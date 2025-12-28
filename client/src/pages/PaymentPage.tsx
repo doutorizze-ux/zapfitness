@@ -18,7 +18,6 @@ export const PaymentPage = () => {
     const [cvv, setCvv] = useState('');
 
     const [subscription, setSubscription] = useState<any>(null);
-    const [pixCode, setPixCode] = useState('');
 
     useEffect(() => {
         // Fetch current tenant plan info

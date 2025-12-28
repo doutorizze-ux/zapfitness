@@ -373,7 +373,7 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
     }
 });
 
-import { createCustomer, createSubscription, getPixQrCode, getSubscription } from './services/asaas.js';
+
 
 // ... (existing code)
 
