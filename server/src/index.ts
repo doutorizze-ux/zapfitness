@@ -529,7 +529,7 @@ import { initScheduler } from './scheduler.js';
 const port = 3000;
 server.listen(port, async () => {
     await seedSaasOwner();
-    await seedSaasPlans();
+    // await seedSaasPlans();
     initScheduler();
     console.log(`Server running on http://localhost:${port}`);
 });
