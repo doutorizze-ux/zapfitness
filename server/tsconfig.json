@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
-        "target": "es2016",
-        "module": "commonjs",
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "rootDir": "./src",
         "outDir": "./dist",
         "strict": true,
@@ -11,5 +12,8 @@
     },
     "include": [
         "src/**/*"
-    ]
+    ],
+    "ts-node": {
+        "esm": true
+    }
 }

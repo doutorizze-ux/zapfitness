@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { prisma } from './db';
-import { initWhatsApp, getSession } from './whatsappManager';
+import { prisma } from './db.js';
+import { initWhatsApp, getSession } from './whatsappManager.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import bcrypt from 'bcryptjs';
@@ -346,7 +346,7 @@ const seedSaasPlans = async () => {
     }
 };
 
-import { initScheduler } from './scheduler';
+import { initScheduler } from './scheduler.js';
 
 const port = 3000;
 server.listen(port, async () => {

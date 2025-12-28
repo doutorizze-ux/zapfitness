@@ -2,8 +2,12 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSig
 import { Boom } from '@hapi/boom';
 import path from 'path';
 import fs from 'fs';
-import { prisma } from './db';
+import { prisma } from './db.js';
 import pino from 'pino';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Store multiple WhatsApp sessions: tenantId -> WASocket
 export const sessions = new Map<string, WASocket>();
@@ -12,7 +16,7 @@ export const getSession = (tenantId: string) => sessions.get(tenantId);
 
 export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void) => {
     const logger = pino({ level: 'silent' });
-    const authPath = path.resolve(__dirname, `../ sessions / ${tenantId} `);
+    const authPath = path.resolve(__dirname, `../sessions/${tenantId}`);
 
     if (!fs.existsSync(authPath)) {
         fs.mkdirSync(authPath, { recursive: true });

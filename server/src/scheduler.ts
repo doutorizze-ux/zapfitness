@@ -1,6 +1,6 @@
 import cron from 'node-cron';
-import { prisma } from './db';
-import { sessions } from './whatsappManager';
+import { prisma } from './db.js';
+import { sessions } from './whatsappManager.js';
 
 export const initScheduler = () => {
     // Run every day at 09:00 AM
