@@ -1,12 +1,14 @@
+
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar } from 'lucide-react';
 
 export const Members = () => {
     const [members, setMembers] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
 
     const fetchData = () => {
@@ -21,14 +23,60 @@ export const Members = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/members', formData);
+            if (editingId) {
+                await api.put(`/members/${editingId}`, formData);
+            } else {
+                await api.post('/members', formData);
+            }
             setShowModal(false);
+            setEditingId(null);
             setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+            fetchData();
+        } catch (e: any) {
+            console.error(e);
+            alert('Erro ao salvar membro: ' + (e.response?.data?.error || e.message));
+        }
+    };
+
+    const handleEdit = (member: any) => {
+        setEditingId(member.id);
+        setFormData({
+            name: member.name,
+            phone: member.phone,
+            plan_id: member.plan_id || '',
+            diet: member.diet_plan || '',
+            workout: member.workout_routine || ''
+        });
+        setShowModal(true);
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`Tem certeza que deseja remover ${name}?`)) return;
+        try {
+            await api.delete(`/members/${id}`);
             fetchData();
         } catch (e) {
             console.error(e);
-            alert('Erro ao salvar membro');
+            alert('Erro ao remover membro');
         }
+    };
+
+    const openForCreate = () => {
+        setEditingId(null);
+        setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+        setShowModal(true);
+    };
+
+    const insertTemplate = (field: 'diet' | 'workout') => {
+        const weeklyTemplate = `
+Segunda: 
+Terça: 
+Quarta: 
+Quinta: 
+Sexta: 
+Sábado: 
+Domingo: `;
+        setFormData(prev => ({ ...prev, [field]: (prev[field] || '') + weeklyTemplate }));
     };
 
     const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search));
@@ -37,7 +85,7 @@ export const Members = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-slate-800">Membros</h2>
-                <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition shadow-sm font-medium">
+                <button onClick={openForCreate} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition shadow-sm font-medium">
                     <Plus size={18} />
                     Novo Membro
                 </button>
@@ -63,6 +111,7 @@ export const Members = () => {
                                 <th className="p-4">Plano Atual</th>
                                 <th className="p-4">Vencimento</th>
                                 <th className="p-4">Status</th>
+                                <th className="p-4 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -81,10 +130,18 @@ export const Members = () => {
                                             {member.active && new Date(member.plan_end_date) > new Date() ? 'Ativo' : 'Inativo/Vencido'}
                                         </span>
                                     </td>
+                                    <td className="p-4 flex gap-2 justify-end">
+                                        <button onClick={() => handleEdit(member)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
+                                            <Pencil size={18} />
+                                        </button>
+                                        <button onClick={() => handleDelete(member.id, member.name)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Excluir">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                             {filtered.length === 0 && (
-                                <tr><td colSpan={5} className="p-8 text-center text-slate-500">Nenhum membro encontrado.</td></tr>
+                                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Nenhum membro encontrado.</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -93,8 +150,8 @@ export const Members = () => {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg animate-fade-in-up">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Adicionar Membro</h3>
+                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg animate-fade-in-up max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-xl font-bold mb-4 text-slate-800">{editingId ? 'Editar Membro' : 'Adicionar Membro'}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
@@ -114,17 +171,46 @@ export const Members = () => {
                                     <option value="">Sem plano (Padrão 30 dias)</option>
                                 </select>
                             </div>
+
+                            {/* Workout Section */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Treino via WhatsApp (Opcional)</label>
-                                <textarea className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" rows={3} placeholder="Ex: Peito e Tríceps..." value={formData.workout} onChange={e => setFormData({ ...formData, workout: e.target.value })}></textarea>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase">Treino via WhatsApp</label>
+                                    <button type="button" onClick={() => insertTemplate('workout')} className="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
+                                        <Calendar size={12} /> Modelo Semanal
+                                    </button>
+                                </div>
+                                <textarea
+                                    className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
+                                    rows={5}
+                                    placeholder="Ex: Peito e Tríceps..."
+                                    value={formData.workout}
+                                    onChange={e => setFormData({ ...formData, workout: e.target.value })}
+                                ></textarea>
                             </div>
+
+                            {/* Diet Section */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dieta via WhatsApp (Opcional)</label>
-                                <textarea className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none" rows={3} placeholder="Ex: Café da manhã: Pão com ovo..." value={formData.diet} onChange={e => setFormData({ ...formData, diet: e.target.value })}></textarea>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-xs font-bold text-slate-500 uppercase">Dieta via WhatsApp</label>
+                                    <button type="button" onClick={() => insertTemplate('diet')} className="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
+                                        <Calendar size={12} /> Modelo Semanal
+                                    </button>
+                                </div>
+                                <textarea
+                                    className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
+                                    rows={5}
+                                    placeholder="Ex: Café da manhã: Pão com ovo..."
+                                    value={formData.diet}
+                                    onChange={e => setFormData({ ...formData, diet: e.target.value })}
+                                ></textarea>
                             </div>
+
                             <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancelar</button>
-                                <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 shadow-lg hover:shadow-xl transition">Salvar Membro</button>
+                                <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 shadow-lg hover:shadow-xl transition">
+                                    {editingId ? 'Salvar Alterações' : 'Adicionar Membro'}
+                                </button>
                             </div>
                         </form>
                     </div>
