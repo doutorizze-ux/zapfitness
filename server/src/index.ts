@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: "*", // Allow all origins for simplicity in this setup since client is on different domain (local vs prod)
         methods: ["GET", "POST"]
     }
 });

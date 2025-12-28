@@ -28,51 +28,48 @@ model Tenant {
   opening_time      String? // "06:00"
   closing_time      String? // "23:00"
 
+
   saas_plan_id     String?
   saas_plan        SaasPlan? @relation(fields: [saas_plan_id], references: [id])
   saas_plan_expires_at DateTime?
+  
+  // Asaas Integrations
+  asaas_customer_id String?
+  subscription_id   String?
+  subscription_cycle String? // MONTHLY, YEARLY
+  payment_method    String? // CREDIT_CARD, PIX
+  payment_status    String  @default("PENDING") // PENDING, ACTIVE, OVERDUE
 
   notificationSettings NotificationSettings?
+  paymentHistory    PaymentHistory[]
 
   created_at       DateTime @default(now())
   
   admins           GymAdmin[]
-  members          Member[]
-  plans            Plan[]
-  accessLogs       AccessLog[]
-  securityLogs     SecurityLog[]
-}
-
-model SecurityLog {
-  id          String   @id @default(uuid())
-  tenant_id   String
-  tenant      Tenant   @relation(fields: [tenant_id], references: [id])
-  event_type  String   // SUSPICIOUS_ACTIVITY, MULTIPLE_FAILURES
-  description String
-  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
-  source      String?  // Phone number or RemoteJID
-  created_at  DateTime @default(now())
-}
-
-model NotificationSettings {
-  id              String   @id @default(uuid())
-  tenant_id       String   @unique
-  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
-  
-  checkin_success String   @default("✅ Acesso Liberado! Bom treino, {name}.")
-  plan_warning    String   @default("⚠️ Olá {name}, seu plano vence em {days} dias. Renove para continuar treinando!")
-  plan_expired    String   @default("🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.")
-  
-  updated_at      DateTime @default(now())
 }
 
 model SaasPlan {
   id          String   @id @default(uuid())
   name        String
   price       Decimal
+  description String?
+  features    String? // JSON string
   max_members Int      @default(50)
+  active      Boolean  @default(true)
   created_at  DateTime @default(now())
   tenants     Tenant[]
+}
+
+model PaymentHistory {
+  id              String   @id @default(uuid())
+  tenant_id       String
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  amount          Decimal
+  method          String // PIX, CREDIT_CARD
+  status          String // PENDING, PAID, FAILED
+  asaas_payment_id String?
+  created_at      DateTime @default(now())
+  paid_at         DateTime?
 }
 
 model GymAdmin {
