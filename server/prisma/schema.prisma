@@ -46,6 +46,33 @@ model Tenant {
   created_at       DateTime @default(now())
   
   admins           GymAdmin[]
+  members          Member[]
+  plans            Plan[]
+  accessLogs       AccessLog[]
+  securityLogs     SecurityLog[]
+}
+
+model SecurityLog {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id])
+  event_type  String   // SUSPICIOUS_ACTIVITY, MULTIPLE_FAILURES
+  description String
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  source      String?  // Phone number or RemoteJID
+  created_at  DateTime @default(now())
+}
+
+model NotificationSettings {
+  id              String   @id @default(uuid())
+  tenant_id       String   @unique
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  
+  checkin_success String   @default("✅ Acesso Liberado! Bom treino, {name}.")
+  plan_warning    String   @default("⚠️ Olá {name}, seu plano venceu hoje. Passe na recepção para renovar.")
+  plan_expired    String   @default("🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.")
+  
+  updated_at      DateTime @default(now())
 }
 
 model SaasPlan {
