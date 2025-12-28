@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { useAuth } from '../contexts/AuthContext'; // Reuse or separate? We can reuse login but maybe separate context state?
+// AuthContext not used in this component as per lint error
+
 // Actually, AuthContext expects { id, name, tenant_id }. SaaS owner doesn't have tenant_id.
 // It's better to handle SaaS login separately or make AuthContext flexible.
 // For simplicity and speed, I'll direct use localStorage and a simple state check in the dashboard or modify AuthContext.

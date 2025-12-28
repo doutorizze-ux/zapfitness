@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
 import io from 'socket.io-client';
 import api from '../api';
