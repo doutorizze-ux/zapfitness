@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { prisma } from './db.js';
 import { initWhatsApp, getSession } from './whatsappManager.js';
+import { createCustomer, createSubscription, getSubscription } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import bcrypt from 'bcryptjs';
@@ -56,7 +57,8 @@ app.post('/api/register', async (req, res) => {
             }
         });
 
-        res.json({ tenant, admin });
+        const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ tenant, admin, token });
     } catch (e: any) {
         console.error(e);
         res.status(400).json({ error: 'Registration failed', details: e.message });
@@ -369,6 +371,88 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
     } catch (e) {
         res.status(400).json({ error: 'Impossível excluir plano em uso' });
     }
+});
+
+import { createCustomer, createSubscription, getPixQrCode, getSubscription } from './services/asaas.js';
+
+// ... (existing code)
+
+app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
+    const { creditCard, cpfCnpj, billingType } = req.body;
+    const tenantId = req.user.tenant_id;
+
+    try {
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            include: { saas_plan: true, admins: true }
+        });
+
+        if (!tenant || !tenant.saas_plan) {
+            return res.status(400).json({ error: 'Nenhum plano selecionado.' });
+        }
+
+        const admin = tenant.admins[0]; // Assume first admin is owner
+        let customerId = tenant.asaas_customer_id;
+
+        if (!customerId) {
+            const customer = await createCustomer(admin.name, cpfCnpj, admin.email, '00000000000'); // Phone should be in admin/tenant
+            customerId = customer.id;
+            await prisma.tenant.update({ where: { id: tenantId }, data: { asaas_customer_id: customerId } });
+        }
+
+        const price = parseFloat(tenant.saas_plan.price.toString());
+
+        // Cancel old subscription if exists? For now assume new.
+
+        const subscription = await createSubscription(customerId!, price, creditCard);
+
+        // Update Tenant
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data: {
+                subscription_id: subscription.id,
+                payment_method: billingType,
+                payment_status: 'PENDING' // Will change via webhook or polling
+            }
+        });
+
+        // Get first payment ID to get Pix Code if needed
+        // Subscription response usually has currentCycle or we search payments
+        // For simplicity, we return subscription and frontend polls status
+        // If Pix, we might need to fetch the charge to get QR Code
+
+        res.json({ subscription });
+
+    } catch (e: any) {
+        console.error(e);
+        res.status(400).json({ error: e.message });
+    }
+});
+
+app.get('/api/saas/payment-status', authMiddleware, async (req: any, res) => {
+    const tenant = await prisma.tenant.findUnique({ where: { id: req.user.tenant_id } });
+    if (!tenant?.subscription_id) return res.json({ status: 'NO_SUBSCRIPTION' });
+
+    try {
+        const sub = await getSubscription(tenant.subscription_id);
+        // If status is ACTIVE, update DB
+        if (sub.status === 'ACTIVE' && tenant.payment_status !== 'ACTIVE') {
+            await prisma.tenant.update({ where: { id: tenant.id }, data: { payment_status: 'ACTIVE' } });
+        }
+        res.json({ status: sub.status, subscription: sub });
+    } catch (e) {
+        res.status(400).json({ error: 'Erro ao buscar assinatura' });
+    }
+});
+
+// Endpoint to get Pix QR Code for the current pending payment of the subscription
+app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
+    // Need to find the pending payment for this subscription
+    // Asaas API: GET /payments?subscription=ID&status=PENDING
+    // API call logic not in service yet, let's just make direct call here or add to service
+    // For now, let's implement a simple poll via subscription response which confusingly doesn't always have the immediate payment ID.
+    // Better to fetch payments of subscription.
+    res.status(501).json({ error: 'Not implemented yet' });
 });
 
 import { initScheduler } from './scheduler.js';

@@ -5,6 +5,7 @@ import { Login } from './pages/Login';
 import { LandingPage } from './pages/LandingPage';
 import { AdminLogin } from './pages/AdminLogin';
 import { Dashboard } from './pages/Dashboard';
+import { PaymentPage } from './pages/PaymentPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -20,7 +21,9 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Login initialMode="register" />} />
+          <Route path="/payment" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
           <Route path="/dashboard/*" element={

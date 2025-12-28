@@ -27,7 +27,11 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.token, res.data.admin);
-            navigate('/dashboard');
+            if (isRegistering) {
+                navigate('/payment');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError('Credenciais inválidas');
         }
@@ -36,9 +40,10 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/register', { gymName, email, password, saasPlanId: planId });
-            setIsRegistering(false);
-            alert('Academia registrada! Faça login.');
+            const res = await api.post('/register', { gymName, email, password, saasPlanId: planId });
+            // Auto login
+            login(res.data.token, res.data.admin);
+            navigate('/payment');
         } catch (err: any) {
             setError(err.response?.data?.details || 'Erro ao registrar.');
         }
