@@ -263,6 +263,39 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
     res.json(member);
 });
 
+app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
+    const { name, phone, plan_id, diet, workout } = req.body;
+
+    const member = await prisma.member.findFirst({
+        where: { id: req.params.id, tenant_id: req.user.tenant_id }
+    });
+
+    if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
+
+    const updated = await prisma.member.update({
+        where: { id: member.id },
+        data: {
+            name,
+            phone,
+            plan_id,
+            diet_plan: diet,
+            workout_routine: workout
+        }
+    });
+    res.json(updated);
+});
+
+app.delete('/api/members/:id', authMiddleware, async (req: any, res) => {
+    const member = await prisma.member.findFirst({
+        where: { id: req.params.id, tenant_id: req.user.tenant_id }
+    });
+
+    if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
+
+    await prisma.member.delete({ where: { id: member.id } });
+    res.json({ success: true });
+});
+
 app.get('/api/plans', authMiddleware, async (req: any, res) => {
     const plans = await prisma.plan.findMany({
         where: { tenant_id: req.user.tenant_id }
