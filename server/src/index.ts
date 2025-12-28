@@ -330,8 +330,7 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
 });
 
 
-    }
-};
+
 
 // CRUD SaaS Plans
 app.get('/api/saas/plans', async (req, res) => {
