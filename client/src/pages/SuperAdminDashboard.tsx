@@ -7,10 +7,38 @@ export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState<any>(null);
     const [tenants, setTenants] = useState<any[]>([]);
+    const [plans, setPlans] = useState<any[]>([]);
+    const [showPlanModal, setShowPlanModal] = useState(false);
+    const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', description: '' });
 
     const fetchData = () => {
         api.get('/saas/dashboard').then(res => setStats(res.data)).catch(console.error);
         api.get('/saas/tenants').then(res => setTenants(res.data)).catch(console.error);
+        api.get('/saas/plans').then(res => setPlans(res.data)).catch(console.error);
+    };
+
+    const handleCreatePlan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/saas/plans', newPlan);
+            setShowPlanModal(false);
+            setNewPlan({ name: '', price: '', max_members: '', description: '' });
+            fetchData();
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao criar plano');
+        }
+    };
+
+    const handleDeletePlan = async (id: string) => {
+        if (!confirm('Tem certeza?')) return;
+        try {
+            await api.delete(`/saas/plans/${id}`);
+            fetchData();
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao excluir plano');
+        }
     };
 
     useEffect(() => {
@@ -83,54 +111,120 @@ export const SuperAdminDashboard = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100">
-                        <h2 className="text-xl font-bold text-slate-800">Gerenciar Academias</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Tenants List */}
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100">
+                            <h2 className="text-xl font-bold text-slate-800">Gerenciar Academias</h2>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 font-medium">
+                                    <tr>
+                                        <th className="p-4">Academia</th>
+                                        <th className="p-4">Plano</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {tenants.map(tenant => (
+                                        <tr key={tenant.id} className="hover:bg-slate-50 transition">
+                                            <td className="p-4">
+                                                <p className="font-bold text-slate-800">{tenant.name}</p>
+                                                <p className="text-xs text-slate-500">{tenant.slug}</p>
+                                            </td>
+                                            <td className="p-4 text-slate-600">{tenant.saas_plan?.name || '-'}</td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {tenant.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <button
+                                                    onClick={() => handleToggle(tenant.id)}
+                                                    className={`p-2 rounded-lg transition ${tenant.status === 'ACTIVE' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                                                    title={tenant.status === 'ACTIVE' ? 'Bloquear' : 'Ativar'}
+                                                >
+                                                    <Power size={18} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-500 font-medium">
-                            <tr>
-                                <th className="p-4">Academia (Slug)</th>
-                                <th className="p-4">Criado em</th>
-                                <th className="p-4">WhatsApp</th>
-                                <th className="p-4">Membros</th>
-                                <th className="p-4">Status</th>
-                                <th className="p-4 text-right">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {tenants.map(tenant => (
-                                <tr key={tenant.id} className="hover:bg-slate-50 transition">
-                                    <td className="p-4">
-                                        <p className="font-bold text-slate-800">{tenant.name}</p>
-                                        <p className="text-xs text-slate-500">{tenant.slug}</p>
-                                    </td>
-                                    <td className="p-4 text-slate-600">{new Date(tenant.created_at).toLocaleDateString()}</td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {tenant.whatsapp_status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 font-medium text-slate-700">{tenant._count?.members || 0}</td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                                            {tenant.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <button
-                                            onClick={() => handleToggle(tenant.id)}
-                                            className={`p-2 rounded-lg transition ${tenant.status === 'ACTIVE' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
-                                            title={tenant.status === 'ACTIVE' ? 'Bloquear Academia' : 'Ativar Academia'}
-                                        >
-                                            <Power size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+
+                    {/* Plans Management */}
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-slate-800">Planos SaaS</h2>
+                            <button onClick={() => setShowPlanModal(true)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition">
+                                + Novo Plano
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-500 font-medium">
+                                    <tr>
+                                        <th className="p-4">Nome</th>
+                                        <th className="p-4">Preço</th>
+                                        <th className="p-4">Max Membros</th>
+                                        <th className="p-4 text-right">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {plans.map(plan => (
+                                        <tr key={plan.id} className="hover:bg-slate-50 transition">
+                                            <td className="p-4 font-bold text-slate-800">{plan.name}</td>
+                                            <td className="p-4 text-slate-600">R$ {parseFloat(plan.price).toFixed(2)}</td>
+                                            <td className="p-4 text-slate-600">{plan.max_members}</td>
+                                            <td className="p-4 text-right">
+                                                <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:text-red-700 p-2">
+                                                    Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+
+                {/* Create Plan Modal */}
+                {showPlanModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
+                            <h2 className="text-xl font-bold mb-4">Novo Plano</h2>
+                            <form onSubmit={handleCreatePlan} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Nome do Plano</label>
+                                    <input required type="text" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">Preço (R$)</label>
+                                        <input required type="number" step="0.01" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">Max Membros</label>
+                                        <input required type="number" value={newPlan.max_members} onChange={e => setNewPlan({ ...newPlan, max_members: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">Descrição</label>
+                                    <textarea value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" rows={3}></textarea>
+                                </div>
+                                <div className="flex justify-end gap-2 mt-6">
+                                    <button type="button" onClick={() => setShowPlanModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                                    <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Criar Plano</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

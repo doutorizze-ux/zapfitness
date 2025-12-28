@@ -330,28 +330,53 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
 });
 
 
-const seedSaasPlans = async () => {
-    const plans = [
-        { name: 'Start', price: 99.00, max_members: 50 },
-        { name: 'Pro', price: 199.00, max_members: 200 },
-        { name: 'Unlimited', price: 299.00, max_members: 999999 }
-    ];
-
-    for (const p of plans) {
-        const exists = await prisma.saasPlan.findFirst({ where: { name: p.name } });
-        if (!exists) {
-            await prisma.saasPlan.create({ data: { name: p.name, price: p.price, max_members: p.max_members } });
-            console.log(`SaaS Plan seeded: ${p.name}`);
-        }
     }
 };
+
+// CRUD SaaS Plans
+app.get('/api/saas/plans', async (req, res) => {
+    // Public endpoint for Landing Page? Or authenticated? 
+    // Usually public to show pricing. Or make separate public endpoint.
+    // For admin dash, we need auth.
+    // Let's make this public for now for simplicity in fetching for landing, 
+    // BUT SuperAdminDashboard uses it too.
+    const plans = await prisma.saasPlan.findMany({ orderBy: { price: 'asc' } });
+    res.json(plans);
+});
+
+app.post('/api/saas/plans', saasAuthMiddleware, async (req, res) => {
+    const { name, price, max_members, description } = req.body;
+    try {
+        const plan = await prisma.saasPlan.create({
+            data: {
+                name,
+                price: parseFloat(price),
+                max_members: parseInt(max_members),
+                description,
+                features: JSON.stringify(['Suporte WhatsApp', 'Check-in QR Code']) // Default features for now
+            }
+        });
+        res.json(plan);
+    } catch (e) {
+        res.status(400).json({ error: 'Erro ao criar plano' });
+    }
+});
+
+app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
+    try {
+        await prisma.saasPlan.delete({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(400).json({ error: 'Impossível excluir plano em uso' });
+    }
+});
 
 import { initScheduler } from './scheduler.js';
 
 const port = 3000;
 server.listen(port, async () => {
     await seedSaasOwner();
-    await seedSaasPlans();
+    // await seedSaasPlans(); // Deprecated in favor of Admin Dashboard management
     initScheduler();
     console.log(`Server running on http://localhost:${port}`);
 });
