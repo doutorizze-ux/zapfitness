@@ -11,34 +11,64 @@ export const LandingPage = () => {
     const [planError, setPlanError] = useState(false);
 
     useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+
         const fetchPlans = async () => {
             try {
-                const res = await fetch('/api/saas/plans');
-                if (!res.ok) throw new Error('API Error');
-                const data = await res.json();
-                if (Array.isArray(data)) setPlansQuery(data);
-            } catch (error) {
-                console.error("Erro ao buscar planos", error);
-                setPlanError(true);
-            } finally {
-                setLoadingPlans(false);
-            }
+                // Determine API URL (using Vite Proxy in dev, absolute in prod if configured, or relative)
+                // In production static build, we need absolute URL if backend is on different domain.
+                // The api.ts logic handles this for axios, but here we used fetch. 
+                // Let's use relative path '/api/saas/plans', hoping proxy or same-domain works.
+                // Or better, import the configured 'api' instance? 
+                // Using fetch for simplicity in Landing Page, but 'api' instance is safer for baseURL.
+                // But for now, let's stick to fetch relative, assuming proxy or domain matches.
+                // Actually, for Shared Host, we rely on VITE_API_URL in .env.production.
+                // Fetch needs full URL if on different domain.
+                // Let's use the 'api' instance from ../api.ts? No, I'll allow fetch but use import.meta.env logic if needed?
+                // Use relative '/api...' works if proxied. On shared host without proxy, it fails unless configured.
+                // Wait, earlier I said Shared Host needs VITE_API_URL.
+                // The 'api' instance in 'src/api.ts' handles baseURL.
+                // Let's use 'api.get' instead of 'fetch' to be consistent and SAFE!
+
+                // Switching to 'api' import would require importing 'api' from '../api'.
+                // Let's DO THAT. It is much better.
+            } catch (e) { }
         };
-        fetchPlans();
+        // Actually, let's keep fetch for now to match imports, BUT use full URL if env var is set?
+        // Let's just use fetch('/api/...') and assume the .htaccess or domain setup handles it?
+        // No, fetch('/api/...') on shared host (static) requests file '/api/...'.
+        // It WON'T hit the backend unless backend IS the host.
+        // I MUST use the full URL.
+        const baseUrl = import.meta.env.VITE_API_URL || '';
+        // If VITE_API_URL is defined, use it. Else relative.
+
+        const url = `${baseUrl}/api/saas/plans`.replace('//api', '/api'); // Prevent double slash if base has /api
+
+        fetch(url).then(async (res) => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            const data = await res.json();
+            if (Array.isArray(data)) setPlansQuery(data);
+        }).catch(err => {
+            console.error(err);
+            setPlanError(true);
+        }).finally(() => {
+            setLoadingPlans(false);
+        });
+
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // ... features definition ...
-
-    // NO DEFAULT PLANS FALLBACK to avoid showing deleted plans.
-
-    // ... scroll logic ...
-
-    // In JSX below (mapping):
-    // Check loadingPlans, planError, plansQuery.length
+    const features = [
+        { icon: <Zap className="text-orange-500" />, title: "Automação via WhatsApp", desc: "Seu aluno pede treino, dieta e faz check-in direto pelo Whats, sem baixar apps." },
+        { icon: <CheckCircle className="text-green-500" />, title: "Check-in Inteligente", desc: "Controle de acesso por QR Code com validação instantânea de pagamentos e horários." },
+        { icon: <Shield className="text-blue-500" />, title: "Gestão Financeira", desc: "Bloqueio automático de inadimplentes e controle total de planos e renovações." },
+        { icon: <Smartphone className="text-purple-500" />, title: "App do Aluno (Sem App)", desc: "Tudo acontece no chat que eles já usam todo dia. Engajamento máximo." }
+    ];
 
     return (
         <div className="font-sans antialiased text-slate-800 bg-white">
-            {/* ... Navbar (unchanged) ... */}
+            {/* Navbar */}
             <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-md py-4' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     <div className="flex items-center gap-2">
@@ -89,7 +119,6 @@ export const LandingPage = () => {
                     <div className="mt-16 text-sm text-slate-500 font-medium">
                         Já confiam na ZapFitness:
                         <div className="flex justify-center gap-8 mt-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                            {/* Mock Logos */}
                             <div className="text-xl font-black text-white">IRON<span className="font-light">GYM</span></div>
                             <div className="text-xl font-black text-white">CROSS<span className="text-primary">X</span></div>
                             <div className="text-xl font-black text-white">SMART<span className="text-blue-400">FIT</span></div>
@@ -127,6 +156,7 @@ export const LandingPage = () => {
                         <p className="text-slate-600">Escolha o melhor para o seu momento. Cancele quando quiser.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
                         {loadingPlans ? (
                             <div className="col-span-3 text-center py-12">
                                 <div className="text-orange-500 font-bold text-xl animate-pulse">Carregando planos...</div>
@@ -134,7 +164,7 @@ export const LandingPage = () => {
                         ) : planError ? (
                             <div className="col-span-3 text-center py-12">
                                 <div className="text-red-500 font-bold mb-2">Não foi possível carregar os planos.</div>
-                                <p className="text-slate-500 text-sm">Verifique sua conexão ou se a API está online (Erro de Certificado SSL).</p>
+                                <p className="text-slate-500 text-sm">Verifique sua conexão (API Offline ou Erro SSL).</p>
                             </div>
                         ) : plansQuery.length === 0 ? (
                             <div className="col-span-3 text-center py-12">
@@ -142,7 +172,6 @@ export const LandingPage = () => {
                             </div>
                         ) : (
                             plansQuery.map((plan: any, i) => {
-                                // Backend features might be JSON string, default is array
                                 let features = plan.features;
                                 if (typeof features === 'string') {
                                     try { features = JSON.parse(features); } catch (e) { features = []; }
@@ -165,7 +194,7 @@ export const LandingPage = () => {
                                         </div>
                                         <ul className="space-y-4 mb-8 flex-1">
                                             {features.map((feat: string, k: number) => (
-                                                <li key={k} className="flex items-start gap-3 text-sm text-slate-600">
+                                                <li key={k} className="flex items-start gap-4 text-sm text-slate-600">
                                                     <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
                                                     {feat}
                                                 </li>
@@ -178,6 +207,7 @@ export const LandingPage = () => {
                                 );
                             })
                         )}
+
                     </div>
 
                     <div className="mt-12 text-center text-slate-500 text-sm">
@@ -198,7 +228,6 @@ export const LandingPage = () => {
                         <p className="max-w-xs text-slate-500 mb-6">A revolução na gestão de academias. Simples, rápido e direto no WhatsApp.</p>
                         <div className="flex gap-4">
                             <a href="#" className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-primary hover:text-white transition"><Instagram size={20} /></a>
-                            {/* More socials */}
                         </div>
                     </div>
                     <div>
