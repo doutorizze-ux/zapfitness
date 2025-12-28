@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
-const socket = io('http://localhost:3000');
+const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 export const WhatsAppConnect = () => {
     const { user } = useAuth();
