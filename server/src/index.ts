@@ -35,16 +35,68 @@ const authMiddleware = async (req: any, res: any, next: any) => {
     }
 };
 
+// Seed initial SaaS plans if none exist
+const seedSaasPlans = async () => {
+    const count = await prisma.saasPlan.count();
+    if (count === 0) {
+        console.log('Seeding initial SaaS plans...');
+        await prisma.saasPlan.createMany({
+            data: [
+                {
+                    name: 'Start',
+                    price: 99.00,
+                    max_members: 50,
+                    description: 'Ideal para começar',
+                    features: JSON.stringify(["Até 50 alunos", "WhatsApp Bot Básico", "Check-in QR Code"])
+                },
+                {
+                    name: 'Pro',
+                    price: 199.00,
+                    max_members: 200,
+                    description: 'Para academias em crescimento',
+                    features: JSON.stringify(["Até 200 alunos", "Bot Completo (Treinos/Dieta)", "Relatórios Avançados", "Suporte Prioritário"])
+                },
+                {
+                    name: 'Unlimited',
+                    price: 299.00,
+                    max_members: 9999,
+                    description: 'Sem limites',
+                    features: JSON.stringify(["Alunos Ilimitados", "Múltiplos WhatsApps", "API Aberta", "Consultoria de Implantação"])
+                }
+            ]
+        });
+        console.log('Plans seeded!');
+    }
+};
+
 app.post('/api/register', async (req, res) => {
     const { gymName, email, password, saasPlanId } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        let validPlanId = undefined;
+        if (saasPlanId) {
+            const plan = await prisma.saasPlan.findUnique({ where: { id: saasPlanId } });
+            if (plan) {
+                validPlanId = saasPlanId;
+            } else {
+                // If ID matches a generic name from default landing page, try to find the real one we just seeded
+                // This handles the transition from "hardcoded ID" to "DB ID"
+                if (saasPlanId.endsWith('-default')) {
+                    const name = saasPlanId.replace('-default', '');
+                    const realPlan = await prisma.saasPlan.findFirst({
+                        where: { name: { equals: name, mode: 'insensitive' } }
+                    });
+                    if (realPlan) validPlanId = realPlan.id;
+                }
+            }
+        }
+
         const tenant = await prisma.tenant.create({
             data: {
                 name: gymName,
                 slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
-                saas_plan_id: saasPlanId || undefined
+                saas_plan_id: validPlanId
             }
         });
 
@@ -53,6 +105,7 @@ app.post('/api/register', async (req, res) => {
                 name: 'Admin',
                 email,
                 password: hashedPassword,
+                role: 'ADMIN',
                 tenant_id: tenant.id
             }
         });
@@ -472,7 +525,7 @@ import { initScheduler } from './scheduler.js';
 const port = 3000;
 server.listen(port, async () => {
     await seedSaasOwner();
-    // await seedSaasPlans(); // Deprecated in favor of Admin Dashboard management
+    await seedSaasPlans();
     initScheduler();
     console.log(`Server running on http://localhost:${port}`);
 });
