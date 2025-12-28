@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model SaasOwner {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+}
+
+model Tenant {
+  id               String   @id @default(uuid())
+  name             String
+  slug             String   @unique
+  whatsapp_number  String?  @unique
+  whatsapp_status  String   @default("DISCONNECTED")
+  status           String   @default("ACTIVE") // ACTIVE, BLOCKED
+  owner_phone      String?
+  
+  // Access Control Settings
+  access_cooldown   Int     @default(5) // minutes between checkins
+  max_daily_access  Int     @default(1)
+  opening_time      String? // "06:00"
+  closing_time      String? // "23:00"
+
+  saas_plan_id     String?
+  saas_plan        SaasPlan? @relation(fields: [saas_plan_id], references: [id])
+  saas_plan_expires_at DateTime?
+
+  notificationSettings NotificationSettings?
+
+  created_at       DateTime @default(now())
+  
+  admins           GymAdmin[]
+  members          Member[]
+  plans            Plan[]
+  accessLogs       AccessLog[]
+  securityLogs     SecurityLog[]
+}
+
+model SecurityLog {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id])
+  event_type  String   // SUSPICIOUS_ACTIVITY, MULTIPLE_FAILURES
+  description String
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  source      String?  // Phone number or RemoteJID
+  created_at  DateTime @default(now())
+}
+
+model NotificationSettings {
+  id              String   @id @default(uuid())
+  tenant_id       String   @unique
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  
+  checkin_success String   @default("✅ Acesso Liberado! Bom treino, {name}.")
+  plan_warning    String   @default("⚠️ Olá {name}, seu plano vence em {days} dias. Renove para continuar treinando!")
+  plan_expired    String   @default("🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.")
+  
+  updated_at      DateTime @default(now())
+}
+
+model SaasPlan {
+  id          String   @id @default(uuid())
+  name        String
+  price       Decimal
+  max_members Int      @default(50)
+  created_at  DateTime @default(now())
+  tenants     Tenant[]
+}
+
+model GymAdmin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  tenant_id     String
+  tenant        Tenant   @relation(fields: [tenant_id], references: [id])
+}
+
+model Plan {
+  id            String   @id @default(uuid())
+  name          String
+  price         Float
+  duration_days Int
+  tenant_id     String
+  tenant        Tenant   @relation(fields: [tenant_id], references: [id])
+  members       Member[]
+}
+
+model Member {
+  id              String   @id @default(uuid())
+  name            String
+  phone           String
+  active          Boolean  @default(true)
+  
+  plan_id         String?
+  plan            Plan?    @relation(fields: [plan_id], references: [id])
+  plan_start_date DateTime?
+  plan_end_date   DateTime?
+  
+  diet_plan       String?
+  workout_routine String?
+  
+  tenant_id       String
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+
+  accessLogs      AccessLog[]
+
+  @@unique([phone, tenant_id])
+}
+
+model AccessLog {
+  id        String   @id @default(uuid())
+  scanned_at DateTime @default(now())
+  status    String
+  reason    String?
+  
+  member_id String?
+  member    Member?  @relation(fields: [member_id], references: [id])
+  
+  tenant_id String
+  tenant    Tenant   @relation(fields: [tenant_id], references: [id])
+}
