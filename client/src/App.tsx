@@ -21,7 +21,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/login" element={<Login />} />
+
           <Route path="/register" element={<Login initialMode="register" />} />
           <Route path="/payment" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
           <Route path="/admin/login" element={<AdminLogin />} />

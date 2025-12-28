@@ -377,6 +377,18 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
 
 // ... (existing code)
 
+app.get('/api/me', authMiddleware, async (req: any, res) => {
+    try {
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenant_id },
+            include: { saas_plan: true, admins: true }
+        });
+        res.json(tenant);
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao buscar dados usuario' });
+    }
+});
+
 app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
     const { creditCard, cpfCnpj, billingType } = req.body;
     const tenantId = req.user.tenant_id;
