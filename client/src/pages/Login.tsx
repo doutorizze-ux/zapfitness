@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
+import { Zap } from 'lucide-react';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -52,7 +53,16 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
             <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md animate-fade-in-up">
-                <h1 className="text-4xl font-extrabold text-center text-primary mb-2">ZapFitness</h1>
+                <div className="flex justify-center mb-6">
+                    <div className="flex items-center gap-2 group">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
+                            <Zap className="text-white fill-white" size={24} />
+                        </div>
+                        <span className="text-3xl font-black tracking-tight text-slate-900">
+                            Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span>
+                        </span>
+                    </div>
+                </div>
                 <p className="text-slate-500 text-center mb-8">Gerencie sua academia pelo WhatsApp</p>
 
                 {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-center border border-red-200">{error}</div>}

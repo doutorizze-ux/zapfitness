@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Members } from './Members';
 import { Plans } from './Plans';
@@ -30,11 +30,15 @@ export const Dashboard = () => {
     return (
         <div className="flex h-screen bg-slate-100">
             <aside className="w-64 bg-slate-900 text-white flex flex-col shadow-xl z-10">
-                <div className="p-6 border-b border-slate-800 flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold">Z</div>
+                <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                        <Zap className="text-white fill-white" size={20} />
+                    </div>
                     <div>
-                        <h2 className="text-lg font-bold">ZapFitness</h2>
-                        <p className="text-xs text-slate-400">SaaS Manager</p>
+                        <h2 className="text-xl font-black tracking-tight text-white">
+                            Zapp<span className="text-orange-500">Fitness</span>
+                        </h2>
+                        <p className="text-xs text-slate-400 font-medium">SaaS Manager</p>
                     </div>
                 </div>
 

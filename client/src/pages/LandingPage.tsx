@@ -71,11 +71,13 @@ export const LandingPage = () => {
             {/* Navbar */}
             <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-md py-4' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/50 backdrop-blur-sm">
-                            <Zap className="text-primary fill-current" size={24} />
+                    <div className="flex items-center gap-2 group">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center border border-white/10 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-transform duration-300">
+                            <Zap className="text-white fill-white" size={20} />
                         </div>
-                        <span className="text-2xl font-bold text-white tracking-tight">Zap<span className="text-primary">Fitness</span></span>
+                        <span className="text-2xl font-black tracking-tight text-white">
+                            Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">Fitness</span>
+                        </span>
                     </div>
                     <div className="hidden md:flex gap-8 text-sm font-medium text-slate-300">
                         <a href="#features" className="hover:text-white transition">Funcionalidades</a>
@@ -222,8 +224,12 @@ export const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center gap-2 mb-6">
-                            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold text-white">Z</div>
-                            <span className="text-xl font-bold text-white">ZapFitness</span>
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                <Zap className="text-white fill-white" size={20} />
+                            </div>
+                            <span className="text-2xl font-black tracking-tight text-white">
+                                Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">Fitness</span>
+                            </span>
                         </div>
                         <p className="max-w-xs text-slate-500 mb-6">A revolução na gestão de academias. Simples, rápido e direto no WhatsApp.</p>
                         <div className="flex gap-4">
