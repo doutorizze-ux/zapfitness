@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 
-export const Login = () => {
+import { useSearchParams } from 'react-router-dom';
+
+export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'register' }) => {
+    const [searchParams] = useSearchParams();
+    const planId = searchParams.get('plan');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
 
-    const [isRegistering, setIsRegistering] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(initialMode === 'register');
     const [gymName, setGymName] = useState('');
+
+    useEffect(() => {
+        setIsRegistering(initialMode === 'register');
+    }, [initialMode]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,7 +36,7 @@ export const Login = () => {
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/register', { gymName, email, password });
+            await api.post('/register', { gymName, email, password, saasPlanId: planId });
             setIsRegistering(false);
             alert('Academia registrada! Faça login.');
         } catch (err: any) {

@@ -35,7 +35,7 @@ const authMiddleware = async (req: any, res: any, next: any) => {
 };
 
 app.post('/api/register', async (req, res) => {
-    const { gymName, email, password } = req.body;
+    const { gymName, email, password, saasPlanId } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -43,6 +43,7 @@ app.post('/api/register', async (req, res) => {
             data: {
                 name: gymName,
                 slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
+                saas_plan_id: saasPlanId || undefined
             }
         });
 

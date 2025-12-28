@@ -6,29 +6,32 @@ import { CheckCircle, Zap, Shield, Smartphone, ArrowRight, Instagram } from 'luc
 export const LandingPage = () => {
     const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(false);
+    const [plansQuery, setPlansQuery] = useState<any[]>([]);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', handleScroll);
+
+        // Fetch public plans
+        fetch('/api/saas/plans').then(res => res.json()).then(data => {
+            if (Array.isArray(data) && data.length > 0) setPlansQuery(data);
+        }).catch(() => { }); // silent fail, keep hardcoded if needed or just show empty
+
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const features = [
-        { icon: <Zap className="text-orange-500" />, title: "Automação via WhatsApp", desc: "Seu aluno pede treino, dieta e faz check-in direto pelo Whats, sem baixar apps." },
-        { icon: <CheckCircle className="text-green-500" />, title: "Check-in Inteligente", desc: "Controle de acesso por QR Code com validação instantânea de pagamentos e horários." },
-        { icon: <Shield className="text-blue-500" />, title: "Gestão Financeira", desc: "Bloqueio automático de inadimplentes e controle total de planos e renovações." },
-        { icon: <Smartphone className="text-purple-500" />, title: "App do Aluno (Sem App)", desc: "Tudo acontece no chat que eles já usam todo dia. Engajamento máximo." }
+    // Fallback if API fails or no plans yet
+    const defaultPlans = [
+        { name: "Start", price: "99", features: ["Até 50 alunos", "WhatsApp Bot Básico", "Check-in QR Code"], id: 'start-default' },
+        { name: "Pro", price: "199", features: ["Até 200 alunos", "Bot Completo (Treinos/Dieta)", "Relatórios Avançados", "Suporte Prioritário"], popular: true, id: 'pro-default' },
+        { name: "Unlimited", price: "299", features: ["Alunos Ilimitados", "Múltiplos WhatsApps", "API Aberta", "Consultoria de Implantação"], id: 'unlimited-default' }
     ];
 
-    const plans = [
-        { name: "Start", price: "R$ 99", features: ["Até 50 alunos", "WhatsApp Bot Básico", "Check-in QR Code"] },
-        { name: "Pro", price: "R$ 199", features: ["Até 200 alunos", "Bot Completo (Treinos/Dieta)", "Relatórios Avançados", "Suporte Prioritário"], popular: true },
-        { name: "Unlimited", price: "R$ 299", features: ["Alunos Ilimitados", "Múltiplos WhatsApps", "API Aberta", "Consultoria de Implantação"] }
-    ];
+    const displayPlans = plansQuery.length > 0 ? plansQuery : defaultPlans;
 
     return (
         <div className="font-sans antialiased text-slate-800 bg-white">
-            {/* Navbar */}
+            {/* ... Navbar (unchanged) ... */}
             <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-md py-4' : 'bg-transparent py-6'}`}>
                 <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
                     <div className="flex items-center gap-2">
@@ -39,7 +42,6 @@ export const LandingPage = () => {
                     </div>
                     <div className="hidden md:flex gap-8 text-sm font-medium text-slate-300">
                         <a href="#features" className="hover:text-white transition">Funcionalidades</a>
-                        <a href="#demo" className="hover:text-white transition">Como Funciona</a>
                         <a href="#pricing" className="hover:text-white transition">Planos</a>
                     </div>
                     <div className="flex gap-4">
@@ -118,33 +120,43 @@ export const LandingPage = () => {
                         <p className="text-slate-600">Escolha o melhor para o seu momento. Cancele quando quiser.</p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                        {plans.map((plan, i) => (
-                            <div key={i} className={`relative p-8 rounded-2xl border ${plan.popular ? 'border-primary bg-slate-50 shadow-xl scale-105 z-10' : 'border-slate-200 bg-white shadow-sm'} flex flex-col`}>
-                                {plan.popular && (
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
-                                        Mais Popular
+                        {displayPlans.map((plan: any, i) => {
+                            // Backend features might be JSON string, default is array
+                            let features = plan.features;
+                            if (typeof features === 'string') {
+                                try { features = JSON.parse(features); } catch (e) { features = []; }
+                            }
+                            // Default logic for mock plans vs db plans
+                            if (!features) features = [];
+
+                            return (
+                                <div key={i} className={`relative p-8 rounded-2xl border ${plan.popular ? 'border-primary bg-slate-50 shadow-xl scale-105 z-10' : 'border-slate-200 bg-white shadow-sm'} flex flex-col`}>
+                                    {plan.popular && (
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg">
+                                            Mais Popular
+                                        </div>
+                                    )}
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-bold text-slate-800">{plan.name}</h3>
+                                        <div className="mt-4 flex items-baseline">
+                                            <span className="text-4xl font-extrabold text-slate-900">R$ {parseFloat(plan.price).toFixed(0)}</span>
+                                            <span className="text-slate-500 ml-1">/mês</span>
+                                        </div>
                                     </div>
-                                )}
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-slate-800">{plan.name}</h3>
-                                    <div className="mt-4 flex items-baseline">
-                                        <span className="text-4xl font-extrabold text-slate-900">{plan.price}</span>
-                                        <span className="text-slate-500 ml-1">/mês</span>
-                                    </div>
+                                    <ul className="space-y-4 mb-8 flex-1">
+                                        {features.map((feat: string, k: number) => (
+                                            <li key={k} className="flex items-start gap-3 text-sm text-slate-600">
+                                                <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
+                                                {feat}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button onClick={() => navigate(`/register?plan=${plan.id}`)} className={`w-full py-3 rounded-lg font-bold transition ${plan.popular ? 'bg-primary text-white hover:bg-orange-600 shadow-lg' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                                        Escolher {plan.name}
+                                    </button>
                                 </div>
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    {plan.features.map((feat, k) => (
-                                        <li key={k} className="flex items-start gap-3 text-sm text-slate-600">
-                                            <CheckCircle size={16} className="text-green-500 mt-0.5 shrink-0" />
-                                            {feat}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button onClick={() => navigate('/register')} className={`w-full py-3 rounded-lg font-bold transition ${plan.popular ? 'bg-primary text-white hover:bg-orange-600 shadow-lg' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
-                                    Escolher {plan.name}
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <div className="mt-12 text-center text-slate-500 text-sm">
