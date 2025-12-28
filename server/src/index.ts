@@ -40,31 +40,33 @@ const seedSaasPlans = async () => {
     const count = await prisma.saasPlan.count();
     if (count === 0) {
         console.log('Seeding initial SaaS plans...');
-        await prisma.saasPlan.createMany({
-            data: [
-                {
-                    name: 'Start',
-                    price: 99.00,
-                    max_members: 50,
-                    description: 'Ideal para começar',
-                    features: JSON.stringify(["Até 50 alunos", "WhatsApp Bot Básico", "Check-in QR Code"])
-                },
-                {
-                    name: 'Pro',
-                    price: 199.00,
-                    max_members: 200,
-                    description: 'Para academias em crescimento',
-                    features: JSON.stringify(["Até 200 alunos", "Bot Completo (Treinos/Dieta)", "Relatórios Avançados", "Suporte Prioritário"])
-                },
-                {
-                    name: 'Unlimited',
-                    price: 299.00,
-                    max_members: 9999,
-                    description: 'Sem limites',
-                    features: JSON.stringify(["Alunos Ilimitados", "Múltiplos WhatsApps", "API Aberta", "Consultoria de Implantação"])
-                }
-            ]
-        });
+        const plans = [
+            {
+                name: 'Start',
+                price: 99.00,
+                max_members: 50,
+                description: 'Ideal para começar',
+                features: JSON.stringify(["Até 50 alunos", "WhatsApp Bot Básico", "Check-in QR Code"])
+            },
+            {
+                name: 'Pro',
+                price: 199.00,
+                max_members: 200,
+                description: 'Para academias em crescimento',
+                features: JSON.stringify(["Até 200 alunos", "Bot Completo (Treinos/Dieta)", "Relatórios Avançados", "Suporte Prioritário"])
+            },
+            {
+                name: 'Unlimited',
+                price: 299.00,
+                max_members: 9999,
+                description: 'Sem limites',
+                features: JSON.stringify(["Alunos Ilimitados", "Múltiplos WhatsApps", "API Aberta", "Consultoria de Implantação"])
+            }
+        ];
+
+        for (const plan of plans) {
+            await prisma.saasPlan.create({ data: plan });
+        }
         console.log('Plans seeded!');
     }
 };
@@ -84,8 +86,9 @@ app.post('/api/register', async (req, res) => {
                 // This handles the transition from "hardcoded ID" to "DB ID"
                 if (saasPlanId.endsWith('-default')) {
                     const name = saasPlanId.replace('-default', '');
+                    // SQLite simple search (case sensitive usually, but names match Start/Pro/Unlimited)
                     const realPlan = await prisma.saasPlan.findFirst({
-                        where: { name: { equals: name, mode: 'insensitive' } }
+                        where: { name: name.charAt(0).toUpperCase() + name.slice(1) } // Ensure Capitalized like Seed
                     });
                     if (realPlan) validPlanId = realPlan.id;
                 }
@@ -100,12 +103,13 @@ app.post('/api/register', async (req, res) => {
             }
         });
 
+        // Create Admin User
         const admin = await prisma.gymAdmin.create({
             data: {
                 name: 'Admin',
                 email,
                 password: hashedPassword,
-                role: 'ADMIN',
+                // role: 'ADMIN', // Removed as it doesn't exist in schema
                 tenant_id: tenant.id
             }
         });
