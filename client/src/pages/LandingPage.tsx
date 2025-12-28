@@ -16,45 +16,22 @@ export const LandingPage = () => {
 
         const fetchPlans = async () => {
             try {
-                // Determine API URL (using Vite Proxy in dev, absolute in prod if configured, or relative)
-                // In production static build, we need absolute URL if backend is on different domain.
-                // The api.ts logic handles this for axios, but here we used fetch. 
-                // Let's use relative path '/api/saas/plans', hoping proxy or same-domain works.
-                // Or better, import the configured 'api' instance? 
-                // Using fetch for simplicity in Landing Page, but 'api' instance is safer for baseURL.
-                // But for now, let's stick to fetch relative, assuming proxy or domain matches.
-                // Actually, for Shared Host, we rely on VITE_API_URL in .env.production.
-                // Fetch needs full URL if on different domain.
-                // Let's use the 'api' instance from ../api.ts? No, I'll allow fetch but use import.meta.env logic if needed?
-                // Use relative '/api...' works if proxied. On shared host without proxy, it fails unless configured.
-                // Wait, earlier I said Shared Host needs VITE_API_URL.
-                // The 'api' instance in 'src/api.ts' handles baseURL.
-                // Let's use 'api.get' instead of 'fetch' to be consistent and SAFE!
+                const baseUrl = import.meta.env.VITE_API_URL || '';
+                const url = `${baseUrl}/api/saas/plans`.replace('//api', '/api');
 
-                // Switching to 'api' import would require importing 'api' from '../api'.
-                // Let's DO THAT. It is much better.
-            } catch (e) { }
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Network response was not ok');
+                const data = await res.json();
+                if (Array.isArray(data)) setPlansQuery(data);
+            } catch (err) {
+                console.error(err);
+                setPlanError(true);
+            } finally {
+                setLoadingPlans(false);
+            }
         };
-        // Actually, let's keep fetch for now to match imports, BUT use full URL if env var is set?
-        // Let's just use fetch('/api/...') and assume the .htaccess or domain setup handles it?
-        // No, fetch('/api/...') on shared host (static) requests file '/api/...'.
-        // It WON'T hit the backend unless backend IS the host.
-        // I MUST use the full URL.
-        const baseUrl = import.meta.env.VITE_API_URL || '';
-        // If VITE_API_URL is defined, use it. Else relative.
 
-        const url = `${baseUrl}/api/saas/plans`.replace('//api', '/api'); // Prevent double slash if base has /api
-
-        fetch(url).then(async (res) => {
-            if (!res.ok) throw new Error('Network response was not ok');
-            const data = await res.json();
-            if (Array.isArray(data)) setPlansQuery(data);
-        }).catch(err => {
-            console.error(err);
-            setPlanError(true);
-        }).finally(() => {
-            setLoadingPlans(false);
-        });
+        fetchPlans();
 
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
