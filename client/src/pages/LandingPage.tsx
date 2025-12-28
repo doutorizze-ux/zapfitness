@@ -16,7 +16,7 @@ export const LandingPage = () => {
 
         const fetchPlans = async () => {
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || '';
+                const baseUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness';
                 const url = `${baseUrl}/api/saas/plans`.replace('//api', '/api');
 
                 const res = await fetch(url);
