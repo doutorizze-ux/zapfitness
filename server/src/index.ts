@@ -418,7 +418,13 @@ app.get('/api/saas/dashboard', saasAuthMiddleware, async (req, res) => {
 app.get('/api/saas/tenants', saasAuthMiddleware, async (req, res) => {
     const tenants = await prisma.tenant.findMany({
         orderBy: { created_at: 'desc' },
-        include: { _count: { select: { members: true } } }
+        include: {
+            _count: { select: { members: true } },
+            admins: {
+                select: { email: true, name: true }
+            },
+            saas_plan: true
+        }
     });
     res.json(tenants);
 });

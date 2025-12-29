@@ -176,6 +176,7 @@ export const SuperAdminDashboard = () => {
                                         <tr key={tenant.id} className="hover:bg-slate-50 transition">
                                             <td className="p-4">
                                                 <p className="font-bold text-slate-800">{tenant.name}</p>
+                                                <p className="text-xs text-slate-600 font-medium">{tenant.admins?.[0]?.email}</p>
                                                 <p className="text-xs text-slate-500">{tenant.slug}</p>
                                                 <p className="text-xs text-slate-400">{tenant.owner_phone}</p>
                                                 <span className={`text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
@@ -247,61 +248,65 @@ export const SuperAdminDashboard = () => {
                 </div>
 
                 {/* Edit Tenant Modal */}
-                {showTenantModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
-                            <h2 className="text-xl font-bold mb-4">Editar Academia</h2>
-                            <form onSubmit={handleSaveTenant} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
-                                    <input required type="text" value={editingTenant?.name} onChange={e => setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
-                                    <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
-                                </div>
-                                <div className="flex justify-end gap-2 mt-6">
-                                    <button type="button" onClick={() => setShowTenantModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                                    <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Salvar</button>
-                                </div>
-                            </form>
+                {
+                    showTenantModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
+                                <h2 className="text-xl font-bold mb-4">Editar Academia</h2>
+                                <form onSubmit={handleSaveTenant} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
+                                        <input required type="text" value={editingTenant?.name} onChange={e => setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
+                                        <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                    <div className="flex justify-end gap-2 mt-6">
+                                        <button type="button" onClick={() => setShowTenantModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                                        <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Salvar</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Create Plan Modal */}
-                {showPlanModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
-                            <h2 className="text-xl font-bold mb-4">Novo Plano</h2>
-                            <form onSubmit={handleCreatePlan} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">Nome do Plano</label>
-                                    <input required type="text" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                {
+                    showPlanModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
+                                <h2 className="text-xl font-bold mb-4">Novo Plano</h2>
+                                <form onSubmit={handleCreatePlan} className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700">Preço (R$)</label>
-                                        <input required type="number" step="0.01" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        <label className="block text-sm font-medium text-slate-700">Nome do Plano</label>
+                                        <input required type="text" value={newPlan.name} onChange={e => setNewPlan({ ...newPlan, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">Preço (R$)</label>
+                                            <input required type="number" step="0.01" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">Max Membros</label>
+                                            <input required type="number" value={newPlan.max_members} onChange={e => setNewPlan({ ...newPlan, max_members: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700">Max Membros</label>
-                                        <input required type="number" value={newPlan.max_members} onChange={e => setNewPlan({ ...newPlan, max_members: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        <label className="block text-sm font-medium text-slate-700">Descrição</label>
+                                        <textarea value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" rows={3}></textarea>
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">Descrição</label>
-                                    <textarea value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" rows={3}></textarea>
-                                </div>
-                                <div className="flex justify-end gap-2 mt-6">
-                                    <button type="button" onClick={() => setShowPlanModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                                    <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Criar Plano</button>
-                                </div>
-                            </form>
+                                    <div className="flex justify-end gap-2 mt-6">
+                                        <button type="button" onClick={() => setShowPlanModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                                        <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Criar Plano</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                    )
+                }
+            </main >
+        </div >
     );
 };
