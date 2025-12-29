@@ -443,6 +443,70 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
     res.json({ status: newStatus });
 });
 
+// Update Tenant
+app.put('/api/saas/tenants/:id', saasAuthMiddleware, async (req: any, res) => {
+    try {
+        const { name, owner_phone } = req.body;
+        const updated = await prisma.tenant.update({
+            where: { id: req.params.id },
+            data: { name, owner_phone }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+// Delete Tenant (Cascade)
+app.delete('/api/saas/tenants/:id', saasAuthMiddleware, async (req: any, res) => {
+    try {
+        const tenantId = req.params.id;
+
+        // Disconnect WA
+        const session = getSession(tenantId);
+        if (session) session.end(undefined);
+
+        await prisma.$transaction([
+            prisma.accessLog.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.securityLog.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.paymentHistory.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.member.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.plan.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.gymAdmin.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.notificationSettings.deleteMany({ where: { tenant_id: tenantId } }),
+            prisma.tenant.delete({ where: { id: tenantId } })
+        ]);
+
+        res.json({ success: true });
+    } catch (e: any) {
+        console.error(e);
+        res.status(400).json({ error: 'Erro ao excluir academia: ' + e.message });
+    }
+});
+
+// Disconnect WhatsApp
+app.post('/api/saas/tenants/:id/disconnect', saasAuthMiddleware, async (req: any, res) => {
+    try {
+        const tenantId = req.params.id;
+        const session = getSession(tenantId);
+
+        if (session) {
+            session.end(undefined);
+            // Wait a bit to ensure session cleanup
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data: { whatsapp_status: 'DISCONNECTED' }
+        });
+
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
 
 
 
