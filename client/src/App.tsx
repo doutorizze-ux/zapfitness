@@ -20,7 +20,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
       setChecking(true);
       api.get('/me')
         .then(res => {
-          const { payment_status, saas_plan, payment_method } = res.data;
+          const { payment_status, payment_method } = res.data;
           // Allow if ACTIVE, or if PENDING but Credit Card (optimistic - can change policy later)
           // Actually, for consistency with User request "so libera... ao fazer pagamento", let's be strict for PIX.
           // But if Plan is Free/Trial (not implemented yet), we might need logic. Assuming all paid plans now.

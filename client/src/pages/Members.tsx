@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar, Clipboard, User, Activity, Utensils } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils } from 'lucide-react';
 
 export const Members = () => {
     const [members, setMembers] = useState<any[]>([]);
