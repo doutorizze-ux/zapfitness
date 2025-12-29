@@ -9,23 +9,27 @@ export const LandingPage = () => {
     const [plansQuery, setPlansQuery] = useState<any[]>([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [planError, setPlanError] = useState(false);
+    const [debugError, setDebugError] = useState('');
+    const [debugUrl, setDebugUrl] = useState('');
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', handleScroll);
 
         const fetchPlans = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
-                const url = `${apiUrl}/saas/plans`;
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
+            const url = `${apiUrl}/saas/plans`;
+            setDebugUrl(url);
 
+            try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error('Network response was not ok');
+                if (!res.ok) throw new Error(`Status: ${res.status} ${res.statusText}`);
                 const data = await res.json();
                 if (Array.isArray(data)) setPlansQuery(data);
-            } catch (err) {
+            } catch (err: any) {
                 console.error(err);
                 setPlanError(true);
+                setDebugError(err.message || String(err));
             } finally {
                 setLoadingPlans(false);
             }
@@ -143,7 +147,13 @@ export const LandingPage = () => {
                         ) : planError ? (
                             <div className="col-span-3 text-center py-12">
                                 <div className="text-red-500 font-bold mb-2">Não foi possível carregar os planos.</div>
-                                <p className="text-slate-500 text-sm">Verifique sua conexão (API Offline ou Erro SSL).</p>
+                                <div className="bg-red-50 p-4 rounded-lg text-left overflow-auto max-w-md mx-auto inline-block border border-red-200">
+                                    <p className="text-xs text-red-600 font-mono mb-2">Erro: {debugError}</p>
+                                    <p className="text-xs text-slate-500 font-mono">
+                                        <strong>URL:</strong> {debugUrl}
+                                    </p>
+                                </div>
+                                <p className="text-slate-400 text-xs mt-4">Verifique se a API está online e acessível.</p>
                             </div>
                         ) : plansQuery.length === 0 ? (
                             <div className="col-span-3 text-center py-12">
