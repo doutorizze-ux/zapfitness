@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// EMERGENCY HARDCODE: To fix connection issues once and for all.
 const api = axios.create({
-    baseURL: 'https://api.zapp.fitness/api',
+    baseURL: import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api',
 });
 
 api.interceptors.request.use((config) => {

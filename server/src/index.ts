@@ -139,11 +139,21 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.get('/api/me', authMiddleware, async (req: any, res) => {
-    const tenant = await prisma.tenant.findUnique({
-        where: { id: req.user.tenant_id },
-        include: { _count: { select: { members: true, accessLogs: true } } }
-    });
-    res.json(tenant);
+    try {
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenant_id },
+            include: {
+                _count: { select: { members: true, accessLogs: true } },
+                saas_plan: true,
+                admins: true
+            }
+        });
+        if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+        res.json(tenant);
+    } catch (e) {
+        console.error("Error in /api/me:", e);
+        res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    }
 });
 
 // --- LOG: endpoint de conexão WhatsApp (quando frontend solicita gerar/ligar)
@@ -211,14 +221,7 @@ app.get('/api/whatsapp/status', authMiddleware, async (req: any, res) => {
     res.json({ status: tenant?.whatsapp_status || 'DISCONNECTED', connected: !!session?.user });
 });
 
-app.get('/api/me', authMiddleware, async (req: any, res) => {
-    const tenant = await prisma.tenant.findUnique({
-        where: { id: req.user.tenant_id },
-        include: { saas_plan: true }
-    });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
-    res.json(tenant);
-});
+
 
 app.get('/api/members', authMiddleware, async (req: any, res) => {
     const members = await prisma.member.findMany({
@@ -480,17 +483,7 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
 
 // ... (existing code)
 
-app.get('/api/me', authMiddleware, async (req: any, res) => {
-    try {
-        const tenant = await prisma.tenant.findUnique({
-            where: { id: req.user.tenant_id },
-            include: { saas_plan: true, admins: true }
-        });
-        res.json(tenant);
-    } catch (e) {
-        res.status(500).json({ error: 'Erro ao buscar dados usuario' });
-    }
-});
+
 
 app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
     const { creditCard, cpfCnpj, billingType } = req.body;
