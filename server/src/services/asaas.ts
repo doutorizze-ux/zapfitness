@@ -16,6 +16,8 @@ const api = axios.create({
     }
 });
 
+console.log(`[Asaas] Service initialized. ENV=${process.env.ASAAS_ENV || 'SANDBOX (default)'}, URL=${ASAAS_API_URL}`);
+
 export const createCustomer = async (name: string, cpfCnpj: string, email: string, phone: string) => {
     try {
         // Search if exists first
@@ -41,6 +43,7 @@ export const createCustomer = async (name: string, cpfCnpj: string, email: strin
     } catch (error: any) {
         console.error('Asaas Create Customer Error Payload:', { name, cpfCnpj, email, phone });
         console.error('Asaas Create Customer Error Response:', error.response?.data);
+        console.error('Asaas Environment URL used:', ASAAS_API_URL);
         throw new Error('Erro ao criar cliente no Asaas: ' + JSON.stringify(error.response?.data?.errors || error.message));
     }
 };
