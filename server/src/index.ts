@@ -647,6 +647,57 @@ app.get('/api/saas/payment-status', authMiddleware, async (req: any, res) => {
 });
 
 // Endpoint to get Pix QR Code for the current pending payment of the subscription
+// Webhook do Asaas
+app.post('/webhook/asaas', async (req, res) => {
+    try {
+        const { event, payment } = req.body;
+        console.log(`[Webhook Asaas] Event: ${event}, Payment ID: ${payment?.id}`);
+
+        if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+            const subscriptionId = payment?.subscription;
+            if (subscriptionId) {
+                console.log(`[Webhook Asaas] Payment Confirmed for Subscription: ${subscriptionId}`);
+
+                // Find tenant by subscription
+                const tenant = await prisma.tenant.findFirst({
+                    where: { subscription_id: subscriptionId }
+                });
+
+                if (tenant) {
+                    await prisma.tenant.update({
+                        where: { id: tenant.id },
+                        data: {
+                            payment_status: 'ACTIVE',
+                            status: 'ACTIVE' // Ensure they are unblocked
+                        }
+                    });
+
+                    // Add to History
+                    await prisma.paymentHistory.create({
+                        data: {
+                            tenant_id: tenant.id,
+                            amount: payment.value,
+                            method: payment.billingType,
+                            status: 'PAID',
+                            asaas_payment_id: payment.id,
+                            paid_at: new Date()
+                        }
+                    });
+
+                    console.log(`[Webhook Asaas] Tenant ${tenant.name} activated/renewed.`);
+                } else {
+                    console.warn(`[Webhook Asaas] Tenant not found for subscription ${subscriptionId}`);
+                }
+            }
+        }
+
+        res.json({ received: true });
+    } catch (e: any) {
+        console.error('[Webhook Asaas] Error:', e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
     // Need to find the pending payment for this subscription
     // Asaas API: GET /payments?subscription=ID&status=PENDING
