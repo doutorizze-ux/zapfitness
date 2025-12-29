@@ -3,11 +3,20 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const ASAAS_API_URL = process.env.ASAAS_ENV === 'PROD'
+let ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
+
+// Sanitize misconfigured double-dollar keys
+if (ASAAS_API_KEY.startsWith('$$')) {
+    ASAAS_API_KEY = ASAAS_API_KEY.substring(1);
+}
+
+// Auto-detect environment based on the key
+const IS_PROD_KEY = ASAAS_API_KEY.includes('aact_prod') || ASAAS_API_KEY.includes('_prod_');
+const FORCED_ENV = process.env.ASAAS_ENV;
+
+const ASAAS_API_URL = (FORCED_ENV === 'PROD' || IS_PROD_KEY)
     ? 'https://www.asaas.com/api/v3'
     : 'https://sandbox.asaas.com/api/v3';
-
-const ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
 
 const api = axios.create({
     baseURL: ASAAS_API_URL,
