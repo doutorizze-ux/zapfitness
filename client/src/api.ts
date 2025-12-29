@@ -1,12 +1,8 @@
 import axios from 'axios';
 
-let apiUrl = (import.meta.env.VITE_API_URL || 'https://api.zapp.fitness').trim();
-if (!apiUrl.startsWith('http')) {
-    apiUrl = `https://${apiUrl}`;
-}
-
+// EMERGENCY HARDCODE: To fix connection issues once and for all.
 const api = axios.create({
-    baseURL: apiUrl + '/api',
+    baseURL: 'https://api.zapp.fitness/api',
 });
 
 api.interceptors.request.use((config) => {

@@ -21,10 +21,21 @@ export const PaymentPage = () => {
 
     useEffect(() => {
         // Fetch current tenant plan info
-        api.get('/me').then(res => {
-            if (res.data.saas_plan) setPlan(res.data.saas_plan);
-            if (res.data.payment_status === 'ACTIVE') navigate('/dashboard');
-        });
+        api.get('/me')
+            .then(res => {
+                if (res.data.saas_plan) setPlan(res.data.saas_plan);
+                if (res.data.payment_status === 'ACTIVE') navigate('/dashboard');
+            })
+            .catch(err => {
+                console.error("PaymentPage Error:", err);
+                // If 401, maybe redirect to login? But show error first for debugging.
+                if (err.response?.status === 401) {
+                    alert("Sessão expirada. Faça login novamente.");
+                    navigate('/login');
+                } else {
+                    alert("Erro ao carregar dados do usuário: " + (err.response?.data?.error || err.message));
+                }
+            });
     }, [navigate]);
 
     const handleSubscribe = async (e: React.FormEvent) => {

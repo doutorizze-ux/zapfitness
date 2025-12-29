@@ -16,11 +16,9 @@ export const LandingPage = () => {
 
         const fetchPlans = async () => {
             try {
-                let baseUrl = (import.meta.env.VITE_API_URL || 'https://api.zapp.fitness').trim();
-                if (!baseUrl.startsWith('http')) {
-                    baseUrl = `https://${baseUrl}`;
-                }
-                const url = `${baseUrl}/api/saas/plans`.replace('//api', '/api');
+                // EMERGENCY HARDCODE
+                const baseUrl = 'https://api.zapp.fitness';
+                const url = `${baseUrl}/api/saas/plans`;
 
                 const res = await fetch(url);
                 if (!res.ok) throw new Error('Network response was not ok');
