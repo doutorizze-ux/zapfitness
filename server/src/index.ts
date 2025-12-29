@@ -280,25 +280,30 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
 });
 
 app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
-    const { name, phone, plan_id, diet, workout } = req.body;
+    try {
+        const { name, phone, plan_id, diet, workout } = req.body;
 
-    const member = await prisma.member.findFirst({
-        where: { id: req.params.id, tenant_id: req.user.tenant_id }
-    });
+        const member = await prisma.member.findFirst({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
 
-    if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
+        if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
 
-    const updated = await prisma.member.update({
-        where: { id: member.id },
-        data: {
-            name,
-            phone,
-            plan_id,
-            diet_plan: diet,
-            workout_routine: workout
-        }
-    });
-    res.json(updated);
+        const updated = await prisma.member.update({
+            where: { id: member.id },
+            data: {
+                name,
+                phone,
+                plan_id: plan_id || null, // Handle empty string as null
+                diet_plan: diet,
+                workout_routine: workout
+            }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        console.error('Error updating member:', e);
+        res.status(400).json({ error: 'Erro ao atualizar membro: ' + e.message });
+    }
 });
 
 app.delete('/api/members/:id', authMiddleware, async (req: any, res) => {

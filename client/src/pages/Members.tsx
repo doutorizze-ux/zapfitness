@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, Clipboard, User, Activity, Utensils } from 'lucide-react';
 
 export const Members = () => {
     const [members, setMembers] = useState<any[]>([]);
@@ -10,6 +9,7 @@ export const Members = () => {
     const [formData, setFormData] = useState({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
     const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
+    const [activeTab, setActiveTab] = useState<'info' | 'workout' | 'diet'>('info');
 
     const fetchData = () => {
         api.get('/members').then(res => setMembers(res.data)).catch(console.error);
@@ -23,10 +23,15 @@ export const Members = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                plan_id: formData.plan_id || null // Ensure null is sent
+            };
+
             if (editingId) {
-                await api.put(`/members/${editingId}`, formData);
+                await api.put(`/members/${editingId}`, payload);
             } else {
-                await api.post('/members', formData);
+                await api.post('/members', payload);
             }
             setShowModal(false);
             setEditingId(null);
@@ -47,6 +52,7 @@ export const Members = () => {
             diet: member.diet_plan || '',
             workout: member.workout_routine || ''
         });
+        setActiveTab('info');
         setShowModal(true);
     };
 
@@ -64,26 +70,40 @@ export const Members = () => {
     const openForCreate = () => {
         setEditingId(null);
         setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+        setActiveTab('info');
         setShowModal(true);
     };
 
     const insertTemplate = (field: 'diet' | 'workout') => {
         const weeklyTemplate = `
-Segunda: 
-Terça: 
-Quarta: 
-Quinta: 
-Sexta: 
-Sábado: 
-Domingo: `;
+Segunda:
+- 
+
+Terça:
+- 
+
+Quarta:
+- 
+
+Quinta:
+- 
+
+Sexta:
+- 
+
+Sábado:
+- 
+
+Domingo:
+- `;
         setFormData(prev => ({ ...prev, [field]: (prev[field] || '') + weeklyTemplate }));
     };
 
     const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search));
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col h-[calc(100vh-6rem)]">
+            <div className="flex justify-between items-center mb-6 shrink-0">
                 <h2 className="text-2xl font-bold text-slate-800">Membros</h2>
                 <button onClick={openForCreate} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition shadow-sm font-medium">
                     <Plus size={18} />
@@ -91,8 +111,8 @@ Domingo: `;
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100 flex gap-2">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex gap-2 shrink-0">
                     <Search className="text-slate-400" size={20} />
                     <input
                         type="text"
@@ -102,9 +122,9 @@ Domingo: `;
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-auto flex-1">
                     <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-500 font-medium">
+                        <thead className="bg-slate-50 text-slate-500 font-medium sticky top-0 z-10">
                             <tr>
                                 <th className="p-4">Nome</th>
                                 <th className="p-4">WhatsApp</th>
@@ -140,9 +160,6 @@ Domingo: `;
                                     </td>
                                 </tr>
                             ))}
-                            {filtered.length === 0 && (
-                                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Nenhum membro encontrado.</td></tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
@@ -150,69 +167,104 @@ Domingo: `;
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg animate-fade-in-up max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">{editingId ? 'Editar Membro' : 'Adicionar Membro'}</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
-                                <input required className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">WhatsApp (com DDD)</label>
-                                <input required type="tel" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" placeholder="5511999999999" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Selecione o Plano</label>
-                                <select className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" value={formData.plan_id} onChange={e => setFormData({ ...formData, plan_id: e.target.value })}>
-                                    <option value="">Selecione...</option>
-                                    {plans.map(p => (
-                                        <option key={p.id} value={p.id}>{p.name} - R$ {p.price} ({p.duration_days} dias)</option>
-                                    ))}
-                                    <option value="">Sem plano (Padrão 30 dias)</option>
-                                </select>
-                            </div>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col animate-fade-in-up overflow-hidden">
 
-                            {/* Workout Section */}
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase">Treino via WhatsApp</label>
-                                    <button type="button" onClick={() => insertTemplate('workout')} className="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
-                                        <Calendar size={12} /> Modelo Semanal
-                                    </button>
-                                </div>
-                                <textarea
-                                    className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
-                                    rows={5}
-                                    placeholder="Ex: Peito e Tríceps..."
-                                    value={formData.workout}
-                                    onChange={e => setFormData({ ...formData, workout: e.target.value })}
-                                ></textarea>
-                            </div>
-
-                            {/* Diet Section */}
-                            <div>
-                                <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-xs font-bold text-slate-500 uppercase">Dieta via WhatsApp</label>
-                                    <button type="button" onClick={() => insertTemplate('diet')} className="text-xs text-primary font-bold flex items-center gap-1 hover:underline">
-                                        <Calendar size={12} /> Modelo Semanal
-                                    </button>
-                                </div>
-                                <textarea
-                                    className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none font-mono"
-                                    rows={5}
-                                    placeholder="Ex: Café da manhã: Pão com ovo..."
-                                    value={formData.diet}
-                                    onChange={e => setFormData({ ...formData, diet: e.target.value })}
-                                ></textarea>
-                            </div>
-
-                            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancelar</button>
-                                <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 shadow-lg hover:shadow-xl transition">
-                                    {editingId ? 'Salvar Alterações' : 'Adicionar Membro'}
+                        {/* Header */}
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <h3 className="text-xl font-bold text-slate-800">{editingId ? `Editar: ${formData.name}` : 'Novo Membro'}</h3>
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => handleSubmit({ preventDefault: () => { } } as any)} className="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-600 transition">
+                                    Salvar
+                                </button>
+                                <button onClick={() => setShowModal(false)} className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                                    Fechar
                                 </button>
                             </div>
-                        </form>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-100 shrink-0 bg-slate-50">
+                            <button
+                                onClick={() => setActiveTab('info')}
+                                className={`flex-1 p-4 text-sm font-bold flex items-center justify-center gap-2 transition ${activeTab === 'info' ? 'bg-white border-t-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <User size={18} /> Dados Básicos
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('workout')}
+                                className={`flex-1 p-4 text-sm font-bold flex items-center justify-center gap-2 transition ${activeTab === 'workout' ? 'bg-white border-t-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <Activity size={18} /> Treino
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('diet')}
+                                className={`flex-1 p-4 text-sm font-bold flex items-center justify-center gap-2 transition ${activeTab === 'diet' ? 'bg-white border-t-2 border-primary text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <Utensils size={18} /> Dieta
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50">
+                            {activeTab === 'info' && (
+                                <div className="space-y-4 max-w-md mx-auto">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
+                                        <input required className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary outline-none" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">WhatsApp (com DDD)</label>
+                                        <input required type="tel" className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary outline-none" placeholder="5511999999999" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Plano</label>
+                                        <select className="w-full border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-primary outline-none" value={formData.plan_id} onChange={e => setFormData({ ...formData, plan_id: e.target.value })}>
+                                            <option value="">Selecione...</option>
+                                            {plans.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name} - R$ {p.price} ({p.duration_days} dias)</option>
+                                            ))}
+                                            <option value="">Sem plano (Padrão 30 dias)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'workout' && (
+                                <div className="h-full flex flex-col">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm text-slate-500">Descreva a rotina de treinos que será enviada pelo bot.</span>
+                                        <button type="button" onClick={() => insertTemplate('workout')} className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded flex items-center gap-1 transition">
+                                            <Calendar size={14} /> Inserir Modelo Semanal
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        className="flex-1 w-full border border-slate-300 rounded-xl p-4 text-base focus:ring-2 focus:ring-primary outline-none font-mono resize-none shadow-sm"
+                                        placeholder="Ex: Segunda: Peito..."
+                                        value={formData.workout}
+                                        onChange={e => setFormData({ ...formData, workout: e.target.value })}
+                                        autoFocus
+                                    ></textarea>
+                                </div>
+                            )}
+
+                            {activeTab === 'diet' && (
+                                <div className="h-full flex flex-col">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm text-slate-500">Descreva o plano alimentar.</span>
+                                        <button type="button" onClick={() => insertTemplate('diet')} className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1 rounded flex items-center gap-1 transition">
+                                            <Calendar size={14} /> Inserir Modelo Semanal
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        className="flex-1 w-full border border-slate-300 rounded-xl p-4 text-base focus:ring-2 focus:ring-primary outline-none font-mono resize-none shadow-sm"
+                                        placeholder="Ex: Café da Manhã: ..."
+                                        value={formData.diet}
+                                        onChange={e => setFormData({ ...formData, diet: e.target.value })}
+                                        autoFocus
+                                    ></textarea>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
