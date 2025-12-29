@@ -23,7 +23,16 @@ export const PaymentPage = () => {
         // Fetch current tenant plan info
         api.get('/me')
             .then(res => {
-                if (res.data.saas_plan) setPlan(res.data.saas_plan);
+                if (res.data.saas_plan) {
+                    setPlan(res.data.saas_plan);
+                } else {
+                    // Alert user they need a plan and redirect
+                    alert("Por favor, escolha um plano para ativar sua conta.");
+                    // Redirect to landing page (or a plans page if exists)
+                    window.location.href = '/';
+                    return;
+                }
+
                 if (res.data.payment_status === 'ACTIVE') navigate('/dashboard');
             })
             .catch(err => {
