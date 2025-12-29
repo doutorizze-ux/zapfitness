@@ -17,7 +17,11 @@ const io = new Server(server, {
     }
 });
 
-app.use(cors());
+app.use(cors({
+    origin: '*', // Allow any frontend domain
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 
 const JWT_SECRET = 'zapfitness_secret_key_123';
