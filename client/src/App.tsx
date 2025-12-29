@@ -10,7 +10,7 @@ import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 
 import api from './api';
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+const PrivateRoute = ({ children, requirePayment = true }: { children: React.ReactNode, requirePayment?: boolean }) => {
   const { user, loading: authLoading } = useAuth();
   const [isPaid, setIsPaid] = React.useState<boolean | null>(null);
   const [checking, setChecking] = React.useState(false);
@@ -20,19 +20,10 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
       setChecking(true);
       api.get('/me')
         .then(res => {
-          const { payment_status, payment_method } = res.data;
-          // Allow if ACTIVE, or if PENDING but Credit Card (optimistic - can change policy later)
-          // Actually, for consistency with User request "so libera... ao fazer pagamento", let's be strict for PIX.
-          // But if Plan is Free/Trial (not implemented yet), we might need logic. Assuming all paid plans now.
-
+          const { payment_status } = res.data;
+          // Allow if ACTIVE
           if (payment_status === 'ACTIVE') {
             setIsPaid(true);
-          } else if (payment_status === 'PENDING' && payment_method === 'CREDIT_CARD') {
-            // Allow optimistic access for CC processing if needed, OR block. 
-            // Let's block to be safe and ensure they see if it failed.
-            // Actually Asaas returns failures quickly. PENDING usually means waiting approval or webhook.
-            // Let's redirect to payment so they can see the "Pending" status or "Success" message there.
-            setIsPaid(false);
           } else {
             setIsPaid(false);
           }
@@ -46,9 +37,8 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) return <Navigate to="/login" />;
 
-  // If we checked and they are not paid, redirect to payment
-  // Explicitly check for isPaid === false to avoid redirecting during initial null state
-  if (isPaid === false) return <Navigate to="/payment" />;
+  // If we checked and they are not paid, AND this route requires payment, redirect to payment
+  if (requirePayment && isPaid === false) return <Navigate to="/payment" />;
 
   return <>{children}</>;
 };
@@ -62,7 +52,7 @@ function App() {
           <Route path="/login" element={<Login />} />
 
           <Route path="/register" element={<Login initialMode="register" />} />
-          <Route path="/payment" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
+          <Route path="/payment" element={<PrivateRoute requirePayment={false}><PaymentPage /></PrivateRoute>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
           <Route path="/dashboard/*" element={
