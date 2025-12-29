@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { prisma } from './db.js';
 import { initWhatsApp, getSession } from './whatsappManager.js';
-import { createCustomer, createSubscription, getSubscription } from './services/asaas.js';
+import { createCustomer, createSubscription, getSubscription, getSubscriptionPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import bcrypt from 'bcryptjs';
@@ -530,16 +530,24 @@ app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
             data: {
                 subscription_id: subscription.id,
                 payment_method: billingType,
-                payment_status: 'PENDING' // Will change via webhook or polling
+                payment_status: 'PENDING'
             }
         });
 
-        // Get first payment ID to get Pix Code if needed
-        // Subscription response usually has currentCycle or we search payments
-        // For simplicity, we return subscription and frontend polls status
-        // If Pix, we might need to fetch the charge to get QR Code
+        let pixData = null;
+        if (billingType === 'PIX') {
+            try {
+                // Fetch the generated payment for this subscription
+                const payment = await getSubscriptionPayment(subscription.id);
+                if (payment) {
+                    pixData = await getPixQrCode(payment.id);
+                }
+            } catch (pixErr) {
+                console.error("Error fetching PIX code:", pixErr);
+            }
+        }
 
-        res.json({ subscription });
+        res.json({ subscription, pix: pixData });
 
     } catch (e: any) {
         console.error(e);

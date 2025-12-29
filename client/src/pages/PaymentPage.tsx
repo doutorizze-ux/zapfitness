@@ -71,7 +71,8 @@ export const PaymentPage = () => {
             }
 
             const res = await api.post('/saas/subscribe', payload);
-            setSubscription(res.data.subscription);
+            // Merge response subscription and pix data
+            setSubscription({ ...res.data.subscription, pix: res.data.pix });
 
             if (billingType === 'PIX') {
                 // If Pix, we would need to fetch the QR Code. 
@@ -95,16 +96,42 @@ export const PaymentPage = () => {
         <br /><span className="text-sm font-normal text-slate-400 ml-2">(Se demorar, verifique o console F12)</span>
     </div>;
 
-    if (subscription && billingType === 'PIX') {
+    if (plan && subscription && billingType === 'PIX') {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
                 <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
                     <CheckCircle className="mx-auto text-green-500 mb-4" size={48} />
                     <h2 className="text-2xl font-bold mb-2">Assinatura Criada!</h2>
-                    <p className="text-slate-600 mb-6">Sua fatura Pix foi enviada para o email cadastrado.</p>
-                    <button onClick={() => navigate('/dashboard')} className="bg-primary text-white px-6 py-2 rounded-lg font-bold">
-                        Foi para o Dashboard
+
+                    {subscription.pix?.encodedImage ? (
+                        <div className="my-6">
+                            <p className="text-slate-600 mb-2 font-medium">Escaneie o QR Code abaixo:</p>
+                            <img src={`data:image/jpeg;base64,${subscription.pix.encodedImage}`} alt="Pix QR Code" className="mx-auto w-48 h-48 border rounded-lg" />
+
+                            <div className="mt-4">
+                                <p className="text-xs text-slate-500 mb-1">Ou copie e cole o código:</p>
+                                <div className="bg-slate-100 p-2 rounded text-xs break-all text-slate-700 select-all cursor-pointer" onClick={() => {
+                                    navigator.clipboard.writeText(subscription.pix.payload);
+                                    alert('Código copiado!');
+                                }}>
+                                    {subscription.pix.payload}
+                                </div>
+                                <button onClick={() => {
+                                    navigator.clipboard.writeText(subscription.pix.payload);
+                                    alert('Código copiado!');
+                                }} className="text-primary text-sm font-bold mt-2 hover:underline">
+                                    Copiar Código
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-slate-600 mb-6">Sua fatura Pix foi enviada para o email cadastrado. Verifique sua caixa de entrada.</p>
+                    )}
+
+                    <button onClick={() => navigate('/dashboard')} className="bg-primary text-white px-6 py-2 rounded-lg font-bold w-full">
+                        Já paguei, ir para Dashboard
                     </button>
+                    <p className="text-xs text-slate-400 mt-4">A liberação pode levar alguns segundos após o pagamento.</p>
                 </div>
             </div>
         );

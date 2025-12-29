@@ -99,6 +99,21 @@ export const getSubscription = async (id: string) => {
     return response.data;
 };
 
+export const getSubscriptionPayment = async (subscriptionId: string) => {
+    // Get the first PENDING payment for this subscription
+    const response = await api.get('/payments', {
+        params: {
+            subscription: subscriptionId,
+            status: 'PENDING',
+            limit: 1
+        }
+    });
+    if (response.data.data && response.data.data.length > 0) {
+        return response.data.data[0];
+    }
+    return null;
+};
+
 export const getPixQrCode = async (paymentId: string) => {
     const response = await api.get(`/payments/${paymentId}/pixQrCode`);
     return response.data;
