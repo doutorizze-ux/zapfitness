@@ -88,7 +88,10 @@ export const PaymentPage = () => {
         }
     };
 
-    if (!plan) return <div className="min-h-screen flex items-center justify-center">Carregando plano...</div>;
+    if (!plan) return <div className="min-h-screen flex items-center justify-center font-bold text-lg text-slate-600">
+        Carregando dados do plano (v2)...
+        <br /><span className="text-sm font-normal text-slate-400 ml-2">(Se demorar, verifique o console F12)</span>
+    </div>;
 
     if (subscription && billingType === 'PIX') {
         return (
