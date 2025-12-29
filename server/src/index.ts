@@ -99,23 +99,31 @@ app.post('/api/register', async (req, res) => {
             }
         }
 
-        const tenant = await prisma.tenant.create({
-            data: {
-                name: gymName,
-                slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
-                saas_plan_id: validPlanId
-            }
-        });
+        if (!gymName || !email || !password) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-        // Create Admin User
-        const admin = await prisma.gymAdmin.create({
-            data: {
-                name: 'Admin',
-                email,
-                password: hashedPassword,
-                // role: 'ADMIN', // Removed as it doesn't exist in schema
-                tenant_id: tenant.id
-            }
+        // Transaction to ensure atomic creation
+        const { tenant, admin } = await prisma.$transaction(async (tx) => {
+            const tenant = await tx.tenant.create({
+                data: {
+                    name: gymName,
+                    slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
+                    saas_plan_id: validPlanId
+                }
+            });
+
+            // Create Admin User
+            const admin = await tx.gymAdmin.create({
+                data: {
+                    name: 'Admin',
+                    email,
+                    password: hashedPassword,
+                    tenant_id: tenant.id
+                }
+            });
+
+            return { tenant, admin };
         });
 
         const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '7d' });
