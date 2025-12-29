@@ -17,7 +17,10 @@ export const LandingPage = () => {
         window.addEventListener('scroll', handleScroll);
 
         const fetchPlans = async () => {
-            const apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
+            let apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
+            if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
+            if (!apiUrl.endsWith('/api')) apiUrl += '/api';
+
             const url = `${apiUrl}/saas/plans`;
             setDebugUrl(url);
 
