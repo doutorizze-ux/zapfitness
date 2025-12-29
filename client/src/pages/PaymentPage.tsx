@@ -12,6 +12,7 @@ export const PaymentPage = () => {
 
     // Form States
     const [cpfCnpj, setCpfCnpj] = useState('');
+    const [phone, setPhone] = useState('');
     const [cardName, setCardName] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [expiry, setExpiry] = useState('');
@@ -53,7 +54,8 @@ export const PaymentPage = () => {
         try {
             const payload: any = {
                 billingType,
-                cpfCnpj: cpfCnpj.replace(/\D/g, '')
+                cpfCnpj: cpfCnpj.replace(/\D/g, ''),
+                phone: phone.replace(/\D/g, '')
             };
 
             if (billingType === 'CREDIT_CARD') {
@@ -159,6 +161,11 @@ export const PaymentPage = () => {
                         <div>
                             <label className="block text-sm font-medium text-slate-700">CPF/CNPJ do Titular</label>
                             <input required value={cpfCnpj} onChange={e => setCpfCnpj(e.target.value)} type="text" placeholder="000.000.000-00" className="mt-1 block w-full border border-gray-300 rounded p-3" />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700">Telefone / WhatsApp</label>
+                            <input required value={phone} onChange={e => setPhone(e.target.value)} type="tel" placeholder="(11) 99999-9999" className="mt-1 block w-full border border-gray-300 rounded p-3" />
                         </div>
 
                         {billingType === 'CREDIT_CARD' && (

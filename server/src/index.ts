@@ -486,7 +486,7 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
 
 
 app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
-    const { creditCard, cpfCnpj, billingType } = req.body;
+    const { creditCard, cpfCnpj, billingType, phone } = req.body;
     const tenantId = req.user.tenant_id;
 
     try {
@@ -502,8 +502,18 @@ app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
         const admin = tenant.admins[0]; // Assume first admin is owner
         let customerId = tenant.asaas_customer_id;
 
+        // Update owner phone if provided
+        if (phone) {
+            await prisma.tenant.update({
+                where: { id: tenantId },
+                data: { owner_phone: phone }
+            });
+        }
+
+        const phoneToUse = phone || tenant.owner_phone || '00000000000';
+
         if (!customerId) {
-            const customer = await createCustomer(admin.name, cpfCnpj, admin.email, '00000000000'); // Phone should be in admin/tenant
+            const customer = await createCustomer(admin.name, cpfCnpj, admin.email, phoneToUse);
             customerId = customer.id;
             await prisma.tenant.update({ where: { id: tenantId }, data: { asaas_customer_id: customerId } });
         }
@@ -512,7 +522,7 @@ app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
 
         // Cancel old subscription if exists? For now assume new.
 
-        const subscription = await createSubscription(customerId!, price, creditCard);
+        const subscription = await createSubscription(customerId!, price, creditCard, phoneToUse);
 
         // Update Tenant
         await prisma.tenant.update({

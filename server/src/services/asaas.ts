@@ -24,21 +24,28 @@ export const createCustomer = async (name: string, cpfCnpj: string, email: strin
             return search.data.data[0];
         }
 
-        const response = await api.post('/customers', {
+        const payload: any = {
             name,
             cpfCnpj,
-            email,
-            phone, // mobilePhone
-            mobilePhone: phone
-        });
+            email
+        };
+
+        if (phone && phone.length === 11) {
+            payload.mobilePhone = phone;
+        } else {
+            payload.phone = phone;
+        }
+
+        const response = await api.post('/customers', payload);
         return response.data;
     } catch (error: any) {
-        console.error('Asaas Create Customer Error:', error.response?.data);
-        throw new Error('Erro ao criar cliente no Asaas');
+        console.error('Asaas Create Customer Error Payload:', { name, cpfCnpj, email, phone });
+        console.error('Asaas Create Customer Error Response:', error.response?.data);
+        throw new Error('Erro ao criar cliente no Asaas: ' + JSON.stringify(error.response?.data?.errors || error.message));
     }
 };
 
-export const createSubscription = async (customerId: string, value: number, creditCard?: any) => {
+export const createSubscription = async (customerId: string, value: number, creditCard?: any, phoneVal?: string) => {
     try {
         const payload: any = {
             customer: customerId,
@@ -59,11 +66,11 @@ export const createSubscription = async (customerId: string, value: number, cred
             };
             payload.creditCardHolderInfo = {
                 name: creditCard.holderName,
-                email: 'email@example.com', // Should pass real email
+                email: 'email@example.com', // Should pass real email too if possible, but maybe minimal change first
                 cpfCnpj: creditCard.cpfCnpj,
                 postalCode: '00000000',
                 addressNumber: '0',
-                phone: '00000000000'
+                phone: phoneVal || '00000000000'
             };
         }
 
