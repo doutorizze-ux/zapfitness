@@ -15,38 +15,41 @@ const server = http.createServer(app);
 // Trust proxy for production environments (helpful for Coolify/Nginx)
 app.set('trust proxy', 1);
 
+// Robust CORS configuration - PLACE AS EARLY AS POSSIBLE
 const allowedOrigins = ['https://zapp.fitness', 'http://localhost:5173', 'http://localhost:3000'];
-
-const io = new Server(server, {
-    cors: {
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error('Not allowed by CORS'));
-            }
-        },
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
 
 app.use(cors({
     origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl) or in allowedOrigins
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.warn(`CORS blocked for origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    credentials: true
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
+
 app.use(express.json());
+
+// Initialize Socket.io with same CORS
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['polling', 'websocket']
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
 
 
 const JWT_SECRET = 'zapfitness_secret_key_123';
