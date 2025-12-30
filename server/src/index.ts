@@ -11,19 +11,43 @@ import jwt from 'jsonwebtoken';
 
 const app = express();
 const server = http.createServer(app);
+
+// Trust proxy for production environments (helpful for Coolify/Nginx)
+app.set('trust proxy', 1);
+
+const allowedOrigins = ['https://zapp.fitness', 'http://localhost:5173', 'http://localhost:3000'];
+
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all origins for simplicity in this setup since client is on different domain (local vs prod)
-        methods: ["GET", "POST"]
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
 app.use(cors({
-    origin: '*', // Allow any frontend domain
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
 }));
 app.use(express.json());
+
+// Health check endpoint
+app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
 
 const JWT_SECRET = 'zapfitness_secret_key_123';
 
@@ -718,10 +742,16 @@ app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
 
 import { initScheduler } from './scheduler.js';
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 server.listen(port, async () => {
-    await seedSaasOwner();
-    // await seedSaasPlans(); // Desabilitado para não recriar planos apagados manualmente
-    initScheduler();
-    console.log(`Server running on http://localhost:${port}`);
+    try {
+        console.log('Starting server initialization...');
+        await seedSaasOwner();
+        // await seedSaasPlans();
+        initScheduler();
+        console.log(`Server running on port ${port}`);
+    } catch (error) {
+        console.error('FAILED TO STARTUP SERVER:', error);
+    }
 });
+
