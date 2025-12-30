@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  zapfitness:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - zapfitness_data:/app/server/database.sqlite
+    environment:
+      - DATABASE_URL=file:/app/server/database.sqlite
+      - PORT=3000
+      - ASAAS_ENV=sandbox
+      - JWT_SECRET=zapfitness_secret_key_123
+
+volumes:
+  zapfitness_data:
