@@ -785,7 +785,8 @@ const port = process.env.PORT || 3000;
 server.listen(Number(port), '0.0.0.0', async () => {
     try {
         console.log(`>>> Server trying to start on port ${port} and address 0.0.0.0`);
-        console.log(`>>> DATABASE_URL source: ${process.env.DATABASE_URL ? 'Loaded from Environment' : 'NOT FOUND'}`);
+        console.log(`>>> WORKDIR: ${process.cwd()}`);
+        console.log(`>>> DATABASE_URL: ${process.env.DATABASE_URL}`);
 
         // Check DB connection
         await prisma.$connect();
