@@ -12,6 +12,12 @@ import jwt from 'jsonwebtoken';
 const app = express();
 const server = http.createServer(app);
 
+// Request Logger Middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    next();
+});
+
 // Trust proxy for production environments (helpful for Coolify/Nginx)
 app.set('trust proxy', 1);
 
@@ -21,21 +27,22 @@ const allowedOrigins = ['https://zapp.fitness', 'http://localhost:5173', 'http:/
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps or curl) or in allowedOrigins
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || origin.includes('zapp.fitness')) {
             callback(null, true);
         } else {
             console.warn(`CORS blocked for origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+            callback(null, true); // Temporarily allow all to debug 502/CORS
         }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
+
 
 // Initialize Socket.io with same CORS
 const io = new Server(server, {
@@ -746,15 +753,23 @@ app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
 import { initScheduler } from './scheduler.js';
 
 const port = process.env.PORT || 3000;
-server.listen(port, async () => {
+// Explicitly listen on 0.0.0.0 for external access (Coolify proxy)
+server.listen(Number(port), '0.0.0.0', async () => {
     try {
-        console.log('Starting server initialization...');
+        console.log(`>>> Server trying to start on port ${port} and address 0.0.0.0`);
+
+        // Check DB connection
+        await prisma.$connect();
+        console.log('>>> Database connected successfully');
+
         await seedSaasOwner();
-        // await seedSaasPlans();
         initScheduler();
-        console.log(`Server running on port ${port}`);
+
+        console.log(`>>> Server is fully ready and listening!`);
     } catch (error) {
-        console.error('FAILED TO STARTUP SERVER:', error);
+        console.error('!!! FAILED TO STARTUP SERVER:', error);
+        // Don't kill the process, let it try to recover or stay alive for logs
     }
 });
+
 
