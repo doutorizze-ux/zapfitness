@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import cors from 'cors';
+// import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
 import { initWhatsApp, getSession } from './whatsappManager.js';
 import { createCustomer, createSubscription, getSubscription, getSubscriptionPayment, getPixQrCode } from './services/asaas.js';
@@ -9,30 +9,55 @@ import http from 'http';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
+// --- PREVENTION FOR CRASHES ---
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('!!! Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('!!! Uncaught Exception thrown:', err);
+});
+
+
 const app = express();
 const server = http.createServer(app);
 
-// --- 1. CONFIGURAÇÕES BASE (DNS/PROXY) ---
-app.set('trust proxy', true); // Confia plenamente no proxy do Coolify
+// --- 0. HEALTH CHECK (BEFORE EVERYTHING) ---
+app.get('/health', (req, res) => res.status(200).send('OK'));
+app.get('/api/health', (req, res) => res.status(200).send('OK'));
 
-// --- 2. LOGGER DE REQUISIÇÕES (PARA DEBUG NO COOLIFY) ---
+// --- 1. CONFIGURAÇÕES BASE (DNS/PROXY) ---
+app.set('trust proxy', true);
+
+// --- 2. MANUAL CORS (ABSOLUTE CONTROL) ---
 app.use((req, res, next) => {
-    console.log(`[REQ] ${new Date().toISOString()} | ${req.method} ${req.url} | Origin: ${req.headers.origin || 'no-origin'}`);
+    const origin = req.headers.origin;
+    // Permitir qualquer origem que contenha zapp.fitness ou localhost
+    if (origin && (origin.includes('zapp.fitness') || origin.includes('localhost'))) {
+        res.header('Access-Control-Allow-Origin', origin);
+    } else {
+        res.header('Access-Control-Allow-Origin', '*');
+    }
+
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
     next();
 });
 
-// --- 3. CORS (EXTREMAMENTE PERMISSIVO PARA DEBUG) ---
-app.use(cors({
-    origin: (origin, callback) => callback(null, true), // Permite qualquer origem temporariamente para matar o erro de CORS
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true,
-    optionsSuccessStatus: 204
-}));
+// --- 3. LOGGER DE REQUISIÇÕES ---
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'zapfitness_secret_key_123';
+
 
 // --- 4. MIDDLEWARES DE AUTENTICAÇÃO (DEFINIDOS ANTES DO USO) ---
 const authMiddleware = async (req: any, res: any, next: any) => {
