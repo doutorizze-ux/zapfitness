@@ -12,55 +12,29 @@ import jwt from 'jsonwebtoken';
 const app = express();
 const server = http.createServer(app);
 
-// Request Logger Middleware
+// --- 1. CONFIGURAÇÕES BASE (DNS/PROXY) ---
+app.set('trust proxy', true); // Confia plenamente no proxy do Coolify
+
+// --- 2. LOGGER DE REQUISIÇÕES (PARA DEBUG NO COOLIFY) ---
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    console.log(`[REQ] ${new Date().toISOString()} | ${req.method} ${req.url} | Origin: ${req.headers.origin || 'no-origin'}`);
     next();
 });
 
-// Trust proxy for production environments (helpful for Coolify/Nginx)
-app.set('trust proxy', 1);
-
-// Robust CORS configuration - PLACE AS EARLY AS POSSIBLE
-const allowedOrigins = ['https://zapp.fitness', 'http://localhost:5173', 'http://localhost:3000'];
-
+// --- 3. CORS (EXTREMAMENTE PERMISSIVO PARA DEBUG) ---
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl) or in allowedOrigins
-        if (!origin || allowedOrigins.includes(origin) || origin.includes('zapp.fitness')) {
-            callback(null, true);
-        } else {
-            console.warn(`CORS blocked for origin: ${origin}`);
-            callback(null, true); // Temporarily allow all to debug 502/CORS
-        }
-    },
+    origin: (origin, callback) => callback(null, true), // Permite qualquer origem temporariamente para matar o erro de CORS
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
-    preflightContinue: false,
     optionsSuccessStatus: 204
 }));
 
 app.use(express.json());
 
+const JWT_SECRET = process.env.JWT_SECRET || 'zapfitness_secret_key_123';
 
-// Initialize Socket.io with same CORS
-const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST"],
-        credentials: true
-    },
-    transports: ['polling', 'websocket']
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
-
-
-
-const JWT_SECRET = 'zapfitness_secret_key_123';
-
+// --- 4. MIDDLEWARES DE AUTENTICAÇÃO (DEFINIDOS ANTES DO USO) ---
 const authMiddleware = async (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -70,9 +44,42 @@ const authMiddleware = async (req: any, res: any, next: any) => {
         req.user = decoded;
         next();
     } catch (e) {
+        console.error('[Auth] Token inválido:', e);
         res.status(401).json({ error: 'Invalid token' });
     }
 };
+
+const saasAuthMiddleware = async (req: any, res: any, next: any) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    try {
+        const decoded: any = jwt.verify(token, JWT_SECRET);
+        if (decoded.role !== 'SAAS_OWNER') {
+            console.warn('[Auth] Acesso negado: não é SAAS_OWNER');
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        req.user = decoded;
+        next();
+    } catch (e) {
+        console.error('[Auth] Erro no saasAuthMiddleware:', e);
+        res.status(401).json({ error: 'Invalid token' });
+    }
+};
+
+// --- 5. SOCKET.IO ---
+const io = new Server(server, {
+    cors: {
+        origin: (origin: any, callback: any) => callback(null, true),
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['polling', 'websocket'],
+    allowEIO3: true
+});
+
+// Health check
+app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'Backend is alive' }));
+
 
 // Seed initial SaaS plans if none exist
 const seedSaasPlans = async () => {
@@ -416,18 +423,7 @@ io.on('connection', (socket: any) => {
     });
 });
 
-const saasAuthMiddleware = async (req: any, res: any, next: any) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
-    try {
-        const decoded: any = jwt.verify(token, JWT_SECRET);
-        if (decoded.role !== 'SAAS_OWNER') return res.status(403).json({ error: 'Forbidden' });
-        req.user = decoded;
-        next();
-    } catch (e) {
-        res.status(401).json({ error: 'Invalid token' });
-    }
-};
+// Removido (movido para o topo)
 
 const seedSaasOwner = async () => {
     const email = 'admin@zapfitness.com';
@@ -573,18 +569,23 @@ app.get('/api/saas/plans', async (req, res) => {
 app.post('/api/saas/plans', saasAuthMiddleware, async (req, res) => {
     const { name, price, max_members, description } = req.body;
     try {
+        if (!name || isNaN(parseFloat(price)) || isNaN(parseInt(max_members))) {
+            return res.status(400).json({ error: 'Nome, preço e limite de membros são obrigatórios e devem ser válidos.' });
+        }
+
         const plan = await prisma.saasPlan.create({
             data: {
                 name,
                 price: parseFloat(price),
                 max_members: parseInt(max_members),
-                description,
-                features: JSON.stringify(['Suporte WhatsApp', 'Check-in QR Code']) // Default features for now
+                description: description || '',
+                features: JSON.stringify(['Suporte WhatsApp', 'Check-in QR Code'])
             }
         });
         res.json(plan);
-    } catch (e) {
-        res.status(400).json({ error: 'Erro ao criar plano' });
+    } catch (e: any) {
+        console.error('[Plano] Erro ao criar:', e);
+        res.status(400).json({ error: 'Erro ao criar plano: ' + e.message });
     }
 });
 
