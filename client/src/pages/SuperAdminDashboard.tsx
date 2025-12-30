@@ -16,9 +16,15 @@ export const SuperAdminDashboard = () => {
     const [showTenantModal, setShowTenantModal] = useState(false);
 
     const fetchData = () => {
-        api.get('/saas/dashboard').then(res => setStats(res.data)).catch(console.error);
-        api.get('/saas/tenants').then(res => setTenants(res.data)).catch(console.error);
-        api.get('/saas/plans').then(res => setPlans(res.data)).catch(console.error);
+        api.get('/saas/dashboard').then(res => setStats(res.data)).catch(err => {
+            if (err.response?.status === 403) navigate('/admin/login');
+        });
+        api.get('/saas/tenants').then(res => setTenants(res.data)).catch(err => {
+            if (err.response?.status === 403) navigate('/admin/login');
+        });
+        api.get('/saas/plans').then(res => setPlans(res.data)).catch(err => {
+            if (err.response?.status === 403) navigate('/admin/login');
+        });
     };
 
     const handleCreatePlan = async (e: React.FormEvent) => {
@@ -47,6 +53,12 @@ export const SuperAdminDashboard = () => {
     };
 
     useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        const user = storedUser ? JSON.parse(storedUser) : {};
+        if (user.role !== 'SAAS_OWNER') {
+            navigate('/admin/login');
+            return;
+        }
         fetchData();
     }, []);
 

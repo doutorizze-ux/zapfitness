@@ -80,7 +80,7 @@ const saasAuthMiddleware = async (req: any, res: any, next: any) => {
     try {
         const decoded: any = jwt.verify(token, JWT_SECRET);
         if (decoded.role !== 'SAAS_OWNER') {
-            console.warn('[Auth] Acesso negado: não é SAAS_OWNER');
+            console.warn(`[Auth] Acesso negado: role=${decoded.role}, email=${decoded.email || 'N/A'}. Não é SAAS_OWNER`);
             return res.status(403).json({ error: 'Forbidden' });
         }
         req.user = decoded;
@@ -209,7 +209,7 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: admin.id, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, admin, tenant_id: admin.tenant_id });
 });
 
@@ -468,7 +468,7 @@ app.post('/api/saas/login', async (req, res) => {
     if (!admin || !await bcrypt.compare(password, admin.password)) {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const token = jwt.sign({ id: admin.id, role: 'SAAS_OWNER' }, JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: admin.id, email: admin.email, role: 'SAAS_OWNER' }, JWT_SECRET, { expiresIn: '1d' });
     res.json({ token, admin });
 });
 
