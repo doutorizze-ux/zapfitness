@@ -28,9 +28,10 @@ export const SuperAdminDashboard = () => {
             setShowPlanModal(false);
             setNewPlan({ name: '', price: '', max_members: '', description: '' });
             fetchData();
-        } catch (e) {
-            console.error(e);
-            alert('Erro ao criar plano');
+        } catch (e: any) {
+            console.error('Erro detalhado:', e.response?.data || e.message);
+            const errorMsg = e.response?.data?.error || 'Erro ao criar plano';
+            alert(errorMsg);
         }
     };
 
