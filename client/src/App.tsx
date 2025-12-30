@@ -20,9 +20,9 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
       setChecking(true);
       api.get('/me')
         .then(res => {
-          const { payment_status } = res.data;
-          // Allow if ACTIVE
-          if (payment_status === 'ACTIVE') {
+          const { payment_status, is_free } = res.data;
+          // Allow if ACTIVE or is_free
+          if (payment_status === 'ACTIVE' || is_free) {
             setIsPaid(true);
           } else {
             setIsPaid(false);

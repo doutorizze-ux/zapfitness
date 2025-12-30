@@ -68,7 +68,12 @@ export const SuperAdminDashboard = () => {
 
     // New Actions
     const handleEditTenant = (tenant: any) => {
-        setEditingTenant({ id: tenant.id, name: tenant.name, owner_phone: tenant.owner_phone || '' });
+        setEditingTenant({
+            id: tenant.id,
+            name: tenant.name,
+            owner_phone: tenant.owner_phone || '',
+            is_free: tenant.is_free || false
+        });
         setShowTenantModal(true);
     };
 
@@ -180,6 +185,11 @@ export const SuperAdminDashboard = () => {
                                                 <p className="text-xs text-slate-600 font-medium">{tenant.admins?.[0]?.email}</p>
                                                 <p className="text-xs text-slate-500">{tenant.slug}</p>
                                                 <p className="text-xs text-slate-400">{tenant.owner_phone}</p>
+                                                {tenant.is_free && (
+                                                    <span className="inline-block mt-1 bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                                                        CONTA GRÁTIS
+                                                    </span>
+                                                )}
                                                 <span className={`text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
                                                     Warning: WA {tenant.whatsapp_status}
                                                 </span>
@@ -262,6 +272,18 @@ export const SuperAdminDashboard = () => {
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
                                         <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    </div>
+                                    <div className="flex items-center gap-2 py-2">
+                                        <input
+                                            type="checkbox"
+                                            id="is_free"
+                                            checked={editingTenant?.is_free}
+                                            onChange={e => setEditingTenant({ ...editingTenant, is_free: e.target.checked })}
+                                            className="w-4 h-4 text-primary rounded"
+                                        />
+                                        <label htmlFor="is_free" className="text-sm font-bold text-slate-700 cursor-pointer">
+                                            Liberar Conta Grátis (Trial/Teste)
+                                        </label>
                                     </div>
                                     <div className="flex justify-end gap-2 mt-6">
                                         <button type="button" onClick={() => setShowTenantModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>

@@ -316,7 +316,9 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
         include: { saas_plan: true, _count: { select: { members: true } } }
     });
 
-    if (tenant?.saas_plan) {
+    if (tenant?.is_free) {
+        // No limit for free/trial accounts manually released by admin
+    } else if (tenant?.saas_plan) {
         if (tenant._count.members >= tenant.saas_plan.max_members) {
             return res.status(403).json({ error: 'Limite de membros excedido. Faça upgrade do seu plano.' });
         }
@@ -516,10 +518,10 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
 // Update Tenant
 app.put('/api/saas/tenants/:id', saasAuthMiddleware, async (req: any, res) => {
     try {
-        const { name, owner_phone } = req.body;
+        const { name, owner_phone, is_free } = req.body;
         const updated = await prisma.tenant.update({
             where: { id: req.params.id },
-            data: { name, owner_phone }
+            data: { name, owner_phone, is_free }
         });
         res.json(updated);
     } catch (e: any) {

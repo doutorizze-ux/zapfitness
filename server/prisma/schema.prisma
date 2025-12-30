@@ -39,6 +39,7 @@ model Tenant {
   subscription_cycle String? // MONTHLY, YEARLY
   payment_method    String? // CREDIT_CARD, PIX
   payment_status    String  @default("PENDING") // PENDING, ACTIVE, OVERDUE
+  is_free           Boolean @default(false)
 
   notificationSettings NotificationSettings?
   paymentHistory    PaymentHistory[]

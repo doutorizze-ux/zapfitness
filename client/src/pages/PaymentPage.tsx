@@ -34,7 +34,7 @@ export const PaymentPage = () => {
                     return;
                 }
 
-                if (res.data.payment_status === 'ACTIVE') navigate('/dashboard');
+                if (res.data.payment_status === 'ACTIVE' || res.data.is_free) navigate('/dashboard');
             })
             .catch(err => {
                 console.error("PaymentPage Error:", err);
