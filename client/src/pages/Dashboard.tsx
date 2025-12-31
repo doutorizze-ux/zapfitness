@@ -212,7 +212,7 @@ const Welcome = () => {
                         <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl group-hover:scale-110 transition-transform"><Activity size={24} /></div>
                         <span className="text-[10px] font-black text-slate-400">{stats?._count?.members || 0}/{stats?.saas_plan?.max_members || 50}</span>
                     </div>
-                    <p className="text-lg font-black text-slate-900 leading-tight">Plano {stats?.saas_plan?.name || 'Iniciante'}</p>
+                    <p className="text-lg font-black text-slate-900 leading-tight">Plano {stats?.saas_plan?.name || 'Nenhum'}</p>
                     <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
                         <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, (stats?._count?.members || 0) / (stats?.saas_plan?.max_members || 50) * 100)}%` }}></div>
                     </div>

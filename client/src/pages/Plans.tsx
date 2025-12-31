@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { Plus, Trash2, Tag, Calendar, BadgeDollarSign, XCircle } from 'lucide-react';
-import clsx from 'clsx';
 
 export const Plans = () => {
     const [plans, setPlans] = useState<any[]>([]);

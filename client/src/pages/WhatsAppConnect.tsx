@@ -4,7 +4,6 @@ import io from 'socket.io-client';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { Zap, ShieldCheck, HelpCircle, Smartphone, LogOut, CheckCircle2 } from 'lucide-react';
-import clsx from 'clsx';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 

@@ -1,16 +1,15 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Zap, Shield, Smartphone, ArrowRight, Instagram, MessageSquare, Target, UserCheck, Star } from 'lucide-react';
+import { CheckCircle, Zap, Shield, Smartphone, ArrowRight, MessageSquare, Target, UserCheck, Menu, X } from 'lucide-react';
+import clsx from 'clsx';
 
 export const LandingPage = () => {
     const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [plansQuery, setPlansQuery] = useState<any[]>([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
-    const [planError, setPlanError] = useState(false);
-    const [debugError, setDebugError] = useState('');
-    const [debugUrl, setDebugUrl] = useState('');
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -22,7 +21,6 @@ export const LandingPage = () => {
             if (!apiUrl.endsWith('/api')) apiUrl += '/api';
 
             const url = `${apiUrl}/saas/plans`;
-            setDebugUrl(url);
 
             try {
                 const res = await fetch(url);
@@ -31,8 +29,6 @@ export const LandingPage = () => {
                 if (Array.isArray(data)) setPlansQuery(data);
             } catch (err: any) {
                 console.error(err);
-                setPlanError(true);
-                setDebugError(err.message || String(err));
             } finally {
                 setLoadingPlans(false);
             }
@@ -50,137 +46,163 @@ export const LandingPage = () => {
         { icon: <Smartphone className="text-purple-500" />, title: "App do Aluno (Sem App)", desc: "Tudo acontece no chat que eles já usam todo dia. Engajamento máximo." }
     ];
 
+    const navLinks = [
+        { label: 'Funcionalidades', href: '#features' },
+        { label: 'Demonstração', href: '#demo' },
+        { label: 'Planos', href: '#pricing' },
+    ];
+
     return (
-        <div className="font-sans antialiased text-slate-800 bg-white selection:bg-orange-100 selection:text-orange-900">
+        <div className="font-sans antialiased text-slate-800 bg-white selection:bg-orange-100 selection:text-orange-900 overflow-x-hidden">
             {/* Navbar */}
-            <nav className={`fixed w-full z-50 transition-all duration-500 ${scrolled ? 'bg-black/80 backdrop-blur-xl py-3 border-b border-white/10' : 'bg-transparent py-6'}`}>
-                <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center border border-white/10 shadow-lg shadow-orange-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+            <nav className={clsx(
+                "fixed w-full z-50 transition-all duration-500 px-6",
+                scrolled || mobileMenuOpen ? 'bg-black/90 backdrop-blur-xl py-4 border-b border-white/10' : 'bg-transparent py-8'
+            )}>
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <div className="flex items-center gap-2 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center border border-white/10 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-all duration-300">
                             <Zap className="text-white fill-white" size={20} />
                         </div>
-                        <span className="text-2xl font-black tracking-tight text-white">
-                            Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">Fitness</span>
+                        <span className="text-xl md:text-2xl font-black tracking-tight text-white">
+                            Zapp<span className="text-orange-500">Fitness</span>
                         </span>
                     </div>
-                    <div className="hidden md:flex gap-8 text-sm font-semibold text-slate-300">
-                        <a href="#features" className="hover:text-white transition-colors relative group py-2">
-                            Funcionalidades
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-                        </a>
-                        <a href="#demo" className="hover:text-white transition-colors relative group py-2">
-                            Demonstração
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-                        </a>
-                        <a href="#pricing" className="hover:text-white transition-colors relative group py-2">
-                            Planos
-                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-                        </a>
+
+                    {/* Desktop Menu */}
+                    <div className="hidden md:flex gap-8 text-sm font-bold text-slate-300">
+                        {navLinks.map(link => (
+                            <a key={link.href} href={link.href} className="hover:text-white transition-colors relative group py-2">
+                                {link.label}
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
+                            </a>
+                        ))}
                     </div>
-                    <div className="flex gap-4 items-center">
-                        <button onClick={() => navigate('/login')} className="text-white hover:text-orange-400 transition-colors font-semibold hidden sm:block">Entrar</button>
-                        <button onClick={() => navigate('/register')} className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 transform hover:-translate-y-1 active:scale-95">
-                            Começar Agora
+
+                    <div className="flex gap-4 items-center z-50">
+                        <button onClick={() => navigate('/login')} className="text-white hover:text-orange-400 transition-colors font-bold hidden sm:block">Entrar</button>
+                        <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-5 md:px-8 py-2.5 rounded-full font-black text-sm md:text-base transition-all shadow-lg shadow-orange-500/25 active:scale-95">
+                            Começar
+                        </button>
+                        <button
+                            className="md:hidden text-white p-1"
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        >
+                            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                         </button>
                     </div>
+                </div>
+
+                {/* Mobile Menu Overlay */}
+                <div className={clsx(
+                    "fixed inset-0 bg-black z-40 flex flex-col items-center justify-center gap-8 transition-all duration-500 md:hidden",
+                    mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                )}>
+                    {navLinks.map(link => (
+                        <a
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="text-2xl font-black text-white hover:text-orange-500 transition-colors"
+                        >
+                            {link.label}
+                        </a>
+                    ))}
+                    <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="text-xl font-bold text-slate-400">Entrar no Sistema</button>
                 </div>
             </nav>
 
             {/* Hero Section */}
-            <header className="relative pt-32 pb-20 lg:pt-56 lg:pb-40 overflow-hidden bg-black text-white">
+            <header className="relative pt-40 pb-20 lg:pt-64 lg:pb-48 overflow-hidden bg-black text-white">
                 {/* Visual Background */}
                 <div className="absolute inset-0 z-0">
                     <img
                         src="/landing/gym-interior.png"
                         alt="High-end Gym"
-                        className="w-full h-full object-cover opacity-40 mix-blend-luminosity scale-105 animate-pulse-slow"
-                        style={{ animationDuration: '10s' }}
+                        className="w-full h-full object-cover opacity-50 mix-blend-luminosity scale-110 animate-pulse-slow"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-slate-50"></div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-white"></div>
                 </div>
 
                 <div className="relative max-w-7xl mx-auto px-6 text-center z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-fade-in animate-float">
-                        <span className="flex h-2 w-2 rounded-full bg-orange-500 animate-ping"></span>
-                        <span className="text-xs font-bold text-slate-100 uppercase tracking-widest px-2">Lançamento ZapFitness 2.0</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 animate-float">
+                        <span className="flex h-2 w-2 rounded-full bg-orange-500"></span>
+                        <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest px-2">Gestão 100% via WhatsApp</span>
                     </div>
-                    <h1 className="text-5xl lg:text-8xl font-black tracking-tighter mb-8 leading-[1.1]">
-                        Transforme seu WhatsApp na <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-red-600">Recepção da sua Academia</span>
+                    <h1 className="text-4xl md:text-6xl lg:text-8xl font-black tracking-tighter mb-8 leading-[1.1] animate-fade-in-up">
+                        Sua Academia no <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">Bolso do Aluno</span>
                     </h1>
-                    <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-medium">
-                        Diga adeus à burocracia. Automatize treinos, pagamentos e controle de acesso direto pelo chat. <br className="hidden md:block" />
-                        Mais conveniência para seu aluno, mais lucro para você.
+                    <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-medium px-4">
+                        Automatize treinos, pagamentos e check-ins pelo chat que seus alunos já usam.
+                        Sem aplicativos, sem burocracia, apenas resultados.
                     </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-6">
-                        <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 transform hover:-translate-y-1">
-                            TESTAR GRÁTIS POR 7 DIAS
-                            <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform duration-300" />
+                    <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
+                        <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
+                            QUERO COMEÇAR AGORA
+                            <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
                         </button>
-                        <button onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })} className="px-10 py-5 rounded-full font-bold text-lg border-2 border-white/20 hover:border-white/40 hover:bg-white/5 backdrop-blur-md transition-all text-white flex items-center justify-center gap-2 group">
-                            <MessageSquare className="group-hover:scale-110 transition-transform" />
-                            Ver Demonstração do Bot
+                        <button onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })} className="px-10 py-5 rounded-full font-bold text-lg border-2 border-white/20 hover:bg-white/5 transition-all text-white flex items-center justify-center gap-2 group backdrop-blur-sm">
+                            <MessageSquare size={20} />
+                            Ver Demonstração
                         </button>
                     </div>
 
-                    <div className="mt-20 pt-10 border-t border-white/10 max-w-4xl mx-auto">
-                        <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-                            <span className="text-2xl font-black text-white tracking-widest italic uppercase">IRON-GYM</span>
-                            <span className="text-2xl font-black text-white tracking-tight uppercase">Titan <span className="text-orange-500">Fitness</span></span>
-                            <span className="text-2xl font-black text-white tracking-tighter italic">CROSS-CORE</span>
-                            <span className="text-2xl font-black text-white tracking-[0.2em]">PLATINUM</span>
+                    <div className="mt-20 pt-10 border-t border-white/10 max-w-4xl mx-auto hidden md:block">
+                        <div className="flex flex-wrap justify-center items-center gap-12 grayscale opacity-40">
+                            <span className="text-xl font-black text-white tracking-widest italic uppercase">IRON-GYM</span>
+                            <span className="text-xl font-black text-white tracking-tight uppercase">Titan Fitness</span>
+                            <span className="text-xl font-black text-white tracking-tighter italic">CROSS-CORE</span>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Chatbot Experience Section */}
-            <section id="demo" className="py-24 bg-slate-50 overflow-hidden">
+            <section id="demo" className="py-24 bg-white overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid lg:grid-cols-2 gap-16 items-center">
-                        <div className="relative order-2 lg:order-1">
-                            <div className="absolute -top-10 -left-10 w-64 h-64 bg-orange-200/50 rounded-full blur-3xl -z-10"></div>
-                            <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-red-100/50 rounded-full blur-3xl -z-10"></div>
-
-                            <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group">
+                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-24 items-center text-center lg:text-left">
+                        <div className="relative order-2 lg:order-1 px-4">
+                            <div className="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border-4 md:border-8 border-slate-100 group">
                                 <img
                                     src="/landing/whatsapp-bot.png"
                                     alt="WhatsApp Bot Experience"
                                     className="w-full h-auto transform group-hover:scale-105 transition-transform duration-700"
                                 />
-                                <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Bot Online agora</span>
+                                <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 bg-white/95 backdrop-blur-md p-4 md:p-6 rounded-2xl shadow-xl border border-white/20 text-left">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ZapFitness Aluno</span>
                                     </div>
-                                    <p className="text-slate-800 font-bold italic">"Oi, João! Seu treino de pernas já está pronto. Vamos começar?"</p>
+                                    <p className="text-slate-800 font-bold text-sm md:text-base">"Olha meu treino de hoje!"</p>
+                                    <p className="text-orange-600 font-black text-sm md:text-base mt-1">"Claro, João! Aqui está sua ficha de Peito e Bíceps: [Link]"</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="order-1 lg:order-2">
-                            <h2 className="text-4xl lg:text-5xl font-black text-slate-900 mb-6 leading-tight">
-                                Um "Personal Trainer" <br />
-                                <span className="text-orange-600">Dentros do Bolso</span>
+                        <div className="order-1 lg:order-2 px-4">
+                            <div className="inline-block px-4 py-1 mb-6 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-widest">Inovação</div>
+                            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-8 leading-tight tracking-tighter">
+                                Experiência <br />
+                                <span className="text-orange-600">Sem Apps</span>
                             </h2>
-                            <p className="text-lg text-slate-600 mb-10 leading-relaxed">
-                                Ninguém quer baixar mais um aplicativo que consome memória. Seus alunos já usam o WhatsApp 24 horas por dia.
-                                Nossa tecnologia integra tudo o que uma academia de elite precisa:
+                            <p className="text-base md:text-lg text-slate-500 mb-10 leading-relaxed font-medium">
+                                Seus alunos já estão no WhatsApp o dia todo. Facilite a vida deles com um assistente virtual que faz tudo, desde liberar a catraca até enviar a dieta do dia.
                             </p>
 
-                            <div className="space-y-6">
+                            <div className="space-y-4 md:space-y-6">
                                 {[
-                                    { icon: <Target className="text-orange-500" />, title: "Treinos Dinâmicos", desc: "Envio de fichas de treino personalizadas com vídeos e dicas." },
-                                    { icon: <UserCheck className="text-green-500" />, title: "Check-in via WhatsApp", desc: "O aluno avisa que chegou e recebe o QR Code de acesso na hora." },
-                                    { icon: <MessageSquare className="text-blue-500" />, title: "Alertas de Renovação", desc: "Avisos automáticos de mensalidade com link direto para pagamento Pix." }
+                                    { icon: <Target className="text-orange-500" />, title: "Treinos na Mão", desc: "Acesso imediato às fichas de treino com vídeos explicativos." },
+                                    { icon: <UserCheck className="text-green-500" />, title: "Check-in Rápido", desc: "Basta um 'cheguei' no Whats para liberar o acesso." },
+                                    { icon: <MessageSquare className="text-blue-500" />, title: "Financeiro Automático", desc: "Lembretes de vencimento e pagamentos via Pix integrados." }
                                 ].map((item, i) => (
-                                    <div key={i} className="flex gap-4 p-4 rounded-xl hover:bg-white hover:shadow-md transition-all duration-300 border border-transparent hover:border-slate-100">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                                    <div key={i} className="flex gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-100 items-start text-left">
+                                        <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
                                             {item.icon}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 mb-1">{item.title}</h4>
-                                            <p className="text-sm text-slate-500">{item.desc}</p>
+                                            <h4 className="font-bold text-slate-900 mb-1 leading-none">{item.title}</h4>
+                                            <p className="text-sm text-slate-500 font-medium">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -191,180 +213,132 @@ export const LandingPage = () => {
             </section>
 
             {/* Features Grid */}
-            <section id="features" className="py-24 bg-white relative">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20">
-                        <div className="inline-block px-4 py-1.5 mb-4 rounded-full bg-orange-50 text-orange-600 text-xs font-black uppercase tracking-widest border border-orange-100">
-                            Poderoso & Simples
-                        </div>
-                        <h2 className="text-4xl font-black text-slate-900 mb-4">Tudo sob seu controle</h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto text-lg">Centralize a gestão da sua academia em um único painel intuitivo.</p>
+            <section id="features" className="py-24 bg-slate-50">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <div className="max-w-3xl mx-auto mb-20 px-4">
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">O sistema definitivo para sua gestão</h2>
+                        <p className="text-slate-500 text-lg font-medium">Um painel administrativo robusto no desktop, uma recepção ágil no WhatsApp.</p>
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                         {features.map((f, i) => (
-                            <div key={i} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] -z-10 group-hover:bg-orange-50 transition-colors"></div>
-                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                                    {f.icon}
+                            <div key={i} className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 text-left group">
+                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
+                                    <div className="group-hover:scale-110 transition-transform">
+                                        {f.icon}
+                                    </div>
                                 </div>
-                                <h3 className="text-xl font-black mb-4 text-slate-800">{f.title}</h3>
-                                <p className="text-slate-500 leading-relaxed font-medium">{f.desc}</p>
+                                <h3 className="text-xl font-black mb-4 text-slate-900 leading-tight">{f.title}</h3>
+                                <p className="text-slate-500 leading-relaxed font-medium text-sm md:text-base">{f.desc}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Stats / Social Proof */}
-            <section className="py-20 bg-black text-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid md:grid-cols-3 gap-12 text-center">
-                        <div>
-                            <div className="text-5xl font-black text-orange-500 mb-2">500+</div>
-                            <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Academias Ativas</div>
-                        </div>
-                        <div>
-                            <div className="text-5xl font-black text-orange-500 mb-2">150k+</div>
-                            <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Alunos Gerenciados</div>
-                        </div>
-                        <div>
-                            <div className="text-5xl font-black text-orange-500 mb-2">98%</div>
-                            <div className="text-slate-400 font-bold uppercase tracking-widest text-sm">Aumento no Recadastro</div>
-                        </div>
+            {/* Stats */}
+            <section className="py-20 bg-slate-900 text-white text-center">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-3 gap-12">
+                    <div className="col-span-1">
+                        <div className="text-4xl md:text-6xl font-black text-orange-500 mb-2">500+</div>
+                        <div className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Academias Ativas</div>
+                    </div>
+                    <div className="col-span-1">
+                        <div className="text-4xl md:text-6xl font-black text-orange-500 mb-2">150k+</div>
+                        <div className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Check-ins/mês</div>
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                        <div className="text-4xl md:text-6xl font-black text-orange-500 mb-2">98%</div>
+                        <div className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Taxa de Renovação</div>
                     </div>
                 </div>
             </section>
 
             {/* Pricing */}
-            <section id="pricing" className="py-24 bg-slate-50">
+            <section id="pricing" className="py-24 bg-white">
                 <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20">
-                        <h2 className="text-4xl font-black text-slate-900 mb-4">Escolha o seu nível</h2>
-                        <p className="text-slate-500 text-lg">Preços claros, sem taxas ocultas. Comece pequeno, cresça gigante.</p>
+                    <div className="text-center mb-20 px-4">
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Investimento Inteligente</h2>
+                        <p className="text-slate-500 text-lg font-medium">Planos diretos, sem letras miúdas. Escolha o melhor para o seu tamanho.</p>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
 
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 md:px-0">
                         {loadingPlans ? (
-                            <div className="col-span-3 text-center py-12">
-                                <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                <div className="text-orange-500 font-bold text-xl">Sincronizando planos...</div>
-                            </div>
-                        ) : planError ? (
-                            <div className="col-span-3 text-center py-12">
-                                <div className="text-red-500 font-bold mb-4">Erro ao carregar planos.</div>
-                                <div className="bg-red-50 p-6 rounded-2xl text-left overflow-auto max-w-md mx-auto inline-block border border-red-200 shadow-sm">
-                                    <p className="text-xs text-red-600 font-mono mb-2">Detalhes: {debugError}</p>
-                                    <p className="text-xs text-slate-500 font-mono"><strong>Endpoint:</strong> {debugUrl}</p>
-                                </div>
-                                <p className="text-slate-400 text-sm mt-6">Aguarde alguns instantes ou entre em contato com o suporte.</p>
-                            </div>
-                        ) : plansQuery.length === 0 ? (
-                            <div className="col-span-3 text-center py-20 bg-white rounded-3xl border border-slate-200">
-                                <div className="text-slate-400 font-bold text-xl">Nenhum plano disponível para o seu país.</div>
+                            <div className="col-span-full py-20 bg-slate-50 rounded-[3rem] text-center">
+                                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                                <p className="font-bold text-slate-400">Sincronizando ofertas...</p>
                             </div>
                         ) : (
-                            plansQuery.map((plan: any, i) => {
-                                let featuresRes = plan.features;
-                                if (typeof featuresRes === 'string') {
-                                    try { featuresRes = JSON.parse(featuresRes); } catch (e) { featuresRes = []; }
-                                }
-                                if (!featuresRes) featuresRes = [];
-
-                                return (
-                                    <div key={i} className={`relative p-10 rounded-[2.5rem] border-2 transition-all duration-500 flex flex-col ${plan.popular ? 'border-orange-500 bg-white shadow-2xl scale-105 z-10' : 'border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-1'}`}>
-                                        {plan.popular && (
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-xl">
-                                                RECOMENDADO
-                                            </div>
-                                        )}
-                                        <div className="mb-10">
-                                            <h3 className="text-2xl font-black text-slate-900 mb-4">{plan.name}</h3>
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="text-slate-400 text-lg font-bold">R$</span>
-                                                <span className="text-5xl font-black text-slate-900">{parseFloat(plan.price).toFixed(0)}</span>
-                                                <span className="text-slate-400 font-bold">/mês</span>
-                                            </div>
+                            plansQuery.map((plan: any, i) => (
+                                <div key={i} className={clsx(
+                                    "p-10 md:p-12 rounded-[3rem] border-2 transition-all duration-500 flex flex-col relative",
+                                    plan.popular ? "border-orange-500 bg-white shadow-2xl scale-105 z-10" : "border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl"
+                                )}>
+                                    {plan.popular && (
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                            MAIS ESCOLHIDO
                                         </div>
-                                        <ul className="space-y-5 mb-12 flex-1">
-                                            {featuresRes.map((feat: string, k: number) => (
-                                                <li key={k} className="flex items-start gap-3 text-slate-600 font-medium leading-tight">
-                                                    <div className="mt-1 w-5 h-5 rounded-full bg-green-50 flex items-center justify-center shrink-0">
-                                                        <CheckCircle size={14} className="text-green-500" />
-                                                    </div>
-                                                    {feat}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <button
-                                            onClick={() => navigate(`/register?plan=${plan.id}`)}
-                                            className={`w-full py-5 rounded-2xl font-black transition-all transform active:scale-95 ${plan.popular ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20' : 'bg-slate-900 text-white hover:bg-black'}`}
-                                        >
-                                            COMEÇAR AGORA
-                                        </button>
+                                    )}
+                                    <h3 className="text-2xl font-black text-slate-900 mb-6">{plan.name}</h3>
+                                    <div className="flex items-baseline gap-1 mb-10">
+                                        <span className="text-slate-400 font-bold text-sm">R$</span>
+                                        <span className="text-6xl font-black text-slate-900 tracking-tighter">{parseFloat(plan.price).toFixed(0)}</span>
+                                        <span className="text-slate-400 font-bold text-sm">/mês</span>
                                     </div>
-                                );
-                            })
+                                    <ul className="space-y-5 mb-12 flex-1">
+                                        {(plan.features || []).map((feat: any, k: number) => (
+                                            <li key={k} className="flex gap-3 text-sm font-bold text-slate-600">
+                                                <CheckCircle size={18} className="text-green-500 shrink-0" />
+                                                {feat}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                    <button
+                                        onClick={() => navigate(`/register?plan=${plan.id}`)}
+                                        className={clsx(
+                                            "w-full py-5 rounded-2xl font-black transition-all active:scale-95 shadow-lg",
+                                            plan.popular ? "bg-orange-500 text-white shadow-orange-500/20" : "bg-slate-900 text-white"
+                                        )}
+                                    >
+                                        VER DISPONIBILIDADE
+                                    </button>
+                                </div>
+                            ))
                         )}
-
-                    </div>
-
-                    <div className="mt-16 flex flex-col md:flex-row items-center justify-center gap-8 px-8 py-6 bg-white rounded-3xl border border-slate-100 shadow-sm max-w-3xl mx-auto">
-                        <div className="flex -space-x-3">
-                            {[1, 2, 3, 4].map(i => (
-                                <img key={i} src={`https://i.pravatar.cc/100?u=${i}`} className="w-12 h-12 rounded-full border-4 border-white object-cover" alt="User" />
-                            ))}
-                        </div>
-                        <div className="text-center md:text-left">
-                            <div className="flex justify-center md:justify-start gap-1 mb-1">
-                                {[1, 2, 3, 4, 5].map(i => <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />)}
-                            </div>
-                            <p className="text-slate-600 font-bold">Aprovado por +2.000 donos de academia no Brasil.</p>
-                        </div>
                     </div>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="bg-slate-950 text-slate-300 py-20 border-t border-white/5">
-                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
-                    <div className="col-span-1 md:col-span-2">
-                        <div className="flex items-center gap-2 mb-8">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-2xl shadow-orange-500/30">
-                                <Zap className="text-white fill-white" size={24} />
-                            </div>
-                            <span className="text-3xl font-black tracking-tighter text-white">
-                                Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span>
-                            </span>
+            <footer className="bg-slate-950 text-slate-400 py-24 border-t border-white/5">
+                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
+                    <div className="md:col-span-2">
+                        <div className="flex items-center justify-center md:justify-start gap-2 mb-8">
+                            <Zap className="text-orange-500 fill-orange-500" size={32} />
+                            <span className="text-3xl font-black tracking-tighter text-white">ZappFitness</span>
                         </div>
-                        <p className="max-w-md text-slate-400 mb-8 text-lg leading-relaxed">
-                            Nossa missão é democratizar a tecnologia de ponta para todas as academias do Brasil,
-                            eliminando a burocracia e aproximando alunos de seus resultados.
+                        <p className="max-w-md text-slate-500 mb-8 mx-auto md:mx-0 font-medium">
+                            A tecnologia que conecta o seu negócio ao futuro da gestão de academias. Atendimento ágil, automatizado e eficiente.
                         </p>
-                        <div className="flex gap-4">
-                            <a href="#" className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all duration-300 hover:-translate-y-1"><Instagram size={24} /></a>
-                        </div>
                     </div>
                     <div>
-                        <h4 className="font-black text-white mb-6 uppercase tracking-widest text-sm">Plataforma</h4>
-                        <ul className="space-y-4 font-medium text-slate-400">
+                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-6">Navegação</h4>
+                        <ul className="space-y-4 text-sm font-bold">
                             <li><a href="#features" className="hover:text-orange-500 transition-colors">Funcionalidades</a></li>
-                            <li><a href="#pricing" className="hover:text-orange-500 transition-colors">Planos e Preços</a></li>
-                            <li><a href="#" className="hover:text-orange-500 transition-colors">Cases de Sucesso</a></li>
-                            <li><a href="#" className="hover:text-orange-500 transition-colors">Central de Ajuda</a></li>
+                            <li><a href="#demo" className="hover:text-orange-500 transition-colors">Demonstração</a></li>
+                            <li><a href="#pricing" className="hover:text-orange-500 transition-colors">Planos</a></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-black text-white mb-6 uppercase tracking-widest text-sm">Empresa</h4>
-                        <ul className="space-y-4 font-medium text-slate-400">
-                            <li><a href="#" className="hover:text-orange-500 transition-colors">Sobre Nós</a></li>
-                            <li><a href="#" className="hover:text-orange-500 transition-colors">Termos de Uso</a></li>
+                        <h4 className="text-white font-black uppercase tracking-widest text-xs mb-6">Legal</h4>
+                        <ul className="space-y-4 text-sm font-bold">
                             <li><a href="#" className="hover:text-orange-500 transition-colors">Privacidade</a></li>
-                            <li><a href="#" className="hover:text-orange-500 transition-colors">Contato</a></li>
+                            <li><a href="#" className="hover:text-orange-500 transition-colors">Termos</a></li>
+                            <li><a href="#" className="hover:text-orange-500 transition-colors">Feedback</a></li>
                         </ul>
                     </div>
                 </div>
-                <div className="max-w-7xl mx-auto px-6 mt-20 pt-10 border-t border-white/5 text-center">
-                    <p className="text-slate-500 font-bold">&copy; 2025 ZapFitness Tecnologia. Desenvolvido com ❤️ para apaixonados por esporte.</p>
+                <div className="max-w-7xl mx-auto px-6 mt-20 pt-10 border-t border-white/5 text-center text-xs font-bold text-slate-600 uppercase tracking-widest">
+                    &copy; 2025 ZapFitness. Transformando academias, mudando vidas.
                 </div>
             </footer>
         </div>
