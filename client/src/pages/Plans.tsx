@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Plus, Trash2, Tag } from 'lucide-react';
+import { Plus, Trash2, Tag, Calendar, BadgeDollarSign, XCircle } from 'lucide-react';
+import clsx from 'clsx';
 
 export const Plans = () => {
     const [plans, setPlans] = useState<any[]>([]);
@@ -41,59 +42,108 @@ export const Plans = () => {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Planos de Assinatura</h2>
-                <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition shadow-sm font-medium">
-                    <Plus size={18} />
-                    Novo Plano
+        <div className="animate-fade-in-up">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Planos</h2>
+                    <p className="text-slate-500 font-medium">Configure as modalidades de assinatura.</p>
+                </div>
+                <button
+                    onClick={() => setShowModal(true)}
+                    className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
+                >
+                    <Plus size={20} />
+                    NOVO PLANO
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 md:mb-0">
                 {plans.map(plan => (
-                    <div key={plan.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition relative group">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Tag size={20} /></div>
-                            <button onClick={() => handleDelete(plan.id)} className="text-slate-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100">
-                                <Trash2 size={18} />
+                    <div key={plan.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative group overflow-hidden">
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] -z-10 transition-colors group-hover:bg-orange-50"></div>
+
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="p-3 bg-slate-50 text-orange-500 rounded-2xl group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
+                                <Tag size={24} />
+                            </div>
+                            <button onClick={() => handleDelete(plan.id)} className="p-3 text-slate-200 hover:text-red-500 transition-colors">
+                                <Trash2 size={20} />
                             </button>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-1">{plan.name}</h3>
-                        <p className="text-3xl font-bold text-primary mb-2">R$ {plan.price.toFixed(2)}</p>
-                        <p className="text-sm text-slate-500">Duração: {plan.duration_days} dias</p>
+
+                        <div className="mb-8">
+                            <h3 className="text-2xl font-black text-slate-900 mb-1">{plan.name}</h3>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-slate-400 font-bold text-sm">R$</span>
+                                <span className="text-4xl font-black text-slate-900 tracking-tighter">{plan.price.toFixed(0)}</span>
+                                <span className="text-slate-400 font-bold text-sm">,{(plan.price % 1).toFixed(2).split('.')[1]}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl w-fit">
+                            <Calendar size={14} className="text-slate-400" />
+                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">{plan.duration_days} Dias</span>
+                        </div>
                     </div>
                 ))}
                 {plans.length === 0 && (
-                    <div className="col-span-3 text-center py-12 bg-white rounded-xl border border-dashed border-slate-300">
-                        <p className="text-slate-500">Nenhum plano cadastrado. Crie o primeiro!</p>
+                    <div className="col-span-3 text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-slate-100 flex flex-col items-center">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                            <Tag size={24} className="text-slate-200" />
+                        </div>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Crie seu primeiro plano de assinatura</p>
                     </div>
                 )}
             </div>
 
+            {/* Modal - Optimized for Mobile */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
-                        <h3 className="text-xl font-bold mb-4 text-slate-800">Novo Plano</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="fixed inset-0 bg-slate-900/60 flex items-end md:items-center justify-center p-0 md:p-4 z-50 backdrop-blur-md">
+                    <div className="bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl p-8 md:p-10 w-full max-w-md animate-fade-in-up">
+                        <div className="flex justify-between items-center mb-8">
                             <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Plano</label>
-                                <input required className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" placeholder="Ex: Mensal Gold" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                <h3 className="text-2xl font-black text-slate-900">Novo Plano</h3>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Configuração de Cobrança</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Preço (R$)</label>
-                                    <input required type="number" step="0.01" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" placeholder="99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Duração (Dias)</label>
-                                    <input required type="number" className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-primary outline-none" placeholder="30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
+                            <button onClick={() => setShowModal(false)} className="text-slate-300 hover:text-slate-500 transition-colors">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="group">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome do Plano</label>
+                                <div className="relative">
+                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                    <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: Mensal Platinum" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 mt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancelar</button>
-                                <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-orange-600 shadow-lg hover:shadow-xl transition">Salvar Plano</button>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="group">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Valor (R$)</label>
+                                    <div className="relative">
+                                        <BadgeDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                        <input required type="number" step="0.01" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="group">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Dias</label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                        <input required type="number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-3 pt-4">
+                                <button type="submit" className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all active:scale-95">
+                                    CRIAR PLANO AGORA
+                                </button>
+                                <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors">
+                                    Cancelar
+                                </button>
                             </div>
                         </form>
                     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { Clock } from 'lucide-react';
+import { Clock, User, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import clsx from 'clsx';
 
 export const AccessLogs = () => {
     const [logs, setLogs] = useState<any[]>([]);
@@ -10,48 +11,94 @@ export const AccessLogs = () => {
             api.get('/logs').then(res => setLogs(res.data)).catch(console.error);
         };
         fetch();
-        const interval = setInterval(fetch, 5000); // Polling for logs
+        const interval = setInterval(fetch, 5000);
         return () => clearInterval(interval);
     }, []);
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Registros de Acesso</h2>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">Atualização automática</span>
+        <div className="animate-fade-in-up">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Fluxo de Acessos</h2>
+                    <p className="text-slate-500 font-medium">Monitoramento em tempo real da recepção.</p>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm w-fit">
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live Update</span>
+                </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-medium">
-                        <tr>
-                            <th className="p-4">Horário</th>
-                            <th className="p-4">Membro</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4">Motivo</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {logs.map(log => (
-                            <tr key={log.id} className="hover:bg-slate-50 transition">
-                                <td className="p-4 text-slate-600 flex items-center gap-2">
-                                    <Clock size={16} className="text-slate-400" />
-                                    {new Date(log.scanned_at).toLocaleString('pt-BR')}
-                                </td>
-                                <td className={`p-4 font-medium ${log.member ? 'text-slate-800' : 'text-slate-400 italic'}`}>{log.member?.name || 'Desconhecido'}</td>
-                                <td className="p-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${log.status === 'GRANTED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {log.status === 'GRANTED' ? 'LIBERADO' : 'NEGADO'}
-                                    </span>
-                                </td>
-                                <td className="p-4 text-slate-500">{log.reason || '-'}</td>
-                            </tr>
-                        ))}
-                        {logs.length === 0 && (
-                            <tr><td colSpan={4} className="p-8 text-center text-slate-500">Nenhum registro encontrado.</td></tr>
-                        )}
-                    </tbody>
-                </table>
+            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-20 md:mb-0">
+                {/* Mobile & Desktop Header for the List */}
+                <div className="hidden md:grid grid-cols-4 bg-slate-50/50 p-6 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <span>Horário</span>
+                    <span>Membro</span>
+                    <span>Status</span>
+                    <span>Motivo</span>
+                </div>
+
+                <div className="divide-y divide-slate-50">
+                    {logs.map(log => (
+                        <div key={log.id} className="grid grid-cols-1 md:grid-cols-4 items-center p-5 md:p-6 hover:bg-slate-50/50 transition-colors group">
+                            {/* Time Section */}
+                            <div className="flex items-center gap-3 mb-2 md:mb-0">
+                                <div className="p-2 bg-slate-100 text-slate-400 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all">
+                                    <Clock size={16} />
+                                </div>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-700">
+                                        {new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter md:hidden">
+                                        {new Date(log.scanned_at).toLocaleDateString('pt-BR')}
+                                    </div>
+                                    <div className="hidden md:block text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                                        {new Date(log.scanned_at).toLocaleDateString('pt-BR')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Member Section */}
+                            <div className="flex items-center gap-3 mb-4 md:mb-0">
+                                <div className="md:hidden p-2 bg-orange-50 text-orange-500 rounded-xl">
+                                    <User size={16} />
+                                </div>
+                                <div className={clsx("font-extrabold text-base md:text-sm truncate", log.member ? 'text-slate-900' : 'text-slate-400 italic font-medium')}>
+                                    {log.member?.name || 'Desconhecido'}
+                                </div>
+                            </div>
+
+                            {/* Status Section */}
+                            <div className="mb-3 md:mb-0 flex items-center">
+                                <span className={clsx(
+                                    "flex items-center gap-2 px-4 py-1.5 md:px-3 md:py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-sm",
+                                    log.status === 'GRANTED' ? 'bg-green-100 text-green-700 shadow-green-200/20' : 'bg-red-100 text-red-700 shadow-red-200/20'
+                                )}>
+                                    {log.status === 'GRANTED' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                                    {log.status === 'GRANTED' ? 'LIBERADO' : 'NEGADO'}
+                                </span>
+                            </div>
+
+                            {/* Reason Section (Desktop) / Info (Mobile) */}
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-tighter flex items-center gap-2 group/reason cursor-pointer">
+                                <ArrowRight size={14} className="md:hidden text-slate-300" />
+                                <span className="truncate">{log.reason || 'Consulta via WhatsApp'}</span>
+                            </div>
+                        </div>
+                    ))}
+
+                    {logs.length === 0 && (
+                        <div className="p-20 text-center flex flex-col items-center">
+                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                <Clock size={24} className="text-slate-200" />
+                            </div>
+                            <p className="text-slate-400 font-bold tracking-tight uppercase text-xs">Aguardando primeiros acessos...</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
