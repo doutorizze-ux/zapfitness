@@ -206,8 +206,8 @@ Domingo:
 
             {/* Modal - Optimized for Mobile */}
             {showModal && (
-                <div className="fixed inset-0 bg-slate-900/60 flex items-end md:items-center justify-center p-0 md:p-4 z-50 backdrop-blur-md transition-all duration-300">
-                    <div className="bg-white rounded-t-[2.5rem] md:rounded-[2rem] shadow-2xl w-full max-w-4xl h-[92vh] md:h-[85vh] flex flex-col animate-fade-in-up overflow-hidden">
+                <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-[9999] backdrop-blur-md transition-all duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col animate-fade-in-up overflow-hidden relative">
 
                         {/* Modal Header */}
                         <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center shrink-0">
@@ -215,18 +215,18 @@ Domingo:
                                 <h3 className="text-xl font-extrabold text-slate-900">{editingId ? 'Editar Aluno' : 'Novo Aluno'}</h3>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{editingId ? formData.name : 'Cadastro Inteligente'}</p>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex items-center gap-3">
                                 <button type="button" onClick={handleSubmit} className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95">
                                     SALVAR
                                 </button>
-                                <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition">
+                                <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition flex items-center justify-center">
                                     <XCircle size={24} />
                                 </button>
                             </div>
                         </div>
 
                         {/* Navigation Tabs (App Like) */}
-                        <div className="flex px-4 border-b border-slate-50 shrink-0 bg-slate-50/30">
+                        <div className="flex px-4 border-b border-slate-100 shrink-0 bg-slate-50/30">
                             {[
                                 { id: 'info', icon: User, label: 'Perfil' },
                                 { id: 'workout', icon: Activity, label: 'Treino' },
@@ -250,7 +250,7 @@ Domingo:
                         {/* Modal Content */}
                         <div className="flex-1 overflow-y-auto p-8 bg-white touch-pan-y">
                             {activeTab === 'info' && (
-                                <div className="space-y-6 max-w-lg mx-auto pb-10">
+                                <div className="space-y-6 pb-10">
                                     <div className="group">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome Completo</label>
                                         <div className="relative">
