@@ -129,31 +129,42 @@ export const Dashboard = () => {
                     </div>
                 </main>
 
-                {/* Mobile Bottom Navigation Bar (The App Experience) */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-slate-200 px-4 py-2 flex items-center justify-around z-40 pb-safe">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={clsx(
-                                "flex flex-col items-center gap-1 p-2 rounded-2xl transition-all duration-300 min-w-[64px]",
-                                location.pathname === item.path
-                                    ? "text-orange-500 scale-110"
-                                    : "text-slate-400"
-                            )}
-                        >
-                            <item.icon size={22} className={location.pathname === item.path ? "fill-orange-50" : ""} />
-                            <span className={clsx("text-[10px] font-black uppercase tracking-tighter", location.pathname === item.path ? "opacity-100" : "opacity-60")}>
-                                {item.label.split(' ')[0]}
-                            </span>
-                        </Link>
-                    ))}
+                {/* Mobile Bottom Navigation Bar (Refined & Responsive) */}
+                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-slate-200 px-2 py-1 flex items-center justify-around z-40 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+                    {navItems.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={clsx(
+                                    "flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all duration-300 flex-1 min-w-0",
+                                    isActive ? "text-orange-600 scale-105" : "text-slate-400"
+                                )}
+                            >
+                                <div className={clsx(
+                                    "p-1.5 rounded-xl transition-colors mb-0.5",
+                                    isActive ? "bg-orange-50" : "bg-transparent"
+                                )}>
+                                    <item.icon size={20} className={isActive ? "fill-orange-500/10" : ""} />
+                                </div>
+                                <span className={clsx(
+                                    "text-[9px] font-black uppercase tracking-tighter truncate w-full text-center",
+                                    isActive ? "opacity-100" : "opacity-60"
+                                )}>
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
                     <button
                         onClick={handleLogout}
-                        className="flex flex-col items-center gap-1 p-2 text-slate-400 min-w-[64px]"
+                        className="flex flex-col items-center justify-center py-2 px-1 text-slate-400 flex-1 min-w-0"
                     >
-                        <LogOut size={22} />
-                        <span className="text-[10px] font-black uppercase tracking-tighter opacity-60">Sair</span>
+                        <div className="p-1.5 bg-transparent mb-0.5">
+                            <LogOut size={20} />
+                        </div>
+                        <span className="text-[9px] font-black uppercase tracking-tighter opacity-60">Sair</span>
                     </button>
                 </nav>
             </div>
