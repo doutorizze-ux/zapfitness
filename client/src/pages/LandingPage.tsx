@@ -95,20 +95,45 @@ export const LandingPage = () => {
 
                 {/* Mobile Menu Overlay */}
                 <div className={clsx(
-                    "fixed inset-0 bg-black z-40 flex flex-col items-center justify-center gap-8 transition-all duration-500 md:hidden",
-                    mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                    "fixed inset-0 bg-slate-950 z-[100] flex flex-col items-center justify-center gap-10 transition-all duration-500 md:hidden",
+                    mobileMenuOpen ? "opacity-100 pointer-events-auto translate-y-0" : "opacity-0 pointer-events-none -translate-y-10"
                 )}>
-                    {navLinks.map(link => (
-                        <a
-                            key={link.href}
-                            href={link.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="text-2xl font-black text-white hover:text-orange-500 transition-colors"
+                    {/* Close Button Inside Overlay for better UX */}
+                    <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="absolute top-8 right-8 text-white p-2 bg-white/5 rounded-full border border-white/10"
+                    >
+                        <X size={32} />
+                    </button>
+
+                    <div className="flex flex-col items-center gap-8">
+                        {navLinks.map((link, i) => (
+                            <a
+                                key={link.href}
+                                href={link.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="text-3xl font-black text-white hover:text-orange-500 transition-all active:scale-95"
+                                style={{ transitionDelay: `${i * 100}ms` }}
+                            >
+                                {link.label}
+                            </a>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col items-center gap-6 w-full px-12 mt-10">
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+                            className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-xl shadow-xl shadow-orange-500/20 active:scale-95 transition-all"
                         >
-                            {link.label}
-                        </a>
-                    ))}
-                    <button onClick={() => { setMobileMenuOpen(false); navigate('/login'); }} className="text-xl font-bold text-slate-400">Entrar no Sistema</button>
+                            Entrar no Sistema
+                        </button>
+                        <button
+                            onClick={() => { setMobileMenuOpen(false); navigate('/register'); }}
+                            className="w-full py-5 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-xl active:scale-95 transition-all"
+                        >
+                            Criar Conta
+                        </button>
+                    </div>
                 </div>
             </nav>
 
