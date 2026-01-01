@@ -2,8 +2,9 @@
 import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
+import { Turnstiles } from './Turnstiles';
 import { Members } from './Members';
 import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
@@ -25,6 +26,7 @@ export const Dashboard = () => {
         { label: 'Planos', path: '/dashboard/plans', icon: Activity },
         { label: 'Membros', path: '/dashboard/members', icon: Users },
         { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
+        { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
         { label: 'WhatsApp', path: '/dashboard/settings', icon: Settings },
     ];
 
@@ -124,6 +126,7 @@ export const Dashboard = () => {
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/members" element={<Members />} />
                             <Route path="/logs" element={<AccessLogs />} />
+                            <Route path="/turnstiles" element={<Turnstiles />} />
                             <Route path="/settings" element={<WhatsAppConnect />} />
                         </Routes>
                     </div>

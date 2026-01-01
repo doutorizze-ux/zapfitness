@@ -8,6 +8,8 @@ import { Server } from 'socket.io';
 import http from 'http';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { eventBus, EVENTS } from './events.js';
 
 // --- PREVENTION FOR CRASHES ---
 process.on('unhandledRejection', (reason, promise) => {
@@ -92,7 +94,7 @@ const saasAuthMiddleware = async (req: any, res: any, next: any) => {
 };
 
 // --- 5. SOCKET.IO ---
-const io = new Server(server, {
+export const io = new Server(server, {
     cors: {
         origin: (origin: any, callback: any) => callback(null, true),
         methods: ["GET", "POST"],
@@ -176,7 +178,8 @@ app.post('/api/register', async (req, res) => {
                 data: {
                     name: gymName,
                     slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
-                    saas_plan_id: validPlanId
+                    saas_plan_id: validPlanId,
+                    gate_token: crypto.randomBytes(16).toString('hex')
                 }
             });
 
@@ -431,6 +434,44 @@ app.get('/api/logs', authMiddleware, async (req: any, res) => {
     res.json(logs);
 });
 
+// --- GATE / TURNSTILE ENDPOINTS ---
+app.get('/api/gate/config', authMiddleware, async (req: any, res) => {
+    const tenant = await prisma.tenant.findUnique({
+        where: { id: req.user.tenant_id },
+        select: { gate_token: true, turnstile_brand: true }
+    });
+
+    // Auto-generate if missing (for old accounts)
+    if (tenant && !tenant.gate_token) {
+        const newToken = crypto.randomBytes(16).toString('hex');
+        await prisma.tenant.update({
+            where: { id: req.user.tenant_id },
+            data: { gate_token: newToken }
+        });
+        return res.json({ gate_token: newToken, turnstile_brand: tenant.turnstile_brand });
+    }
+
+    res.json(tenant);
+});
+
+app.post('/api/gate/regenerate-token', authMiddleware, async (req: any, res) => {
+    const newToken = crypto.randomBytes(16).toString('hex');
+    await prisma.tenant.update({
+        where: { id: req.user.tenant_id },
+        data: { gate_token: newToken }
+    });
+    res.json({ gate_token: newToken });
+});
+
+app.put('/api/gate/brand', authMiddleware, async (req: any, res) => {
+    const { brand } = req.body;
+    await prisma.tenant.update({
+        where: { id: req.user.tenant_id },
+        data: { turnstile_brand: brand }
+    });
+    res.json({ success: true });
+});
+
 io.on('connection', (socket: any) => {
     console.log(`[IO] socket connected id=${socket.id}, handshake.query=${JSON.stringify(socket.handshake.query)}`);
 
@@ -447,6 +488,25 @@ io.on('connection', (socket: any) => {
 
     socket.on('disconnect', (reason: any) => {
         console.log(`[IO] socket ${socket.id} disconnected: ${reason}`);
+    });
+});
+
+// --- TURNSTILE INTEGRATION ---
+eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
+    console.log(`[Events] Check-in GRANTED for tenant ${data.tenantId}, member ${data.memberName}`);
+    // Emit to the specific gym's room
+    io.to(data.tenantId).emit('gate:open', {
+        memberId: data.memberId,
+        memberName: data.memberName,
+        timestamp: new Date()
+    });
+});
+
+eventBus.on(EVENTS.CHECKIN_DENIED, (data) => {
+    console.log(`[Events] Check-in DENIED for tenant ${data.tenantId}, reason: ${data.reason}`);
+    io.to(data.tenantId).emit('gate:denied', {
+        reason: data.reason,
+        timestamp: new Date()
     });
 });
 

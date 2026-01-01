@@ -5,6 +5,7 @@ import fs from 'fs';
 import { prisma } from './db.js';
 import pino from 'pino';
 import { fileURLToPath } from 'url';
+import { eventBus, EVENTS } from './events.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -180,6 +181,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     if (!member.active) {
         await sock.sendMessage(remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
         await logAccess(tenantId, member.id, 'DENIED_INACTIVE', remoteJid);
+        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, reason: 'INACTIVE' });
         return;
     }
 
@@ -205,6 +207,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
         await sock.sendMessage(remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
         await logAccess(tenantId, member.id, 'DENIED_PLAN_EXPIRED', remoteJid);
+        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, reason: 'PLAN_EXPIRED' });
         return;
     }
 
@@ -257,6 +260,14 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
     await sock.sendMessage(remoteJid, { text: msg.replace('{name}', member.name.split(' ')[0]) });
     await logAccess(tenantId, member.id, 'GRANTED', remoteJid);
+
+    // Emit event for Turnstile integration
+    eventBus.emit(EVENTS.CHECKIN_GRANTED, {
+        tenantId,
+        memberId: member.id,
+        memberName: member.name,
+        phone: member.phone
+    });
 }
 
 // Unused now but kept for reference or deleted? The handleMessage calls replacement logic.

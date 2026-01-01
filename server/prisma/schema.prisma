@@ -27,6 +27,9 @@ model Tenant {
   max_daily_access  Int     @default(1)
   opening_time      String? // "06:00"
   closing_time      String? // "23:00"
+  
+  gate_token        String?  @unique
+  turnstile_brand   String?  @default("generic")
 
 
   saas_plan_id     String?

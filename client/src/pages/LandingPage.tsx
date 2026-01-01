@@ -217,7 +217,7 @@ export const LandingPage = () => {
 
                             <div className="space-y-4 md:space-y-6">
                                 {[
-                                    { icon: <Target className="text-orange-500" />, title: "Treinos na Mão", desc: "Acesso imediato às fichas de treino com vídeos explicativos." },
+                                    { icon: <Target className="text-orange-500" />, title: "Treinos na Mão", desc: "Acesso imediato às fichas de treino pelo celular." },
                                     { icon: <UserCheck className="text-green-500" />, title: "Check-in Rápido", desc: "Basta um 'cheguei' no Whats para liberar o acesso." },
                                     { icon: <MessageSquare className="text-blue-500" />, title: "Financeiro Automático", desc: "Lembretes de vencimento e pagamentos via Pix integrados." }
                                 ].map((item, i) => (
