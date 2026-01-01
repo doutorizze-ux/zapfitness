@@ -285,12 +285,19 @@ export const LandingPage = () => {
                                         <span className="text-slate-400 font-bold text-sm">/mês</span>
                                     </div>
                                     <ul className="space-y-5 mb-12 flex-1">
-                                        {(plan.features || []).map((feat: any, k: number) => (
-                                            <li key={k} className="flex gap-3 text-sm font-bold text-slate-600">
-                                                <CheckCircle size={18} className="text-green-500 shrink-0" />
-                                                {feat}
-                                            </li>
-                                        ))}
+                                        {(() => {
+                                            let feats = plan.features;
+                                            if (typeof feats === 'string') {
+                                                try { feats = JSON.parse(feats); } catch (e) { feats = []; }
+                                            }
+                                            if (!Array.isArray(feats)) feats = [];
+                                            return feats.map((feat: any, k: number) => (
+                                                <li key={k} className="flex gap-3 text-sm font-bold text-slate-600">
+                                                    <CheckCircle size={18} className="text-green-500 shrink-0" />
+                                                    {feat}
+                                                </li>
+                                            ));
+                                        })()}
                                     </ul>
                                     <button
                                         onClick={() => navigate(`/register?plan=${plan.id}`)}
