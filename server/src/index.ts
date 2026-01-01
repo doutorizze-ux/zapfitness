@@ -358,6 +358,24 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
             active: true
         }
     });
+
+    // --- AUTO LOGIC: Create Invoice for New Member ---
+    if (plan_id) {
+        const plan = await prisma.plan.findUnique({ where: { id: plan_id } });
+        if (plan) {
+            await prisma.invoice.create({
+                data: {
+                    member_id: member.id,
+                    tenant_id: req.user.tenant_id,
+                    amount: plan.price,
+                    description: `Mensalidade: ${plan.name}`,
+                    due_date: new Date(), // Vence hoje (adesão)
+                    status: 'PENDING'
+                }
+            });
+        }
+    }
+
     res.json(member);
 });
 
@@ -434,6 +452,76 @@ app.get('/api/logs', authMiddleware, async (req: any, res) => {
         take: 50
     });
     res.json(logs);
+});
+
+// --- FINANCE ENDPOINTS ---
+app.get('/api/finance/stats', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const paidThisMonth = await prisma.invoice.aggregate({
+        where: {
+            tenant_id: tenantId,
+            status: 'PAID',
+            paid_at: { gte: firstDayOfMonth }
+        },
+        _sum: { amount: true }
+    });
+
+    const pending = await prisma.invoice.aggregate({
+        where: {
+            tenant_id: tenantId,
+            status: 'PENDING'
+        },
+        _sum: { amount: true }
+    });
+
+    const overdue = await prisma.invoice.aggregate({
+        where: {
+            tenant_id: tenantId,
+            status: 'PENDING',
+            due_date: { lt: now }
+        },
+        _sum: { amount: true }
+    });
+
+    res.json({
+        monthly_income: paidThisMonth._sum.amount || 0,
+        pending_amount: pending._sum.amount || 0,
+        overdue_amount: overdue._sum.amount || 0
+    });
+});
+
+app.get('/api/finance/invoices', authMiddleware, async (req: any, res) => {
+    const invoices = await prisma.invoice.findMany({
+        where: { tenant_id: req.user.tenant_id },
+        include: { member: true },
+        orderBy: { due_date: 'desc' },
+        take: 100
+    });
+    res.json(invoices);
+});
+
+app.post('/api/finance/invoices/:id/pay', authMiddleware, async (req: any, res) => {
+    const { method } = req.body;
+    const invoice = await prisma.invoice.findFirst({
+        where: { id: req.params.id, tenant_id: req.user.tenant_id }
+    });
+
+    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+
+    const updated = await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: {
+            status: 'PAID',
+            paid_at: new Date(),
+            payment_method: method || 'CASH'
+        }
+    });
+
+    res.json(updated);
 });
 
 // --- GATE / TURNSTILE ENDPOINTS ---

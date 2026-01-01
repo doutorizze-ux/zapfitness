@@ -54,6 +54,7 @@ model Tenant {
   plans            Plan[]
   accessLogs       AccessLog[]
   securityLogs     SecurityLog[]
+  invoices         Invoice[]
 }
 
 model SecurityLog {
@@ -140,8 +141,26 @@ model Member {
   tenant          Tenant   @relation(fields: [tenant_id], references: [id])
 
   accessLogs      AccessLog[]
+  invoices        Invoice[]
 
   @@unique([phone, tenant_id])
+}
+
+model Invoice {
+  id              String   @id @default(uuid())
+  member_id       String
+  member          Member   @relation(fields: [member_id], references: [id])
+  tenant_id       String
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  
+  amount          Float
+  description     String
+  due_date        DateTime
+  paid_at         DateTime?
+  status          String   @default("PENDING") // PENDING, PAID, OVERDUE, CANCELLED
+  payment_method  String?  // PIX, CASH, CREDIT_CARD
+  
+  created_at      DateTime @default(now())
 }
 
 model AccessLog {
