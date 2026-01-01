@@ -517,11 +517,23 @@ app.get('/api/gate/guide', authMiddleware, async (req: any, res) => {
 io.on('connection', (socket: any) => {
     console.log(`[IO] socket connected id=${socket.id}, handshake.query=${JSON.stringify(socket.handshake.query)}`);
 
-    socket.on('join_room', (room: string) => {
+    socket.on('join_room', async ({ room, token }: { room: string, token?: string }) => {
         try {
-            console.log(`[IO] socket ${socket.id} requested join_room=${room} at ${new Date().toISOString()}`);
+            console.log(`[IO] socket ${socket.id} requested join_room=${room}`);
+
+            // Se for uma conexão do Painel (Dashboard), o usuário já está logado via JWT no login.
+            // Para o ZappBridge (externo), validamos o gate_token.
+            if (token) {
+                const tenant = await prisma.tenant.findUnique({ where: { id: room, gate_token: token } });
+                if (!tenant) {
+                    console.warn(`[IO] Tentativa de conexão INVÁLIDA para sala ${room} com token ${token}`);
+                    socket.emit('error', 'Token de acesso inválido');
+                    return;
+                }
+            }
+
             socket.join(room);
-            console.log(`[IO] socket ${socket.id} joined room=${room}`);
+            console.log(`[IO] socket ${socket.id} joined room=${room} (Authenticated)`);
             socket.emit('joined_room', { room, socketId: socket.id });
         } catch (err) {
             console.error('[IO] Error on join_room:', err);

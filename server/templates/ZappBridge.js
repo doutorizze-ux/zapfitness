@@ -24,8 +24,8 @@ const socket = io(SERVER_URL, {
 socket.on("connect", () => {
     console.log("✅ Conectado ao servidor ZapFitness");
 
-    // Entrar na sala da academia usando o Token de Segurança
-    socket.emit("join_room", TENANT_ID);
+    // Entrar na sala da academia usando o Token de Segurança (Multi-tenant)
+    socket.emit("join_room", { room: TENANT_ID, token: GATE_TOKEN });
     console.log(`📡 Monitorando acessos para academia: ${TENANT_ID}`);
 });
 
