@@ -103,111 +103,113 @@ Domingo:
     const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search));
 
     return (
-        <div className="flex flex-col h-full animate-fade-in-up">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Membros</h2>
-                    <p className="text-slate-500 font-medium">Gestão de alunos e acessos.</p>
-                </div>
-                <button
-                    onClick={openForCreate}
-                    className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
-                >
-                    <Plus size={20} />
-                    NOVO MEMBRO
-                </button>
-            </div>
-
-            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
-                <div className="p-5 md:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
-                    <Search className="text-slate-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome ou WhatsApp..."
-                        className="bg-transparent outline-none w-full text-base font-medium placeholder:text-slate-400"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
+        <>
+            <div className="flex flex-col h-full animate-fade-in-up">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+                    <div>
+                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Membros</h2>
+                        <p className="text-slate-500 font-medium">Gestão de alunos e acessos.</p>
+                    </div>
+                    <button
+                        onClick={openForCreate}
+                        className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
+                    >
+                        <Plus size={20} />
+                        NOVO MEMBRO
+                    </button>
                 </div>
 
-                {/* Mobile View: Card List */}
-                <div className="md:hidden divide-y divide-slate-50 overflow-auto max-h-[60vh] touch-pan-y">
-                    {filtered.map(member => {
-                        const isActive = member.active && new Date(member.plan_end_date) > new Date();
-                        return (
-                            <div key={member.id} className="p-5 active:bg-slate-50 transition-colors flex items-center justify-between group">
-                                <div className="flex-1 min-w-0" onClick={() => handleEdit(member)}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="font-bold text-slate-900 truncate">{member.name}</h4>
-                                        {isActive ? <CheckCircle2 size={14} className="text-green-500" /> : <XCircle size={14} className="text-slate-300" />}
+                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
+                    <div className="p-5 md:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
+                        <Search className="text-slate-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar por nome ou WhatsApp..."
+                            className="bg-transparent outline-none w-full text-base font-medium placeholder:text-slate-400"
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Mobile View: Card List */}
+                    <div className="md:hidden divide-y divide-slate-50 overflow-auto max-h-[60vh] touch-pan-y">
+                        {filtered.map(member => {
+                            const isActive = member.active && new Date(member.plan_end_date) > new Date();
+                            return (
+                                <div key={member.id} className="p-5 active:bg-slate-50 transition-colors flex items-center justify-between group">
+                                    <div className="flex-1 min-w-0" onClick={() => handleEdit(member)}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h4 className="font-bold text-slate-900 truncate">{member.name}</h4>
+                                            {isActive ? <CheckCircle2 size={14} className="text-green-500" /> : <XCircle size={14} className="text-slate-300" />}
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                                            <span className="flex items-center gap-1"><Phone size={12} /> {member.phone}</span>
+                                            <span className="text-slate-200">|</span>
+                                            <span>{member.plan?.name || 'Manual'}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                                        <span className="flex items-center gap-1"><Phone size={12} /> {member.phone}</span>
-                                        <span className="text-slate-200">|</span>
-                                        <span>{member.plan?.name || 'Manual'}</span>
+                                    <div className="flex gap-1 ml-4">
+                                        <button onClick={() => handleDelete(member.id, member.name)} className="p-3 text-slate-300 hover:text-red-500 transition">
+                                            <Trash2 size={20} />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-1 ml-4">
-                                    <button onClick={() => handleDelete(member.id, member.name)} className="p-3 text-slate-300 hover:text-red-500 transition">
-                                        <Trash2 size={20} />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
 
-                {/* Desktop View: Table */}
-                <div className="hidden md:block overflow-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50/50 text-slate-400 font-bold uppercase tracking-widest text-[10px] border-b border-slate-100">
-                            <tr>
-                                <th className="p-6">Nome / WhatsApp</th>
-                                <th className="p-6">Plano / Vencimento</th>
-                                <th className="p-6">Status</th>
-                                <th className="p-6 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {filtered.map(member => {
-                                const isActive = member.active && new Date(member.plan_end_date) > new Date();
-                                return (
-                                    <tr key={member.id} className="hover:bg-slate-50/50 transition group">
-                                        <td className="p-6">
-                                            <div className="font-bold text-slate-800">{member.name}</div>
-                                            <div className="text-xs text-slate-400 font-medium">{member.phone}</div>
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="font-bold text-slate-600">{member.plan?.name || 'Personalizado'}</div>
-                                            <div className="text-xs text-slate-400">Até {member.plan_end_date ? new Date(member.plan_end_date).toLocaleDateString('pt-BR') : '-'}</div>
-                                        </td>
-                                        <td className="p-6">
-                                            <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest", isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                                                {isActive ? 'ATIVO' : 'VENCIDO'}
-                                            </span>
-                                        </td>
-                                        <td className="p-6">
-                                            <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => handleEdit(member)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button onClick={() => handleDelete(member.id, member.name)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Excluir">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                    {/* Desktop View: Table */}
+                    <div className="hidden md:block overflow-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-slate-50/50 text-slate-400 font-bold uppercase tracking-widest text-[10px] border-b border-slate-100">
+                                <tr>
+                                    <th className="p-6">Nome / WhatsApp</th>
+                                    <th className="p-6">Plano / Vencimento</th>
+                                    <th className="p-6">Status</th>
+                                    <th className="p-6 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {filtered.map(member => {
+                                    const isActive = member.active && new Date(member.plan_end_date) > new Date();
+                                    return (
+                                        <tr key={member.id} className="hover:bg-slate-50/50 transition group">
+                                            <td className="p-6">
+                                                <div className="font-bold text-slate-800">{member.name}</div>
+                                                <div className="text-xs text-slate-400 font-medium">{member.phone}</div>
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="font-bold text-slate-600">{member.plan?.name || 'Personalizado'}</div>
+                                                <div className="text-xs text-slate-400">Até {member.plan_end_date ? new Date(member.plan_end_date).toLocaleDateString('pt-BR') : '-'}</div>
+                                            </td>
+                                            <td className="p-6">
+                                                <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest", isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
+                                                    {isActive ? 'ATIVO' : 'VENCIDO'}
+                                                </span>
+                                            </td>
+                                            <td className="p-6">
+                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => handleEdit(member)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
+                                                        <Pencil size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(member.id, member.name)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Excluir">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            {/* Modal - Optimized for Mobile */}
+            {/* Modal - Outside of animation container to fix fixed positioning */}
             {showModal && (
-                <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-[9999] backdrop-blur-md transition-all duration-300">
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col animate-fade-in-up overflow-hidden relative">
+                <div className="fixed inset-0 bg-slate-900/80 flex items-center justify-center p-4 z-[9999] backdrop-blur-md transition-all duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl h-[90vh] md:h-[85vh] flex flex-col animate-fade-in-up overflow-hidden relative border border-white/20">
 
                         {/* Modal Header */}
                         <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center shrink-0">
@@ -318,6 +320,6 @@ Domingo:
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };
