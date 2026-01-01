@@ -40,6 +40,30 @@ export const Turnstiles = () => {
         }
     };
 
+    const handleDownload = async () => {
+        try {
+            const response = await api.get('/gate/download-bridge', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'ZappBridge.js');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Erro ao baixar arquivo. Verifique se o token foi gerado.');
+        }
+    };
+
+    const handleShowGuide = async () => {
+        try {
+            const res = await api.get('/gate/guide');
+            alert(res.data.guide);
+        } catch (err) {
+            alert('Erro ao carregar guia.');
+        }
+    };
+
     const brands = [
         { id: 'controlid', name: 'Control iD', logo: '🚀', desc: 'Integração direta via Nuvem (Sem PC ligado)' },
         { id: 'topdata', name: 'Topdata', logo: '⚡', desc: 'Integração via ZappBridge (PC Recepção)' },
@@ -127,11 +151,17 @@ export const Turnstiles = () => {
                                             </div>
                                         </div>
                                         <div className="flex flex-col sm:flex-row gap-4">
-                                            <button className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20">
+                                            <button
+                                                onClick={handleDownload}
+                                                className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+                                            >
                                                 <Download size={20} />
                                                 Baixar ZappBridge (.js)
                                             </button>
-                                            <button className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-white/10 transition-all">
+                                            <button
+                                                onClick={handleShowGuide}
+                                                className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
+                                            >
                                                 <ExternalLink size={20} />
                                                 Guia de Instalação
                                             </button>

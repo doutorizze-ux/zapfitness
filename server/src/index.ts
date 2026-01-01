@@ -1,5 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
 import { initWhatsApp, getSession } from './whatsappManager.js';
@@ -470,6 +472,46 @@ app.put('/api/gate/brand', authMiddleware, async (req: any, res) => {
         data: { turnstile_brand: brand }
     });
     res.json({ success: true });
+});
+
+app.get('/api/gate/download-bridge', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+
+    if (!tenant || !tenant.gate_token) return res.status(404).json({ error: 'Configuração não encontrada' });
+
+    const templatePath = path.resolve('templates/ZappBridge.js');
+    if (!fs.existsSync(templatePath)) {
+        return res.status(500).json({ error: 'Template não encontrado no servidor' });
+    }
+
+    let content = fs.readFileSync(templatePath, 'utf8');
+
+    // Injetar dados reais no arquivo para o cliente
+    content = content.replace('SEU_TOKEN_AQUI', tenant.gate_token);
+    content = content.replace('SEU_ID_DA_ACADEMIA', tenantId);
+    content = content.replace('https://api.zapp.fitness', process.env.API_URL || 'https://api.zapp.fitness');
+
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Content-Disposition', `attachment; filename=ZappBridge_${tenant.slug}.js`);
+    res.send(content);
+});
+
+app.get('/api/gate/guide', authMiddleware, async (req: any, res) => {
+    // Retorna um guia simples em markdown ou texto
+    const guide = `
+# Guia de Instalação ZappBridge
+
+1. Certifique-se de ter o **Node.js** instalado no computador da recepção.
+2. Baixe o arquivo \`ZappBridge.js\` através do painel.
+3. Coloque o arquivo em uma pasta dedicada (ex: C:\\ZapFitness).
+4. Abra o terminal (CMD) nessa pasta e execute:
+   \`npm install socket.io-client\`
+5. Para iniciar o monitoramento, execute:
+   \`node ZappBridge.js\`
+6. A catraca estará pronta para receber comandos do WhatsApp!
+    `;
+    res.json({ guide });
 });
 
 io.on('connection', (socket: any) => {
