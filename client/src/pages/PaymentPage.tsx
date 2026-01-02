@@ -8,6 +8,7 @@ export const PaymentPage = () => {
     const navigate = useNavigate();
     const [plan, setPlan] = useState<any>(null);
     const [loading, setLoading] = useState(false);
+    const [verifying, setVerifying] = useState(false);
     const [billingType, setBillingType] = useState<'CREDIT_CARD' | 'PIX'>('CREDIT_CARD');
 
     // Form States
@@ -47,6 +48,34 @@ export const PaymentPage = () => {
                 }
             });
     }, [navigate]);
+
+    useEffect(() => {
+        let interval: any;
+        if (subscription && billingType === 'PIX') {
+            // Poll for payment status every 5 seconds
+            interval = setInterval(() => {
+                checkPaymentStatus();
+            }, 5000);
+        }
+        return () => clearInterval(interval);
+    }, [subscription, billingType]);
+
+    const checkPaymentStatus = async (manual = false) => {
+        if (manual) setVerifying(true);
+        try {
+            const res = await api.get('/saas/payment-status');
+            if (res.data.status === 'ACTIVE' || res.data.status === 'CONFIRMED' || res.data.status === 'RECEIVED') {
+                alert('Pagamento confirmado! Bem-vindo ao ZapFitness.');
+                navigate('/dashboard');
+            } else if (manual) {
+                alert('Ainda aguardando confirmação do banco. Pode levar alguns minutos.');
+            }
+        } catch (e) {
+            console.error("Error checking status:", e);
+        } finally {
+            if (manual) setVerifying(false);
+        }
+    };
 
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,10 +157,18 @@ export const PaymentPage = () => {
                         <p className="text-slate-600 mb-6">Sua fatura Pix foi enviada para o email cadastrado. Verifique sua caixa de entrada.</p>
                     )}
 
-                    <button onClick={() => navigate('/dashboard')} className="bg-primary text-white px-6 py-2 rounded-lg font-bold w-full">
+                    <button
+                        onClick={() => checkPaymentStatus(true)}
+                        disabled={verifying}
+                        className="bg-orange-500 text-white px-6 py-4 rounded-2xl font-black w-full shadow-lg shadow-orange-500/20 active:scale-95 transition-all mb-4 disabled:opacity-50"
+                    >
+                        {verifying ? 'VERIFICANDO...' : 'VERIFICAR PAGAMENTO AGORA'}
+                    </button>
+
+                    <button onClick={() => navigate('/dashboard')} className="text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors">
                         Já paguei, ir para Dashboard
                     </button>
-                    <p className="text-xs text-slate-400 mt-4">A liberação pode levar alguns segundos após o pagamento.</p>
+                    <p className="text-[10px] text-slate-400 mt-6 uppercase font-black tracking-widest">A liberação é automática e geralmente leva menos de 1 minuto.</p>
                 </div>
             </div>
         );

@@ -1036,11 +1036,19 @@ app.get('/api/saas/payment-status', authMiddleware, async (req: any, res) => {
 
     try {
         const sub = await getSubscription(tenant.subscription_id);
-        // If status is ACTIVE, update DB
-        if (sub.status === 'ACTIVE' && tenant.payment_status !== 'ACTIVE') {
-            await prisma.tenant.update({ where: { id: tenant.id }, data: { payment_status: 'ACTIVE' } });
+        const payment = await getSubscriptionPayment(tenant.subscription_id);
+
+        const isPaid = sub.status === 'ACTIVE' ||
+            (payment && (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED'));
+
+        // If status is ACTIVE or payment confirmed, update DB
+        if (isPaid && tenant.payment_status !== 'ACTIVE') {
+            await prisma.tenant.update({
+                where: { id: tenant.id },
+                data: { payment_status: 'ACTIVE', status: 'ACTIVE' }
+            });
         }
-        res.json({ status: sub.status, subscription: sub });
+        res.json({ status: isPaid ? 'ACTIVE' : (payment?.status || sub.status), subscription: sub, payment });
     } catch (e) {
         res.status(400).json({ error: 'Erro ao buscar assinatura' });
     }
