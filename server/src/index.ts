@@ -575,6 +575,7 @@ app.get('/api/logs', authMiddleware, async (req: any, res) => {
         orderBy: { scanned_at: 'desc' },
         take: 50
     });
+    console.log(`[API] Fetched ${logs.length} logs for tenant ${req.user.tenant_id}`);
     res.json(logs);
 });
 

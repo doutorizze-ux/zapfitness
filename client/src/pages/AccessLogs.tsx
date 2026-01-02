@@ -5,13 +5,24 @@ import clsx from 'clsx';
 
 export const AccessLogs = () => {
     const [logs, setLogs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetch = () => {
-            api.get('/logs').then(res => setLogs(res.data)).catch(console.error);
+        const fetchLogs = async () => {
+            try {
+                const res = await api.get('/logs');
+                setLogs(Array.isArray(res.data) ? res.data : []);
+                setError(null);
+            } catch (err: any) {
+                console.error('Error fetching logs:', err);
+                setError('Erro ao carregar acessos');
+            } finally {
+                setLoading(false);
+            }
         };
-        fetch();
-        const interval = setInterval(fetch, 5000);
+        fetchLogs();
+        const interval = setInterval(fetchLogs, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -41,7 +52,15 @@ export const AccessLogs = () => {
                 </div>
 
                 <div className="divide-y divide-slate-50">
-                    {logs.map(log => (
+                    {loading && logs.length === 0 ? (
+                        <div className="p-20 text-center animate-pulse">
+                            <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Carregando acessos...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="p-20 text-center">
+                            <p className="text-red-400 font-bold uppercase text-xs tracking-widest">{error}</p>
+                        </div>
+                    ) : logs.map(log => (
                         <div key={log.id} className="grid grid-cols-1 md:grid-cols-4 items-center p-5 md:p-6 hover:bg-slate-50/50 transition-colors group">
                             {/* Time Section */}
                             <div className="flex items-center gap-3 mb-2 md:mb-0">
@@ -90,7 +109,7 @@ export const AccessLogs = () => {
                         </div>
                     ))}
 
-                    {logs.length === 0 && (
+                    {!loading && !error && logs.length === 0 && (
                         <div className="p-20 text-center flex flex-col items-center">
                             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                                 <Clock size={24} className="text-slate-200" />

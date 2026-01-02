@@ -196,7 +196,7 @@ const Welcome = () => {
         <div className="animate-fade-in-up">
             <div className="mb-8 p-4 md:p-0">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                    Olá, <span className="text-orange-600">{stats?.employer?.name || 'Academia'}</span>! 👋
+                    Olá, <span className="text-orange-600">{stats?.name || 'Academia'}</span>! 👋
                 </h1>
                 <p className="text-slate-500 font-medium">Aqui está o que está acontecendo hoje.</p>
             </div>
@@ -215,7 +215,7 @@ const Welcome = () => {
                         <div className="p-3 bg-green-50 text-green-600 rounded-2xl group-hover:scale-110 transition-transform"><Activity size={24} /></div>
                     </div>
                     <p className="text-3xl font-black text-slate-900 tracking-tighter">{stats?._count?.accessLogs || 0}</p>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mt-1 leading-none">Acessos Hoje</p>
+                    <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mt-1 leading-none">Total de Acessos</p>
                 </div>
 
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group col-span-2 md:col-span-1">
