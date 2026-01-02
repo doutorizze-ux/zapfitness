@@ -45,12 +45,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
     const logger = pino({ level: 'silent' });
 
     // Persistent session path logic
-    let authPath = path.resolve(__dirname, `../sessions/${tenantId}`);
-
-    // Check if we are in a production environment with a /data volume (common in Coolify)
-    if (fs.existsSync('/data')) {
-        authPath = `/data/sessions/${tenantId}`;
-    }
+    const authPath = path.resolve(__dirname, `../sessions/${tenantId}`);
 
     if (!fs.existsSync(authPath)) {
         fs.mkdirSync(authPath, { recursive: true });
