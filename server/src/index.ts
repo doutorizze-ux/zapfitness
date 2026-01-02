@@ -844,7 +844,7 @@ app.get('/api/saas/plans', async (req, res) => {
 });
 
 app.post('/api/saas/plans', saasAuthMiddleware, async (req, res) => {
-    const { name, price, max_members, description } = req.body;
+    const { name, price, max_members, description, features } = req.body;
     try {
         if (!name || isNaN(parseFloat(price)) || isNaN(parseInt(max_members))) {
             return res.status(400).json({ error: 'Nome, preço e limite de membros são obrigatórios e devem ser válidos.' });
@@ -856,7 +856,7 @@ app.post('/api/saas/plans', saasAuthMiddleware, async (req, res) => {
                 price: parseFloat(price),
                 max_members: parseInt(max_members),
                 description: description || '',
-                features: JSON.stringify(['Suporte WhatsApp', 'Check-in QR Code'])
+                features: Array.isArray(features) ? JSON.stringify(features) : JSON.stringify(['Suporte WhatsApp', 'Check-in QR Code'])
             }
         });
         res.json(plan);

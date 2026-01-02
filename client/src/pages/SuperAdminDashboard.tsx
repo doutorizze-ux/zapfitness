@@ -30,7 +30,16 @@ export const SuperAdminDashboard = () => {
     const handleCreatePlan = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post('/saas/plans', newPlan);
+            // Transform description lines into features array
+            const features = newPlan.description
+                .split('\n')
+                .map(f => f.trim())
+                .filter(f => f.length > 0);
+
+            await api.post('/saas/plans', {
+                ...newPlan,
+                features: features.length > 0 ? features : undefined
+            });
             setShowPlanModal(false);
             setNewPlan({ name: '', price: '', max_members: '', description: '' });
             fetchData();
@@ -329,8 +338,8 @@ export const SuperAdminDashboard = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700">Descrição</label>
-                                        <textarea value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" rows={3}></textarea>
+                                        <label className="block text-sm font-medium text-slate-700">Funcionalidades do Plano (uma por linha)</label>
+                                        <textarea value={newPlan.description} onChange={e => setNewPlan({ ...newPlan, description: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" rows={3} placeholder="Ex:&#10;Até 100 alunos&#10;Suporte VIP&#10;Relatórios PDF"></textarea>
                                     </div>
                                     <div className="flex justify-end gap-2 mt-6">
                                         <button type="button" onClick={() => setShowPlanModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
