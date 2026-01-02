@@ -155,12 +155,12 @@ export const LandingPage = () => {
                         <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-widest px-2">Gestão 100% via WhatsApp</span>
                     </div>
                     <h1 className="text-4xl md:text-6xl lg:text-8xl font-black tracking-tighter mb-8 leading-[1.1] animate-fade-in-up">
-                        Sua Academia no <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">Bolso do Aluno</span>
+                        Sua Academia ou <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">Consultoria no WhatsApp</span>
                     </h1>
                     <p className="text-lg md:text-xl text-slate-300 max-w-3xl mx-auto mb-12 leading-relaxed font-medium px-4">
+                        O sistema definitivo para Academias e Personal Trainers.
                         Automatize treinos, pagamentos e check-ins pelo chat que seus alunos já usam.
-                        Sem aplicativos, sem burocracia, apenas resultados.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
                         <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
@@ -241,8 +241,8 @@ export const LandingPage = () => {
             <section id="features" className="py-24 bg-slate-50">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <div className="max-w-3xl mx-auto mb-20 px-4">
-                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">O sistema definitivo para sua gestão</h2>
-                        <p className="text-slate-500 text-lg font-medium">Um painel administrativo robusto no desktop, uma recepção ágil no WhatsApp.</p>
+                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Perfeito para Academias e Personal Trainers</h2>
+                        <p className="text-slate-500 text-lg font-medium">Um painel administrativo para sua gestão, uma recepção ágil no WhatsApp para seu aluno.</p>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                         {features.map((f, i) => (
@@ -349,7 +349,7 @@ export const LandingPage = () => {
                             <span className="text-3xl font-black tracking-tighter text-white">ZappFitness</span>
                         </div>
                         <p className="max-w-md text-slate-500 mb-8 mx-auto md:mx-0 font-medium">
-                            A tecnologia que conecta o seu negócio ao futuro da gestão de academias. Atendimento ágil, automatizado e eficiente.
+                            A tecnologia que conecta Academias e Personal Trainers ao futuro da gestão fitness. Atendimento ágil, automatizado e eficiente.
                         </p>
                     </div>
                     <div>
