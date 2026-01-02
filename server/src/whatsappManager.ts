@@ -29,7 +29,7 @@ export const reconnectSessions = async () => {
         try {
             console.log(`[WA] Reconnecting tenant: ${tenant.name} (${tenant.id})`);
             // Pass a callback to emit QR if it expires during restart and user is watching
-            await initWhatsApp(tenant.id, (qr) => {
+            await initWhatsApp(tenant.id.trim(), (qr) => {
                 console.log(`[WA] New QR generated for tenant ${tenant.id} during auto-reconnect`);
                 io.to(tenant.id).emit('qr_code', qr);
             });
@@ -47,7 +47,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
     const logger = pino({ level: 'silent' });
 
     // Persistent session path logic
-    const authPath = path.join(process.cwd(), 'sessions', tenantId);
+    const authPath = path.join(process.cwd(), 'sessions', tenantId.trim());
     console.log(`[WA] Initializing session for ${tenantId} at path: ${authPath}`);
 
     if (!fs.existsSync(authPath)) {
