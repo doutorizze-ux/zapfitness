@@ -383,7 +383,7 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
                     tenant_id: req.user.tenant_id,
                     amount: plan.price,
                     description: `Mensalidade: ${plan.name}`,
-                    due_date: new Date(), // Vence hoje (adesão)
+                    due_date: planEndDate, // Vence no fim do período (30 dias ou duração do plano)
                     status: 'PENDING'
                 }
             });
