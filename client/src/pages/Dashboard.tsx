@@ -9,6 +9,7 @@ import { Finance } from './Finance';
 import { Members } from './Members';
 import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
+import { ProfileSettings } from './ProfileSettings';
 import clsx from 'clsx';
 import api from '../api';
 
@@ -29,7 +30,8 @@ export const Dashboard = () => {
         { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
         { label: 'Financeiro', path: '/dashboard/finance', icon: CreditCard },
         { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
-        { label: 'WhatsApp', path: '/dashboard/settings', icon: Settings },
+        { label: 'WhatsApp', path: '/dashboard/whatsapp', icon: Zap },
+        { label: 'Configurações', path: '/dashboard/settings', icon: Settings },
     ];
 
     const currentItem = navItems.find(item => item.path === location.pathname) || navItems[0];
@@ -39,30 +41,34 @@ export const Dashboard = () => {
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-72 bg-slate-900 text-white flex-col shadow-2xl z-20">
                 <div className="p-8 border-b border-slate-800 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                        <Zap className="text-white fill-white" size={20} />
-                    </div>
+                    {user?.logo_url ? (
+                        <img src={user.logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover" />
+                    ) : (
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                            <Zap className="text-white fill-white" size={20} />
+                        </div>
+                    )}
                     <div>
-                        <h2 className="text-xl font-black tracking-tight text-white">
-                            Zapp<span className="text-orange-500">Fitness</span>
+                        <h2 className="text-xl font-black tracking-tight text-white truncate max-w-[160px]">
+                            {user?.name || 'ZappFitness'}
                         </h2>
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user?.role || 'GYM OWNER'}</p>
                     </div>
                 </div>
 
-                <nav className="flex-1 p-6 space-y-2">
+                <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
                     {navItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
                             className={clsx(
-                                "flex items-center gap-3 p-4 rounded-xl transition-all duration-300 group",
+                                "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group",
                                 location.pathname === item.path
                                     ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
                                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                             )}
                         >
-                            <item.icon size={22} className={clsx(location.pathname === item.path ? "scale-110" : "group-hover:scale-110 transition-transform")} />
+                            <item.icon size={20} className={clsx(location.pathname === item.path ? "scale-110" : "group-hover:scale-110 transition-transform")} />
                             <span className="font-bold text-sm tracking-wide">{item.label}</span>
                         </Link>
                     ))}
@@ -130,7 +136,8 @@ export const Dashboard = () => {
                             <Route path="/logs" element={<AccessLogs />} />
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
-                            <Route path="/settings" element={<WhatsAppConnect />} />
+                            <Route path="/whatsapp" element={<WhatsAppConnect />} />
+                            <Route path="/settings" element={<ProfileSettings />} />
                         </Routes>
                     </div>
                 </main>

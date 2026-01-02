@@ -21,6 +21,7 @@ model Tenant {
   whatsapp_status  String   @default("DISCONNECTED")
   status           String   @default("ACTIVE") // ACTIVE, BLOCKED
   owner_phone      String?
+  logo_url         String?
   
   // Access Control Settings
   access_cooldown   Int     @default(5) // minutes between checkins

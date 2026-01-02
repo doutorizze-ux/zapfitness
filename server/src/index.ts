@@ -225,7 +225,8 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
             include: {
                 _count: { select: { members: true, accessLogs: true } },
                 saas_plan: true,
-                admins: true
+                admins: true,
+                notificationSettings: true
             }
         });
         if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
@@ -233,6 +234,81 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
     } catch (e) {
         console.error("Error in /api/me:", e);
         res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    }
+});
+
+// Update Tenant Profile
+app.put('/api/settings/profile', authMiddleware, async (req: any, res) => {
+    try {
+        const { name, logo_url } = req.body;
+        const updated = await prisma.tenant.update({
+            where: { id: req.user.tenant_id },
+            data: { name, logo_url }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao atualizar perfil: ' + e.message });
+    }
+});
+
+// Update Admin Password
+app.put('/api/settings/security', authMiddleware, async (req: any, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const admin = await prisma.gymAdmin.findUnique({ where: { id: req.user.id } });
+
+        if (!admin || !await bcrypt.compare(currentPassword, admin.password)) {
+            return res.status(400).json({ error: 'Senha atual incorreta' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.gymAdmin.update({
+            where: { id: req.user.id },
+            data: { password: hashedPassword }
+        });
+
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao atualizar senha: ' + e.message });
+    }
+});
+
+// Update Access/Operational Settings
+app.put('/api/settings/access', authMiddleware, async (req: any, res) => {
+    try {
+        const { opening_time, closing_time, access_cooldown, max_daily_access } = req.body;
+        const updated = await prisma.tenant.update({
+            where: { id: req.user.tenant_id },
+            data: {
+                opening_time,
+                closing_time,
+                access_cooldown: parseInt(access_cooldown),
+                max_daily_access: parseInt(max_daily_access)
+            }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao atualizar configurações: ' + e.message });
+    }
+});
+
+// Update Notification Messages
+app.put('/api/settings/notifications', authMiddleware, async (req: any, res) => {
+    try {
+        const { checkin_success, plan_warning, plan_expired } = req.body;
+        const updated = await prisma.notificationSettings.upsert({
+            where: { tenant_id: req.user.tenant_id },
+            update: { checkin_success, plan_warning, plan_expired },
+            create: {
+                tenant_id: req.user.tenant_id,
+                checkin_success,
+                plan_warning,
+                plan_expired
+            }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao atualizar mensagens: ' + e.message });
     }
 });
 
