@@ -21,6 +21,8 @@ export const reconnectSessions = async () => {
         where: { whatsapp_status: 'CONNECTED', status: 'ACTIVE' }
     });
 
+    console.log(`[WA] Found ${connectedTenants.length} tenants to reconnect.`);
+
     const { io } = await import('./index.js');
 
     for (const tenant of connectedTenants) {
@@ -45,11 +47,15 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
     const logger = pino({ level: 'silent' });
 
     // Persistent session path logic
-    const authPath = path.resolve(__dirname, `../sessions/${tenantId}`);
+    const authPath = path.join(process.cwd(), 'sessions', tenantId);
+    console.log(`[WA] Initializing session for ${tenantId} at path: ${authPath}`);
 
     if (!fs.existsSync(authPath)) {
         fs.mkdirSync(authPath, { recursive: true });
     }
+
+    const credsPath = path.join(authPath, 'creds.json');
+    console.log(`[WA] Session credentials exist: ${fs.existsSync(credsPath)}`);
 
     const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
@@ -76,6 +82,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
+        console.log(`[WA] Connection update for ${tenantId}:`, { connection, qr: !!qr });
 
         if (qr && onQr) {
             onQr(qr);
