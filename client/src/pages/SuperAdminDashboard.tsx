@@ -9,7 +9,7 @@ export const SuperAdminDashboard = () => {
     const [tenants, setTenants] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
     const [showPlanModal, setShowPlanModal] = useState(false);
-    const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', description: '' });
+    const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
 
     // Edit Tenant State
     const [editingTenant, setEditingTenant] = useState<any>(null);
@@ -41,7 +41,7 @@ export const SuperAdminDashboard = () => {
                 features: features.length > 0 ? features : undefined
             });
             setShowPlanModal(false);
-            setNewPlan({ name: '', price: '', max_members: '', description: '' });
+            setNewPlan({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
             fetchData();
         } catch (e: any) {
             console.error('Erro detalhado:', e.response?.data || e.message);
@@ -256,6 +256,7 @@ export const SuperAdminDashboard = () => {
                                     <tr>
                                         <th className="p-4">Nome</th>
                                         <th className="p-4">Preço</th>
+                                        <th className="p-4">Período</th>
                                         <th className="p-4">Max Membros</th>
                                         <th className="p-4 text-right">Ação</th>
                                     </tr>
@@ -265,6 +266,7 @@ export const SuperAdminDashboard = () => {
                                         <tr key={plan.id} className="hover:bg-slate-50 transition">
                                             <td className="p-4 font-bold text-slate-800">{plan.name}</td>
                                             <td className="p-4 text-slate-600">R$ {parseFloat(plan.price).toFixed(2)}</td>
+                                            <td className="p-4 text-slate-600">{plan.duration_months} {plan.duration_months === 1 ? 'mês' : 'meses'}</td>
                                             <td className="p-4 text-slate-600">{plan.max_members}</td>
                                             <td className="p-4 text-right">
                                                 <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:text-red-700 p-2">
@@ -333,9 +335,23 @@ export const SuperAdminDashboard = () => {
                                             <input required type="number" step="0.01" value={newPlan.price} onChange={e => setNewPlan({ ...newPlan, price: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700">Max Membros</label>
-                                            <input required type="number" value={newPlan.max_members} onChange={e => setNewPlan({ ...newPlan, max_members: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                            <label className="block text-sm font-medium text-slate-700">Período</label>
+                                            <select
+                                                required
+                                                value={newPlan.duration_months}
+                                                onChange={e => setNewPlan({ ...newPlan, duration_months: e.target.value })}
+                                                className="mt-1 block w-full border border-gray-300 rounded p-2 bg-white"
+                                            >
+                                                <option value="1">Mensal</option>
+                                                <option value="3">Trimestral</option>
+                                                <option value="6">Semestral</option>
+                                                <option value="12">Anual</option>
+                                            </select>
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">Max Membros</label>
+                                        <input required type="number" value={newPlan.max_members} onChange={e => setNewPlan({ ...newPlan, max_members: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700">Funcionalidades do Plano (uma por linha)</label>

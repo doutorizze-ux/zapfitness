@@ -307,7 +307,12 @@ export const LandingPage = () => {
                                     <div className="flex items-baseline gap-1 mb-10">
                                         <span className="text-slate-400 font-bold text-sm">R$</span>
                                         <span className="text-6xl font-black text-slate-900 tracking-tighter">{parseFloat(plan.price).toFixed(0)}</span>
-                                        <span className="text-slate-400 font-bold text-sm">/mês</span>
+                                        <span className="text-slate-400 font-bold text-sm">
+                                            {plan.duration_months === 1 ? '/mês' :
+                                                plan.duration_months === 3 ? '/trimestre' :
+                                                    plan.duration_months === 6 ? '/semestre' :
+                                                        '/ano'}
+                                        </span>
                                     </div>
                                     <ul className="space-y-5 mb-12 flex-1">
                                         {(() => {
