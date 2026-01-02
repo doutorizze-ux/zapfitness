@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import clsx from 'clsx';
 import api from '../api';
 import { Plus, Trash2, Tag, Calendar, BadgeDollarSign, XCircle } from 'lucide-react';
 
@@ -119,20 +120,42 @@ export const Plans = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="group">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Valor (R$)</label>
-                                    <div className="relative">
-                                        <BadgeDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                        <input required type="number" step="0.01" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-                                    </div>
+                            <div className="group">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Valor do Plano (R$)</label>
+                                <div className="relative">
+                                    <BadgeDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                    <input required type="number" step="0.01" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: 99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                                 </div>
-                                <div className="group">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Dias</label>
-                                    <div className="relative">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                        <input required type="number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
-                                    </div>
+                            </div>
+
+                            <div className="group">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Duração do Plano</label>
+                                <div className="relative mb-3">
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                    <input required type="number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: 30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Dias</span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {[
+                                        { label: 'Mensal', days: 30 },
+                                        { label: 'Trim.', days: 90 },
+                                        { label: 'Semest.', days: 180 },
+                                        { label: 'Anual', days: 365 }
+                                    ].map(d => (
+                                        <button
+                                            key={d.days}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, duration_days: d.days.toString() })}
+                                            className={clsx(
+                                                "py-2 rounded-xl text-[10px] font-black border transition-all",
+                                                formData.duration_days === d.days.toString()
+                                                    ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20"
+                                                    : "bg-white border-slate-100 text-slate-500 hover:border-orange-200"
+                                            )}
+                                        >
+                                            {d.label}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
