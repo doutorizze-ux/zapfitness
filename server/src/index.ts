@@ -457,7 +457,11 @@ app.delete('/api/members/:id', authMiddleware, async (req: any, res) => {
 
     if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
 
-    await prisma.member.delete({ where: { id: member.id } });
+    await prisma.$transaction([
+        prisma.invoice.deleteMany({ where: { member_id: member.id } }),
+        prisma.accessLog.deleteMany({ where: { member_id: member.id } }),
+        prisma.member.delete({ where: { id: member.id } })
+    ]);
     res.json({ success: true });
 });
 
