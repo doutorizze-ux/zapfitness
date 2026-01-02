@@ -9,6 +9,7 @@ services:
       - "3000:3000"
     volumes:
       - zapfitness_data:/app/server/database.sqlite
+      - zapfitness_sessions:/app/server/sessions
     environment:
       - DATABASE_URL=file:/app/server/database.sqlite
       - PORT=3000
@@ -17,3 +18,4 @@ services:
 
 volumes:
   zapfitness_data:
+  zapfitness_sessions:

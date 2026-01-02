@@ -15,6 +15,32 @@ export const sessions = new Map<string, WASocket>();
 
 export const getSession = (tenantId: string) => sessions.get(tenantId);
 
+export const reconnectSessions = async () => {
+    console.log('[WA] Auto-reconnecting active sessions...');
+    const connectedTenants = await prisma.tenant.findMany({
+        where: { whatsapp_status: 'CONNECTED', status: 'ACTIVE' }
+    });
+
+    const { io } = await import('./index.js');
+
+    for (const tenant of connectedTenants) {
+        try {
+            console.log(`[WA] Reconnecting tenant: ${tenant.name} (${tenant.id})`);
+            // Pass a callback to emit QR if it expires during restart and user is watching
+            await initWhatsApp(tenant.id, (qr) => {
+                console.log(`[WA] New QR generated for tenant ${tenant.id} during auto-reconnect`);
+                io.to(tenant.id).emit('qr_code', qr);
+            });
+        } catch (err) {
+            console.error(`[WA] Failed to reconnect ${tenant.id}:`, err);
+            await prisma.tenant.update({
+                where: { id: tenant.id },
+                data: { whatsapp_status: 'DISCONNECTED' }
+            });
+        }
+    }
+};
+
 export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void) => {
     const logger = pino({ level: 'silent' });
 

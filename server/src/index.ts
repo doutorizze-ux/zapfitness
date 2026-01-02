@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
-import { initWhatsApp, getSession } from './whatsappManager.js';
+import { initWhatsApp, getSession, reconnectSessions } from './whatsappManager.js';
 import { createCustomer, createSubscription, getSubscription, getSubscriptionPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -243,7 +243,7 @@ app.put('/api/settings/profile', authMiddleware, async (req: any, res) => {
         const { name, logo_url } = req.body;
         const updated = await prisma.tenant.update({
             where: { id: req.user.tenant_id },
-            data: { name, logo_url }
+            data: { name, logo_url } as any
         });
         res.json(updated);
     } catch (e: any) {
@@ -1120,6 +1120,7 @@ server.listen(Number(port), '0.0.0.0', async () => {
 
         await seedSaasOwner();
         initScheduler();
+        await reconnectSessions();
 
         console.log(`>>> Server is fully ready and listening!`);
     } catch (error) {
