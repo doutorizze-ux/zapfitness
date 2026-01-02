@@ -335,14 +335,28 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
     }
 
     let planEndDate = new Date();
+    let duration = 30;
 
     if (plan_id) {
         const plan = await prisma.plan.findUnique({ where: { id: plan_id } });
         if (plan) {
-            planEndDate.setDate(planEndDate.getDate() + plan.duration_days);
+            duration = plan.duration_days;
         }
-    } else {
-        planEndDate.setDate(planEndDate.getDate() + 30);
+    }
+
+    planEndDate.setDate(planEndDate.getDate() + duration);
+    planEndDate.setHours(23, 59, 59, 999);
+
+    // Check if phone already exists for this tenant
+    const existingMember = await prisma.member.findFirst({
+        where: {
+            tenant_id: req.user.tenant_id,
+            phone: phone
+        }
+    });
+
+    if (existingMember) {
+        return res.status(400).json({ error: 'Já existe um aluno cadastrado com este telefone.' });
     }
 
     const member = await prisma.member.create({
@@ -389,12 +403,42 @@ app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
 
         if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
 
+        // Calculate new end date if plan is changed
+        let plan_end_date = member.plan_end_date;
+        if (plan_id !== undefined && plan_id !== member.plan_id) {
+            let duration = 30;
+            if (plan_id) {
+                const plan = await prisma.plan.findUnique({ where: { id: plan_id } });
+                if (plan) duration = plan.duration_days;
+            }
+            const newEndDate = new Date();
+            newEndDate.setDate(newEndDate.getDate() + duration);
+            newEndDate.setHours(23, 59, 59, 999);
+            plan_end_date = newEndDate;
+        }
+
+        // Check if phone is being changed and if it already exists for another member
+        if (phone && phone !== member.phone) {
+            const existingMember = await prisma.member.findFirst({
+                where: {
+                    tenant_id: req.user.tenant_id,
+                    phone: phone,
+                    NOT: { id: member.id }
+                }
+            });
+
+            if (existingMember) {
+                return res.status(400).json({ error: 'Já existe outro aluno cadastrado com este telefone.' });
+            }
+        }
+
         const updated = await prisma.member.update({
             where: { id: member.id },
             data: {
                 name,
                 phone,
                 plan_id: plan_id || null, // Handle empty string as null
+                plan_end_date,
                 diet_plan: diet,
                 workout_routine: workout
             }
