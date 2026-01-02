@@ -772,6 +772,7 @@ eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
 eventBus.on(EVENTS.CHECKIN_DENIED, (data) => {
     console.log(`[Events] Check-in DENIED for tenant ${data.tenantId}, reason: ${data.reason}`);
     io.to(data.tenantId).emit('gate:denied', {
+        memberName: data.memberName,
         reason: data.reason,
         timestamp: new Date()
     });

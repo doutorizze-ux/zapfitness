@@ -1,15 +1,50 @@
 import { useState, useEffect } from 'react';
-import { Cpu, Wifi, CheckCircle, Download, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Cpu, Wifi, CheckCircle, Download, ExternalLink, ShieldCheck, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
+import { useAuth } from '../contexts/AuthContext';
+import io from 'socket.io-client';
+
+const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
 export const Turnstiles = () => {
+    const { user } = useAuth();
     const [selectedBrand, setSelectedBrand] = useState('generic');
     const [token, setToken] = useState('Carregando...');
+    const [recentEvents, setRecentEvents] = useState<any[]>([]);
 
     useEffect(() => {
         fetchConfig();
-    }, []);
+        fetchRecentLogs();
+
+        if (user?.tenant_id) {
+            socket.emit('join_room', { room: user.tenant_id });
+
+            socket.on('gate:open', (data) => {
+                setRecentEvents(prev => [{
+                    id: Math.random().toString(),
+                    name: data.memberName,
+                    status: 'GRANTED',
+                    time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                }, ...prev].slice(0, 5));
+            });
+
+            socket.on('gate:denied', (data) => {
+                setRecentEvents(prev => [{
+                    id: Math.random().toString(),
+                    name: data.memberName || 'Visitante/Inativo',
+                    status: 'DENIED',
+                    reason: data.reason,
+                    time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                }, ...prev].slice(0, 5));
+            });
+        }
+
+        return () => {
+            socket.off('gate:open');
+            socket.off('gate:denied');
+        };
+    }, [user?.tenant_id]);
 
     const fetchConfig = async () => {
         try {
@@ -18,6 +53,21 @@ export const Turnstiles = () => {
             setSelectedBrand(res.data.turnstile_brand || 'generic');
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const fetchRecentLogs = async () => {
+        try {
+            const res = await api.get('/logs');
+            const formatted = res.data.slice(0, 5).map((log: any) => ({
+                id: log.id,
+                name: log.member?.name || 'Desconhecido',
+                status: log.status,
+                time: new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            }));
+            setRecentEvents(formatted);
+        } catch (err) {
+            console.error('Erro ao buscar logs recentes:', err);
         }
     };
 
@@ -177,18 +227,31 @@ export const Turnstiles = () => {
                 {/* Status & Preview */}
                 <div className="space-y-6">
                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                        <h4 className="font-black text-slate-900 mb-6 uppercase tracking-widest text-xs">Acessos em Tempo Real</h4>
+                        <h4 className="font-black text-slate-900 mb-6 uppercase tracking-widest text-xs">Monitoramento Live</h4>
                         <div className="space-y-4">
-                            {[1, 2].map((i) => (
-                                <div key={i} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-default">
-                                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-green-500">
-                                        <CheckCircle size={20} />
+                            {recentEvents.length === 0 ? (
+                                <div className="p-8 text-center text-slate-400">
+                                    <Clock className="mx-auto mb-2 opacity-20" size={32} />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">Aguardando...</p>
+                                </div>
+                            ) : recentEvents.map((event) => (
+                                <div key={event.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-default animate-fade-in">
+                                    <div className={clsx(
+                                        "w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center",
+                                        event.status === 'GRANTED' ? "text-green-500" : "text-red-500"
+                                    )}>
+                                        {event.status === 'GRANTED' ? <CheckCircle size={20} /> : <XCircle size={20} />}
                                     </div>
                                     <div className="flex-1 overflow-hidden">
-                                        <p className="text-sm font-black text-slate-900 truncate">João Silva</p>
-                                        <p className="text-[10px] text-slate-400 font-bold">ACABOU DE ENTRAR</p>
+                                        <p className="text-sm font-black text-slate-900 truncate">{event.name}</p>
+                                        <p className={clsx(
+                                            "text-[10px] font-black uppercase tracking-widest",
+                                            event.status === 'GRANTED' ? "text-slate-400" : "text-red-400"
+                                        )}>
+                                            {event.status === 'GRANTED' ? 'ACESSO LIBERADO' : (event.reason || 'NEGADO')}
+                                        </p>
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-300">14:02</span>
+                                    <span className="text-[10px] font-black text-slate-300">{event.time}</span>
                                 </div>
                             ))}
                         </div>

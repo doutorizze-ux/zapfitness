@@ -207,7 +207,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     if (!member.active) {
         await sock.sendMessage(remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
         await logAccess(tenantId, member.id, 'DENIED_INACTIVE', remoteJid);
-        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, reason: 'INACTIVE' });
+        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'INACTIVE' });
         return;
     }
 
@@ -233,7 +233,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
         await sock.sendMessage(remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
         await logAccess(tenantId, member.id, 'DENIED_PLAN_EXPIRED', remoteJid);
-        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, reason: 'PLAN_EXPIRED' });
+        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'PLAN_EXPIRED' });
         return;
     }
 
@@ -245,6 +245,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
         if (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time) {
             await sock.sendMessage(remoteJid, { text: `⛔ A academia está fechada. Horário de funcionamento: ${tenant.opening_time} às ${tenant.closing_time}.` });
             await logAccess(tenantId, member.id, 'DENIED_OUTSIDE_HOURS', remoteJid);
+            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'OUTSIDE_HOURS' });
             return;
         }
     }
@@ -263,6 +264,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     if (dailyAccessCount >= tenant.max_daily_access) {
         await sock.sendMessage(remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });
         await logAccess(tenantId, member.id, 'DENIED_DAILY_LIMIT', remoteJid);
+        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'DAILY_LIMIT' });
         return;
     }
 
@@ -278,6 +280,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
             const waitTime = Math.ceil(tenant.access_cooldown - diffMinutes);
             await sock.sendMessage(remoteJid, { text: `⏳ Aguarde ${waitTime} minutos para realizar um novo check-in.` });
             await logAccess(tenantId, member.id, 'DENIED_COOLDOWN', remoteJid);
+            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'COOLDOWN' });
             return;
         }
     }
