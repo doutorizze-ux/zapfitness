@@ -147,7 +147,16 @@ export const PaymentPage = () => {
                         <span className="text-sm text-slate-400 uppercase tracking-wider">Plano Escolhido</span>
                         <div className="flex justify-between items-end mt-2">
                             <h3 className="text-3xl font-bold">{plan.name}</h3>
-                            <span className="text-2xl font-light">R$ {plan.price} <span className="text-sm text-slate-400">/mês</span></span>
+                            <span className="text-2xl font-light">
+                                R$ {plan.price}
+                                <span className="text-sm text-slate-400">
+                                    {plan.duration_months === 1 ? '/mês' :
+                                        plan.duration_months === 3 ? '/trimestre' :
+                                            plan.duration_months === 6 ? '/semestre' :
+                                                plan.duration_months === 12 ? '/ano' :
+                                                    ` / ${plan.duration_months} meses`}
+                                </span>
+                            </span>
                         </div>
                     </div>
                     <ul className="space-y-4 mb-8 text-slate-300">
