@@ -15,30 +15,40 @@ export const WhatsAppConnect = () => {
     const [tenantInfo, setTenantInfo] = useState<any>(null);
 
     useEffect(() => {
+        if (!user?.tenant_id) return;
+
         api.get('/me').then(res => {
             setTenantInfo(res.data);
             setStatus(res.data.whatsapp_status);
         });
 
-        socket.emit('join_room', user?.tenant_id);
+        // Corrigido: Enviar objeto esperado pelo servidor
+        socket.emit('join_room', { room: user.tenant_id });
 
         socket.on('qr_code', (code) => {
+            console.log('[Socket] QR Code recebido');
             setQr(code);
             setStatus('SCAN_QR');
             setLoading(false);
         });
 
         socket.on('whatsapp_status', (s) => {
+            console.log('[Socket] Status WhatsApp:', s);
             setStatus(s);
             setLoading(false);
             if (s === 'CONNECTED') setQr('');
         });
 
+        socket.on('joined_room', (data) => {
+            console.log('[Socket] Entrou na sala:', data.room);
+        });
+
         return () => {
             socket.off('qr_code');
             socket.off('whatsapp_status');
+            socket.off('joined_room');
         }
-    }, [user]);
+    }, [user?.tenant_id]);
 
     const handleConnect = async () => {
         setLoading(true);
