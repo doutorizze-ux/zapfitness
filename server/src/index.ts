@@ -5,7 +5,7 @@ import fs from 'fs';
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
 import { initWhatsApp, getSession, reconnectSessions } from './whatsappManager.js';
-import { createCustomer, createSubscription, getSubscription, getSubscriptionPayment, getPixQrCode } from './services/asaas.js';
+import { createCustomer, createSubscription, getSubscription, getLatestPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
 import bcrypt from 'bcryptjs';
@@ -1013,7 +1013,7 @@ app.post('/api/saas/subscribe', authMiddleware, async (req: any, res) => {
         if (billingType === 'PIX') {
             try {
                 // Fetch the generated payment for this subscription
-                const payment = await getSubscriptionPayment(subscription.id);
+                const payment = await getLatestPayment(subscription.id);
                 if (payment) {
                     pixData = await getPixQrCode(payment.id);
                 }
@@ -1036,19 +1036,26 @@ app.get('/api/saas/payment-status', authMiddleware, async (req: any, res) => {
 
     try {
         const sub = await getSubscription(tenant.subscription_id);
-        const payment = await getSubscriptionPayment(tenant.subscription_id);
+        const payment = await getLatestPayment(tenant.subscription_id);
 
-        const isPaid = sub.status === 'ACTIVE' ||
-            (payment && (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED'));
+        // Access is ONLY granted if the latest payment is confirmed/received
+        const isPaid = payment && (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED');
 
-        // If status is ACTIVE or payment confirmed, update DB
+        // If payment confirmed, update DB and unblock tenant
         if (isPaid && tenant.payment_status !== 'ACTIVE') {
             await prisma.tenant.update({
                 where: { id: tenant.id },
-                data: { payment_status: 'ACTIVE', status: 'ACTIVE' }
+                data: {
+                    payment_status: 'ACTIVE',
+                    status: 'ACTIVE'
+                }
             });
         }
-        res.json({ status: isPaid ? 'ACTIVE' : (payment?.status || sub.status), subscription: sub, payment });
+        res.json({
+            status: isPaid ? 'ACTIVE' : (payment?.status || sub.status),
+            subscription: sub,
+            payment
+        });
     } catch (e) {
         res.status(400).json({ error: 'Erro ao buscar assinatura' });
     }

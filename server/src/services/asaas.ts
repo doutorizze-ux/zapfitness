@@ -99,12 +99,11 @@ export const getSubscription = async (id: string) => {
     return response.data;
 };
 
-export const getSubscriptionPayment = async (subscriptionId: string) => {
-    // Get the first PENDING payment for this subscription
+export const getLatestPayment = async (subscriptionId: string) => {
+    // Get the most recent payment for this subscription regardless of status
     const response = await api.get('/payments', {
         params: {
             subscription: subscriptionId,
-            status: 'PENDING',
             limit: 1
         }
     });
