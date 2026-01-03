@@ -81,7 +81,7 @@ export const LandingPage = () => {
 
                     <div className="flex gap-4 items-center z-50">
                         <button onClick={() => navigate('/login')} className="text-white hover:text-orange-400 transition-colors font-bold hidden sm:block">Entrar</button>
-                        <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-5 md:px-8 py-2.5 rounded-full font-black text-sm md:text-base transition-all shadow-lg shadow-orange-500/25 active:scale-95">
+                        <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="bg-orange-500 text-white px-5 md:px-8 py-2.5 rounded-full font-black text-sm md:text-base transition-all shadow-lg shadow-orange-500/25 active:scale-95">
                             Começar
                         </button>
                         <button
@@ -163,7 +163,7 @@ export const LandingPage = () => {
                         Automatize treinos, pagamentos e check-ins pelo chat que seus alunos já usam.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
-                        <button onClick={() => navigate('/register')} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
+                        <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
                             QUERO COMEÇAR AGORA
                             <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
                         </button>
@@ -336,7 +336,7 @@ export const LandingPage = () => {
                                             plan.popular ? "bg-orange-500 text-white shadow-orange-500/20" : "bg-slate-900 text-white"
                                         )}
                                     >
-                                        VER DISPONIBILIDADE
+                                        ESCOLHER ESTE PLANO
                                     </button>
                                 </div>
                             ))

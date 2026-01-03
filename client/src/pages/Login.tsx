@@ -54,7 +54,7 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
         <div className="min-h-screen flex items-center justify-center bg-slate-900 p-4">
             <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md animate-fade-in-up">
                 <div className="flex justify-center mb-6">
-                    <div className="flex items-center gap-2 group">
+                    <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
                             <Zap className="text-white fill-white" size={24} />
                         </div>
@@ -92,50 +92,60 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
                         <button type="submit" className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                             Entrar
                         </button>
-                        <div className="text-center mt-6">
-                            <span className="text-sm text-gray-600">Não tem conta? </span>
-                            <button type="button" onClick={() => setIsRegistering(true)} className="text-sm text-primary font-bold hover:underline">Registrar Academia</button>
+                        <div className="text-center mt-6 flex flex-col gap-3">
+                            <button type="button" onClick={() => setIsRegistering(true)} className="text-sm text-primary font-bold hover:underline">Não tem conta? Registrar Academia</button>
+                            <button type="button" onClick={() => navigate('/')} className="text-sm text-slate-400 hover:text-slate-600 font-bold transition-colors">Voltar para o Início</button>
                         </div>
                     </form>
                 ) : (
-                    <form onSubmit={handleRegister} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
-                            <input
-                                type="text"
-                                value={gymName}
-                                onChange={e => setGymName(e.target.value)}
-                                className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700">Email</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700">Senha</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                            Criar Conta
-                        </button>
-                        <div className="text-center mt-6">
-                            <button type="button" onClick={() => setIsRegistering(false)} className="text-sm text-primary font-bold hover:underline">Voltar para Login</button>
-                        </div>
-                    </form>
+                    <>
+                        {!planId && (
+                            <div className="bg-orange-50 border border-orange-100 p-3 rounded-lg mb-6 text-center">
+                                <p className="text-orange-700 text-xs font-bold leading-relaxed">
+                                    ⚠️ Recomendamos escolher um plano na página inicial antes de se cadastrar.
+                                </p>
+                            </div>
+                        )}
+                        <form onSubmit={handleRegister} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
+                                <input
+                                    type="text"
+                                    value={gymName}
+                                    onChange={e => setGymName(e.target.value)}
+                                    className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Senha</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    className="mt-1 block w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-orange-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                Criar Conta
+                            </button>
+                            <div className="text-center mt-6 flex flex-col gap-3">
+                                <button type="button" onClick={() => setIsRegistering(false)} className="text-sm text-primary font-bold hover:underline">Já tem conta? Entrar</button>
+                                <button type="button" onClick={() => navigate('/')} className="text-sm text-slate-400 hover:text-slate-600 font-bold transition-colors">Voltar para o Início</button>
+                            </div>
+                        </form>
+                    </>
                 )}
             </div>
         </div>
