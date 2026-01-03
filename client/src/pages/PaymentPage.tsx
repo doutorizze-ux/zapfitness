@@ -28,14 +28,17 @@ export const PaymentPage = () => {
                 if (res.data.saas_plan) {
                     setPlan(res.data.saas_plan);
                 } else {
-                    // Alert user they need a plan and redirect
+                    console.warn("PaymentPage: User has no saas_plan data.");
                     alert("Por favor, escolha um plano para ativar sua conta.");
-                    // Redirect to landing page (or a plans page if exists)
-                    window.location.href = '/';
+                    navigate('/');
                     return;
                 }
 
-                if (res.data.payment_status === 'ACTIVE' || res.data.is_free) navigate('/dashboard');
+                console.log("PaymentPage: Status is", res.data.payment_status);
+                if (res.data.payment_status === 'ACTIVE' || res.data.is_free) {
+                    console.log("PaymentPage: Redirecting to dashboard...");
+                    navigate('/dashboard');
+                }
             })
             .catch(err => {
                 console.error("PaymentPage Error:", err);
@@ -120,10 +123,16 @@ export const PaymentPage = () => {
         }
     };
 
-    if (!plan) return <div className="min-h-screen flex items-center justify-center font-bold text-lg text-slate-600">
-        Carregando dados do plano (v2)...
-        <br /><span className="text-sm font-normal text-slate-400 ml-2">(Se demorar, verifique o console F12)</span>
-    </div>;
+    if (!plan) return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
+            <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <h2 className="text-xl font-bold text-slate-800">Carregando dados do plano...</h2>
+            <p className="text-slate-500 mt-2">Isso deve levar apenas um momento.</p>
+            <button onClick={() => window.location.reload()} className="mt-6 text-orange-500 font-bold hover:underline">
+                Recarregar Página
+            </button>
+        </div>
+    );
 
     if (plan && subscription && billingType === 'PIX') {
         return (

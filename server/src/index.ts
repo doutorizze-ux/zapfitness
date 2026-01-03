@@ -220,7 +220,7 @@ app.post('/api/login', async (req, res) => {
 
 app.get('/api/me', authMiddleware, async (req: any, res) => {
     try {
-        const tenant = await prisma.tenant.findUnique({
+        let tenant = await prisma.tenant.findUnique({
             where: { id: req.user.tenant_id },
             include: {
                 _count: { select: { members: true, accessLogs: true } },
@@ -229,7 +229,35 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
                 notificationSettings: true
             }
         });
+
         if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+
+        // Auto-verify if not active and has subscription
+        if (tenant.payment_status !== 'ACTIVE' && tenant.subscription_id && !tenant.is_free) {
+            try {
+                const sub = await getSubscription(tenant.subscription_id);
+                const payment = await getLatestPayment(tenant.subscription_id);
+
+                const isPaidNow = payment && (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED');
+
+                if (isPaidNow) {
+                    tenant = await prisma.tenant.update({
+                        where: { id: tenant.id },
+                        data: { payment_status: 'ACTIVE', status: 'ACTIVE' },
+                        include: {
+                            _count: { select: { members: true, accessLogs: true } },
+                            saas_plan: true,
+                            admins: true,
+                            notificationSettings: true
+                        }
+                    });
+                    console.log(`[API/me] Auto-activated tenant ${tenant.name}`);
+                }
+            } catch (err) {
+                console.warn(`[API/me] Failed auto-verify for ${tenant.id}:`, err);
+            }
+        }
+
         res.json(tenant);
     } catch (e) {
         console.error("Error in /api/me:", e);
