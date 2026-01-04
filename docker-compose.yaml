@@ -12,6 +12,7 @@ services:
       - zapfitness_sessions:/app/server/sessions
     environment:
       - DATABASE_URL=file:/app/server/database.sqlite
+      - TZ=America/Sao_Paulo
       - PORT=3000
       - ASAAS_ENV=sandbox
       - JWT_SECRET=zapfitness_secret_key_123
