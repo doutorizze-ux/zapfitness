@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import QRCode from 'react-qr-code';
 import io from 'socket.io-client';
 import api from '../api';
@@ -14,7 +15,13 @@ export const WhatsAppConnect = () => {
     const [loading, setLoading] = useState(false);
     const [tenantInfo, setTenantInfo] = useState<any>(null);
 
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+
     useEffect(() => {
+        if (!hasSeenTutorial('whatsapp')) {
+            startTutorial('whatsapp');
+        }
+
         if (!user?.tenant_id) return;
 
         api.get('/me').then(res => {
@@ -62,7 +69,9 @@ export const WhatsAppConnect = () => {
                 <p className="text-slate-500 font-medium">Ative o bot para responder seus alunos automaticamente.</p>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 flex flex-col items-center">
+
+
+            <div id="whatsapp-panel" className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 flex flex-col items-center">
                 {status === 'CONNECTED' ? (
                     <div className="text-center w-full max-w-md animate-fade-in">
                         <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border-4 border-white">
@@ -145,7 +154,9 @@ export const WhatsAppConnect = () => {
                 )}
             </div>
 
-            <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden group">
+
+
+            <div id="whatsapp-qr" className="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                 <div className="relative z-10">
@@ -190,6 +201,6 @@ export const WhatsAppConnect = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

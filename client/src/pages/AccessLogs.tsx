@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
 import { Clock, User, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
@@ -8,7 +9,12 @@ export const AccessLogs = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+
     useEffect(() => {
+        if (!hasSeenTutorial('access_logs')) {
+            startTutorial('access_logs');
+        }
         const fetchLogs = async () => {
             try {
                 const res = await api.get('/logs');
@@ -42,7 +48,8 @@ export const AccessLogs = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-20 md:mb-0">
+
+            <div id="access-logs-list" className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-20 md:mb-0">
                 {/* Mobile & Desktop Header for the List */}
                 <div className="hidden md:grid grid-cols-4 bg-slate-50/50 p-6 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                     <span>Horário</span>
@@ -119,6 +126,6 @@ export const AccessLogs = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };

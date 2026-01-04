@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
 import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle } from 'lucide-react';
 import clsx from 'clsx';
@@ -12,6 +13,8 @@ export const Members = () => {
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'info' | 'workout' | 'diet'>('info');
 
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+
     const fetchData = () => {
         api.get('/members').then(res => setMembers(res.data)).catch(console.error);
         api.get('/plans').then(res => setPlans(res.data)).catch(console.error);
@@ -19,6 +22,9 @@ export const Members = () => {
 
     useEffect(() => {
         fetchData();
+        if (!hasSeenTutorial('members')) {
+            startTutorial('members');
+        }
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +117,7 @@ Domingo:
                         <p className="text-slate-500 font-medium">Gestão de alunos e acessos.</p>
                     </div>
                     <button
+                        id="btn-new-member"
                         onClick={openForCreate}
                         className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
                     >
@@ -120,7 +127,7 @@ Domingo:
                 </div>
 
                 <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
-                    <div className="p-5 md:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
+                    <div id="member-search" className="p-5 md:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
                         <Search className="text-slate-400" size={20} />
                         <input
                             type="text"
@@ -159,7 +166,7 @@ Domingo:
                     </div>
 
                     {/* Desktop View: Table */}
-                    <div className="hidden md:block overflow-auto">
+                    <div id="members-list" className="hidden md:block overflow-auto">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-slate-50/50 text-slate-400 font-bold uppercase tracking-widest text-[10px] border-b border-slate-100">
                                 <tr>

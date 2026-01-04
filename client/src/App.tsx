@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { TutorialProvider } from './contexts/TutorialContext';
 import { Login } from './pages/Login';
 import { LandingPage } from './pages/LandingPage';
 import { AdminLogin } from './pages/AdminLogin';
@@ -47,21 +48,23 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
+        <TutorialProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
 
-          <Route path="/register" element={<Login initialMode="register" />} />
-          <Route path="/payment" element={<PrivateRoute requirePayment={false}><PaymentPage /></PrivateRoute>} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
-          <Route path="/dashboard/*" element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          } />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+            <Route path="/register" element={<Login initialMode="register" />} />
+            <Route path="/payment" element={<PrivateRoute requirePayment={false}><PaymentPage /></PrivateRoute>} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/dashboard/*" element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            } />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </TutorialProvider>
       </AuthProvider>
     </Router>
   );

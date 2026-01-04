@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import clsx from 'clsx';
 import api from '../api';
 import { Plus, Trash2, Tag, Calendar, BadgeDollarSign, XCircle } from 'lucide-react';
@@ -14,6 +15,13 @@ export const Plans = () => {
 
     useEffect(() => {
         fetchPlans();
+    }, []);
+
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+    useEffect(() => {
+        if (!hasSeenTutorial('plans')) {
+            startTutorial('plans');
+        }
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +57,7 @@ export const Plans = () => {
                     <p className="text-slate-500 font-medium">Configure as modalidades de assinatura.</p>
                 </div>
                 <button
+                    id="btn-new-plan"
                     onClick={() => setShowModal(true)}
                     className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
                 >
@@ -57,7 +66,7 @@ export const Plans = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 md:mb-0">
+            <div id="plans-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 md:mb-0">
                 {plans.map(plan => (
                     <div key={plan.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative group overflow-hidden">
                         {/* Background Decoration */}

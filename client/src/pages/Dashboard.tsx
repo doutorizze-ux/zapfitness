@@ -2,7 +2,8 @@
 import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard } from 'lucide-react';
+import { useTutorial } from '../contexts/TutorialContext';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -17,6 +18,14 @@ export const Dashboard = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+
+    React.useEffect(() => {
+        // Start the general dashboard tutorial if not seen
+        if (!hasSeenTutorial('dashboard')) {
+            startTutorial('dashboard');
+        }
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -56,7 +65,7 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
-                <nav className="flex-1 p-6 space-y-1 overflow-y-auto">
+                <nav id="sidebar-nav" className="flex-1 p-6 space-y-1 overflow-y-auto">
                     {navItems.map((item) => (
                         <Link
                             key={item.path}
@@ -87,6 +96,21 @@ export const Dashboard = () => {
                             </div>
                         </div>
                     </div>
+                    <button onClick={() => {
+                        const path = location.pathname;
+                        let tutorialId = 'dashboard';
+                        if (path.includes('/members')) tutorialId = 'members';
+                        else if (path.includes('/plans')) tutorialId = 'plans';
+                        else if (path.includes('/finance')) tutorialId = 'finance';
+                        else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
+                        else if (path.includes('/logs')) tutorialId = 'access_logs';
+                        else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
+
+                        startTutorial(tutorialId);
+                    }} className="flex items-center gap-3 w-full p-4 mb-2 text-slate-400 hover:text-orange-400 hover:bg-orange-400/10 rounded-xl transition-all font-bold text-sm group">
+                        <HelpCircle size={20} className="group-hover:scale-110 transition-transform" />
+                        <span>Reiniciar Tutorial</span>
+                    </button>
                     <button onClick={handleLogout} className="flex items-center gap-3 w-full p-4 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all font-bold text-sm">
                         <LogOut size={20} />
                         <span>Sair da Conta</span>
@@ -119,7 +143,7 @@ export const Dashboard = () => {
                 {/* Desktop Top Header (Subtle) */}
                 <header className="hidden md:flex bg-white/50 backdrop-blur-sm border-b border-slate-100 px-10 py-4 items-center justify-between z-10">
                     <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">{currentItem.label}</h2>
-                    <div className="flex items-center gap-4">
+                    <div id="header-profile" className="flex items-center gap-4">
                         <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
                             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </div>
@@ -127,7 +151,7 @@ export const Dashboard = () => {
                 </header>
 
                 {/* Content Container */}
-                <main className="flex-1 overflow-auto pb-24 md:pb-8 touch-pan-y">
+                <main id="main-content" className="flex-1 overflow-auto pb-24 md:pb-8 touch-pan-y">
                     <div className="p-5 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />

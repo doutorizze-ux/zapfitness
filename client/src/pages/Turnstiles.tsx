@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import { Cpu, Wifi, CheckCircle, Download, ExternalLink, ShieldCheck, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
@@ -13,9 +14,15 @@ export const Turnstiles = () => {
     const [token, setToken] = useState('Carregando...');
     const [recentEvents, setRecentEvents] = useState<any[]>([]);
 
+    const { startTutorial, hasSeenTutorial } = useTutorial();
+
     useEffect(() => {
         fetchConfig();
         fetchRecentLogs();
+
+        if (!hasSeenTutorial('turnstiles')) {
+            startTutorial('turnstiles');
+        }
 
         if (user?.tenant_id) {
             socket.emit('join_room', { room: user.tenant_id });
@@ -131,7 +138,7 @@ export const Turnstiles = () => {
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Brand Selector */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <div id="turnstiles-brands" className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                         <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
                             <Cpu className="text-orange-500" />
                             Selecione sua Marca
@@ -157,7 +164,7 @@ export const Turnstiles = () => {
                     </div>
 
                     {/* Configuration Panel */}
-                    <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl">
+                    <div id="turnstiles-config" className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl">
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="p-4 bg-white/10 rounded-2xl">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTutorial } from '../contexts/TutorialContext';
 import { TrendingUp, AlertCircle, Clock, CheckCircle, Search } from 'lucide-react';
 import api from '../api';
 import clsx from 'clsx';
@@ -10,7 +11,12 @@ export const Finance = () => {
 
     useEffect(() => {
         fetchData();
+        if (!hasSeenTutorial('finance')) {
+            startTutorial('finance');
+        }
     }, []);
+
+    const { startTutorial, hasSeenTutorial } = useTutorial();
 
     const fetchData = async () => {
         try {
@@ -47,7 +53,7 @@ export const Finance = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid md:grid-cols-3 gap-6 mb-10">
+            <div id="finance-stats" className="grid md:grid-cols-3 gap-6 mb-10">
                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-6">
                     <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
                         <TrendingUp size={32} />
@@ -80,7 +86,7 @@ export const Finance = () => {
             </div>
 
             {/* Invoices List */}
-            <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+            <div id="invoices-list" className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                 <div className="p-8 border-b border-slate-50 flex flex-col md:row items-center justify-between gap-4">
                     <h3 className="text-xl font-black text-slate-900">Últimas Transações</h3>
                     <div className="relative w-full md:w-96">
