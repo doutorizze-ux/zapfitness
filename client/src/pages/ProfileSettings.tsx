@@ -10,13 +10,14 @@ import {
     AlertCircle,
     Save,
     Image as ImageIcon,
-    RefreshCw
+    RefreshCw,
+    CreditCard
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const ProfileSettings = () => {
     const { user, login } = useAuth();
-    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'access' | 'notifications'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'access' | 'notifications' | 'subscription'>('profile');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -131,6 +132,7 @@ export const ProfileSettings = () => {
         { id: 'security', label: 'Segurança', icon: Lock },
         { id: 'access', label: 'Operacional', icon: Clock },
         { id: 'notifications', label: 'Mensagens Bot', icon: MessageSquare },
+        { id: 'subscription', label: 'Assinatura', icon: CreditCard },
     ];
 
     return (
@@ -411,6 +413,60 @@ export const ProfileSettings = () => {
                                     </button>
                                 </div>
                             </form>
+                        )}
+
+                        {activeTab === 'subscription' && (
+                            <div className="space-y-8 animate-fade-in">
+                                <div className="bg-slate-900 rounded-[2rem] p-8 text-white relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mb-2">Seu Plano Atual</p>
+                                                <h2 className="text-4xl font-black mb-1">{(user as any)?.saas_plan?.name || "Gratuito"}</h2>
+                                                <p className="text-slate-300 font-medium">
+                                                    {(user as any)?.saas_plan_expires_at
+                                                        ? `Válido até ${new Date((user as any).saas_plan_expires_at).toLocaleDateString()}`
+                                                        : 'Plano vitalício ou não informado'}
+                                                </p>
+                                            </div>
+                                            <div className="px-4 py-2 bg-green-500/20 border border-green-500/30 text-green-400 rounded-full text-xs font-black uppercase tracking-widest">
+                                                Ativo
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                            <div className="bg-white/5 rounded-2xl p-4">
+                                                <p className="text-xs text-slate-400 font-bold uppercase mb-1">Limite de Alunos</p>
+                                                <p className="text-2xl font-black">{(user as any)?.saas_plan?.max_members || 50}</p>
+                                            </div>
+                                            <div className="bg-white/5 rounded-2xl p-4">
+                                                <p className="text-xs text-slate-400 font-bold uppercase mb-1">Preço Atual</p>
+                                                <p className="text-2xl font-black">{(user as any)?.saas_plan?.price ? `R$ ${(user as any).saas_plan.price}` : 'Grátis'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
+                                        <CreditCard size={20} className="text-orange-500" />
+                                        Fazer Upgrade
+                                    </h3>
+
+                                    <div className="bg-slate-50 rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
+                                        <p className="text-slate-500 font-medium mb-4">Deseja liberar mais alunos ou funcionalidades?</p>
+                                        <button
+                                            onClick={() => window.open('https://wa.me/5511999999999?text=Quero%20fazer%20upgrade%20do%20meu%20plano%20ZapFitness', '_blank')}
+                                            className="bg-green-500 text-white px-8 py-4 rounded-xl font-black hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all active:scale-95 inline-flex items-center gap-2"
+                                        >
+                                            <MessageSquare size={20} />
+                                            FALAR COM O SUPORTE
+                                        </button>
+                                        <p className="mt-4 text-xs text-slate-400 font-bold">O upgrade é feito diretamente com nosso time comercial.</p>
+                                    </div>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>

@@ -217,9 +217,18 @@ export const SuperAdminDashboard = () => {
                                             </td>
                                             <td className="p-4 text-slate-600">{tenant.saas_plan?.name || '-'}</td>
                                             <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                                                    {tenant.status}
-                                                </span>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {tenant.status === 'ACTIVE' ? 'LIBERADO' : 'BLOQUEADO'}
+                                                    </span>
+                                                    {tenant.saas_plan_expires_at && (
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${new Date(tenant.saas_plan_expires_at) > new Date() ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                            {new Date(tenant.saas_plan_expires_at) > new Date()
+                                                                ? `VENCE: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`
+                                                                : `VENCEU: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="p-4 text-right flex justify-end gap-1">
                                                 <button onClick={() => handleEditTenant(tenant)} className="p-2 text-blue-500 hover:bg-blue-50 rounded" title="Editar">
