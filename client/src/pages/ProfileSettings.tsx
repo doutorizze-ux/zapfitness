@@ -27,6 +27,7 @@ export const ProfileSettings = () => {
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [accessData, setAccessData] = useState({ opening_time: '', closing_time: '', access_cooldown: 5, max_daily_access: 1 });
     const [notificationData, setNotificationData] = useState({ checkin_success: '', plan_warning: '', plan_expired: '' });
+    const [tenantData, setTenantData] = useState<any>(null);
 
     useEffect(() => {
         fetchSettings();
@@ -36,6 +37,7 @@ export const ProfileSettings = () => {
         try {
             const res = await api.get('/me');
             const tenant = res.data;
+            setTenantData(tenant);
             setProfileData({ name: tenant.name, logo_url: tenant.logo_url || '' });
             setAccessData({
                 opening_time: tenant.opening_time || '06:00',
@@ -423,10 +425,10 @@ export const ProfileSettings = () => {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mb-2">Seu Plano Atual</p>
-                                                <h2 className="text-4xl font-black mb-1">{(user as any)?.saas_plan?.name || "Gratuito"}</h2>
+                                                <h2 className="text-4xl font-black mb-1">{tenantData?.saas_plan?.name || "Gratuito"}</h2>
                                                 <p className="text-slate-300 font-medium">
-                                                    {(user as any)?.saas_plan_expires_at
-                                                        ? `Válido até ${new Date((user as any).saas_plan_expires_at).toLocaleDateString()}`
+                                                    {tenantData?.saas_plan_expires_at
+                                                        ? `Válido até ${new Date(tenantData.saas_plan_expires_at).toLocaleDateString()}`
                                                         : 'Plano vitalício ou não informado'}
                                                 </p>
                                             </div>
@@ -438,11 +440,11 @@ export const ProfileSettings = () => {
                                         <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
                                             <div className="bg-white/5 rounded-2xl p-4">
                                                 <p className="text-xs text-slate-400 font-bold uppercase mb-1">Limite de Alunos</p>
-                                                <p className="text-2xl font-black">{(user as any)?.saas_plan?.max_members || 50}</p>
+                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.max_members || 50}</p>
                                             </div>
                                             <div className="bg-white/5 rounded-2xl p-4">
                                                 <p className="text-xs text-slate-400 font-bold uppercase mb-1">Preço Atual</p>
-                                                <p className="text-2xl font-black">{(user as any)?.saas_plan?.price ? `R$ ${(user as any).saas_plan.price}` : 'Grátis'}</p>
+                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.price ? `R$ ${tenantData.saas_plan.price}` : 'Grátis'}</p>
                                             </div>
                                         </div>
                                     </div>
