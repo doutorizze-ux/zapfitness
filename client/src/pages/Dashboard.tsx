@@ -119,7 +119,7 @@ export const Dashboard = () => {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
 
                 {/* Mobile Top Header */}
                 <header className="md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
@@ -151,7 +151,7 @@ export const Dashboard = () => {
                 </header>
 
                 {/* Content Container */}
-                <main id="main-content" className="flex-1 overflow-auto pb-24 md:pb-8 touch-pan-y">
+                <main id="main-content" className="flex-1 overflow-y-auto min-h-0 pb-24 md:pb-8 touch-pan-y">
                     <div className="p-5 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
