@@ -4,7 +4,7 @@ import QRCode from 'react-qr-code';
 import io from 'socket.io-client';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
-import { Zap, ShieldCheck, HelpCircle, Smartphone, LogOut, CheckCircle2 } from 'lucide-react';
+import { Zap, ShieldCheck, Smartphone, LogOut, CheckCircle2 } from 'lucide-react';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
@@ -13,7 +13,6 @@ export const WhatsAppConnect = () => {
     const [qr, setQr] = useState('');
     const [status, setStatus] = useState('DISCONNECTED');
     const [loading, setLoading] = useState(false);
-    const [tenantInfo, setTenantInfo] = useState<any>(null);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
@@ -25,7 +24,6 @@ export const WhatsAppConnect = () => {
         if (!user?.tenant_id) return;
 
         api.get('/me').then(res => {
-            setTenantInfo(res.data);
             setStatus(res.data.whatsapp_status);
         });
 
@@ -152,54 +150,6 @@ export const WhatsAppConnect = () => {
                         )}
                     </div>
                 )}
-            </div>
-
-
-
-            <div id="whatsapp-qr" className="bg-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-
-                <div className="relative z-10">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
-                        <div>
-                            <h3 className="text-3xl font-black tracking-tight mb-2">QR Code da Recepção</h3>
-                            <p className="text-slate-400 font-medium max-w-md">
-                                Imprima e cole este código na entrada da sua academia. Os alunos liberam o acesso escaneando este QR Code.
-                            </p>
-                        </div>
-                        <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-6 py-3 rounded-2xl transition-all font-bold text-sm">
-                            <HelpCircle size={18} />
-                            Dúvidas no Set-up
-                        </button>
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row items-center gap-12">
-                        <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl relative group-hover:scale-105 transition-transform duration-500">
-                            <div className="absolute -top-3 -right-3 bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg border-2 border-slate-900 uppercase">Imprimir</div>
-                            <QRCode
-                                value={`https://wa.me/${tenantInfo?.whatsapp_number?.replace(/\D/g, '') || ''}?text=cheguei`}
-                                size={220}
-                            />
-                        </div>
-                        <div className="flex-1 space-y-8">
-                            {[
-                                { title: '1. Scan Simples', desc: 'O aluno abre o WhatsApp e foca no código na recepção.' },
-                                { title: '2. Check-in Direto', desc: 'Uma mensagem "Cheguei" é pré-preenchida no celular dele.' },
-                                { title: '3. Liberação Segura', desc: 'O bot valida o plano e libera o acesso em menos de 2 segundos.' }
-                            ].map((step, i) => (
-                                <div key={i} className="flex gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-black text-orange-500 text-sm">
-                                        {i + 1}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-lg mb-1">{step.title}</h4>
-                                        <p className="text-slate-400 text-sm font-medium">{step.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
             </div>
         </div >
     );

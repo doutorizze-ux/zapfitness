@@ -61,95 +61,105 @@ const TUTORIAL_STEPS: Record<string, Step[]> = {
     'dashboard': [
         {
             target: 'body',
-            content: 'Bem-vindo ao ZapFitness! 👋 Vamos fazer um tour rápido para você aproveitar ao máximo seu sistema.',
+            content: '👋 Olá! Bem-vindo ao ZapFitness. Vou te mostrar rapidinho como controlar sua academia por aqui.',
             placement: 'center',
+            disableBeacon: true,
         },
         {
-            target: 'aside nav', // Target the sidebar
-            content: 'Aqui é o seu menu principal. Navegue entre Planos, Membros, Financeiro e muito mais.',
+            target: 'aside nav',
+            content: '📋 Menu Principal: Aqui ficam todas as ferramentas. Você vai usar muito a aba "Membros" e "Financeiro".',
             placement: 'right',
+            disableBeacon: true,
         },
         {
-            target: 'header div:nth-child(2)', // Adjust selector for user profile/date
-            content: 'Veja a data e seu perfil rapidamente aqui no topo.',
+            target: 'header div:nth-child(2)',
+            content: '📅 Data e Perfil: Confira se hoje é feriado ou dia útil se o sistema da catraca mudar.',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: 'main',
-            content: 'Esta é a área principal onde seus dados e relatórios aparecem.',
+            content: '📊 Visão Geral: Aqui aparecem os resumos do dia. Quem entrou, quanto entrou de dinheiro e avisos importantes.',
             placement: 'center',
+            disableBeacon: true,
         }
     ],
     'members': [
         {
             target: '#btn-new-member',
-            content: 'Clique aqui para cadastrar um novo aluno manualmente.',
+            content: '➕ Novo Aluno: Clique aqui quando chegar alguém para se matricular.',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: '#member-search',
-            content: 'Busque alunos pelo nome ou telefone rapidamente.',
+            content: '🔍 Pesquisa Rápida: Digite o nome ou celular para achar a ficha do aluno em segundos.',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: '#members-list',
-            content: 'Aqui você visualiza todos os alunos, seus planos e status. Clique no lápis para editar.',
+            content: '📝 Lista de Alunos: Aqui você vê todos. Clique no lápis para editar ou bloquear alguém se precisar.',
             placement: 'top',
+            disableBeacon: true,
         }
     ],
     'plans': [
         {
             target: '#btn-new-plan',
-            content: 'Crie novos planos de assinatura (Mensal, Trimestral, etc.) para vincular aos alunos.',
+            content: '💰 Criar Planos: Defina seus pacotes aqui. Ex: "Mensal", "Anual", "Pilates".',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: '#plans-grid',
-            content: 'Gerencie seus planos ativos aqui. Você pode ver o preço e a duração de cada um.',
+            content: '🏷️ Seus Planos: Seus pacotes ativos aparecem aqui. Você vincula esses planos aos alunos na hora da matrícula.',
             placement: 'top',
+            disableBeacon: true,
         }
     ],
     'finance': [
         {
             target: '#finance-stats',
-            content: 'Visualize rapidamente sua renda mensal, e os valores pendentes ou atrasados.',
+            content: '💵 Resumo do Caixa: Quanto você faturou no mês e o que ainda tem para receber.',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: '#invoices-list',
-            content: 'Acompanhe todas as cobranças geradas. Confirme pagamentos manuais clicando em "Confirmar Pago".',
-            placement: 'top'
+            content: '🧾 Cobranças: Lista de quem pagou e quem está devendo. Você pode dar baixa manual aqui.',
+            placement: 'top',
+            disableBeacon: true,
         }
     ],
     'turnstiles': [
         {
             target: '#turnstiles-brands',
-            content: 'Selecione a marca da sua catraca aqui. Cada uma tem um modo de conexão diferente.',
+            content: '🚧 Marca da Catraca: Escolha qual modelo você tem instalada. Isso ajusta a conexão automaticamente.',
             placement: 'bottom',
+            disableBeacon: true,
         },
         {
             target: '#turnstiles-config',
-            content: 'Aqui você gera o Token de Acesso para conectar o software da catraca (ZappBridge) ao sistema.',
+            content: '🔑 Configuração: Gere o Token aqui para colocar no computador da recepção. É a "senha" para a catraca funcionar.',
             placement: 'top',
+            disableBeacon: true,
         }
     ],
     'access_logs': [
         {
             target: '#access-logs-list',
-            content: 'Este painel mostra quem está entrando na academia agora. O status "LIBERADO" ou "NEGADO" atualiza em tempo real.',
+            content: '👁️ Portaria Virtual: Acompanhe em tempo real quem está passando na catraca agora. Tela ótima para deixar num monitor.',
             placement: 'top',
+            disableBeacon: true,
         }
     ],
     'whatsapp': [
         {
             target: '#whatsapp-panel',
-            content: 'Conecte o WhatsApp da academia aqui. Escaneie o QR Code igual ao WhatsApp Web.',
+            content: '📱 Conectar WhatsApp: Escaneie o QR Code com o celular da academia. Assim o sistema envia cobranças e treinos sozinho!',
             placement: 'bottom',
-        },
-        {
-            target: '#whatsapp-qr',
-            content: 'Imprima este QR Code e coloque na recepção. Seus alunos pode fazer check-in apenas escaneando ele!',
-            placement: 'top',
+            disableBeacon: true,
         }
     ],
     // Add other pages here later
