@@ -4,7 +4,7 @@ import QRCode from 'react-qr-code';
 import io from 'socket.io-client';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
-import { Zap, ShieldCheck, Smartphone, LogOut, CheckCircle2 } from 'lucide-react';
+import { Zap, ShieldCheck, Smartphone, LogOut, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
@@ -111,6 +111,13 @@ export const WhatsAppConnect = () => {
                                 <p className="text-slate-500 font-medium mb-10 leading-relaxed">
                                     Escaneie o QR Code conforme faria no WhatsApp Web para ativar as automações da academia.
                                 </p>
+
+                                <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-8 flex items-start gap-3">
+                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
+                                    <p className="text-xs font-bold text-orange-800 leading-relaxed text-left">
+                                        IMPORTANTE: Caso seu WhatsApp desconecte por qualquer motivo, gere um novo QR Code imediatamente para que não fique sem os serviços de automação.
+                                    </p>
+                                </div>
                                 <button
                                     onClick={handleConnect}
                                     disabled={loading}
@@ -141,10 +148,17 @@ export const WhatsAppConnect = () => {
                                 </div>
                                 <h3 className="text-xl font-black text-slate-900 mb-2">Escaneie o Código</h3>
                                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Aguardando leitura pelo WhatsApp</p>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 mb-8">
                                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
                                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                                     <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                </div>
+
+                                <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-start gap-3 max-w-xs">
+                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
+                                    <p className="text-[10px] font-bold text-orange-800 leading-relaxed text-left">
+                                        IMPORTANTE: Mantenha esta tela aberta até a conexão ser confirmada. Caso desconecte no futuro, basta gerar um novo código aqui.
+                                    </p>
                                 </div>
                             </div>
                         )}
