@@ -19,12 +19,14 @@ export const Dashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { startTutorial, hasSeenTutorial } = useTutorial();
+    const [systemSettings, setSystemSettings] = React.useState({ site_name: 'ZapFitness', logo_url: '' });
 
     React.useEffect(() => {
         // Start the general dashboard tutorial if not seen
         if (!hasSeenTutorial('dashboard')) {
             startTutorial('dashboard');
         }
+        api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
     }, []);
 
     const handleLogout = () => {
@@ -49,19 +51,24 @@ export const Dashboard = () => {
         <div className="flex h-screen bg-slate-50 overflow-hidden">
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-72 bg-slate-900 text-white flex-col shadow-2xl z-20">
-                <div className="p-8 border-b border-slate-800 flex items-center gap-3">
-                    {user?.logo_url ? (
-                        <img src={user.logo_url} alt="Logo" className="w-10 h-10 rounded-xl object-cover" />
-                    ) : (
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                            <Zap className="text-white fill-white" size={20} />
+                <div className="p-8 border-b border-slate-800">
+                    <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+                            {systemSettings.logo_url ? (
+                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
+                                    <Zap className="text-white fill-white" size={20} />
+                                </div>
+                            )}
                         </div>
-                    )}
-                    <div>
-                        <h2 className="text-xl font-black tracking-tight text-white truncate max-w-[160px]">
-                            {user?.name || 'ZappFitness'}
-                        </h2>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{user?.role || 'GYM OWNER'}</p>
+                        <span className="text-2xl font-black tracking-tighter text-white">
+                            {systemSettings.site_name === 'ZapFitness' ? (
+                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span></>
+                            ) : (
+                                systemSettings.site_name
+                            )}
+                        </span>
                     </div>
                 </div>
 

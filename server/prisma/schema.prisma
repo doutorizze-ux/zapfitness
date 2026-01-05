@@ -180,3 +180,10 @@ model AccessLog {
   tenant_id String
   tenant    Tenant   @relation(fields: [tenant_id], references: [id])
 }
+
+model SystemSettings {
+  id        String   @id @default("global")
+  site_name String   @default("ZapFitness")
+  logo_url  String?
+  updated_at DateTime @updatedAt
+}

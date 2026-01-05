@@ -18,9 +18,11 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
 
     const [isRegistering, setIsRegistering] = useState(initialMode === 'register');
     const [gymName, setGymName] = useState('');
+    const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
 
     useEffect(() => {
         setIsRegistering(initialMode === 'register');
+        api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
     }, [initialMode]);
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -55,11 +57,21 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
             <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md animate-fade-in-up">
                 <div className="flex justify-center mb-6">
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
-                            <Zap className="text-white fill-white" size={24} />
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            {systemSettings.logo_url ? (
+                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
+                                    <Zap className="text-white fill-white" size={24} />
+                                </div>
+                            )}
                         </div>
                         <span className="text-3xl font-black tracking-tight text-slate-900">
-                            Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span>
+                            {systemSettings.site_name === 'ZapFitness' ? (
+                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span></>
+                            ) : (
+                                systemSettings.site_name
+                            )}
                         </span>
                     </div>
                 </div>

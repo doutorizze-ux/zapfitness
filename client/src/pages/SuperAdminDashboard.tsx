@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Activity, Users, Store, ShieldAlert, Power, Pencil, Trash2, WifiOff } from 'lucide-react';
+import clsx from 'clsx';
 
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
@@ -10,6 +11,8 @@ export const SuperAdminDashboard = () => {
     const [plans, setPlans] = useState<any[]>([]);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
+    const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
+    const [activeTab, setActiveTab] = useState<'gyms' | 'plans' | 'settings'>('gyms');
 
     // Edit Tenant State
     const [editingTenant, setEditingTenant] = useState<any>(null);
@@ -25,6 +28,7 @@ export const SuperAdminDashboard = () => {
         api.get('/saas/plans').then(res => setPlans(res.data)).catch(err => {
             if (err.response?.status === 403) navigate('/admin/login');
         });
+        api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
     };
 
     const handleCreatePlan = async (e: React.FormEvent) => {
@@ -131,14 +135,31 @@ export const SuperAdminDashboard = () => {
         }
     };
 
+    const handleSaveSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.put('/system/settings', systemSettings);
+            alert('Configurações salvas com sucesso!');
+            fetchData();
+        } catch (e: any) {
+            alert('Erro ao salvar as configurações.');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-100">
             <nav className="bg-slate-900 text-white p-4 shadow-lg">
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center font-bold">Z</div>
+                        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center font-bold">
+                            {systemSettings.logo_url ? (
+                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="bg-primary w-full h-full flex items-center justify-center">Z</div>
+                            )}
+                        </div>
                         <div>
-                            <h1 className="text-xl font-bold">ZapFitness</h1>
+                            <h1 className="text-xl font-bold">{systemSettings.site_name}</h1>
                             <span className="text-xs text-slate-400 uppercase tracking-widest">Super Admin</span>
                         </div>
                     </div>
@@ -182,112 +203,172 @@ export const SuperAdminDashboard = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Main Tabs Navigation */}
+                <div className="flex gap-4 mb-8">
+                    <button onClick={() => setActiveTab('gyms')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'gyms' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>ACADEMIAS</button>
+                    <button onClick={() => setActiveTab('plans')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'plans' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>PLANOS SAAS</button>
+                    <button onClick={() => setActiveTab('settings')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'settings' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>SISTEMA</button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8">
                     {/* Tenants List */}
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100">
-                            <h2 className="text-xl font-bold text-slate-800">Gerenciar Academias</h2>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 font-medium">
-                                    <tr>
-                                        <th className="p-4">Academia</th>
-                                        <th className="p-4">Plano</th>
-                                        <th className="p-4">Status</th>
-                                        <th className="p-4 text-right">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {tenants.map(tenant => (
-                                        <tr key={tenant.id} className="hover:bg-slate-50 transition">
-                                            <td className="p-4">
-                                                <p className="font-bold text-slate-800">{tenant.name}</p>
-                                                <p className="text-xs text-slate-600 font-medium">{tenant.admins?.[0]?.email}</p>
-                                                <p className="text-xs text-slate-500">{tenant.slug}</p>
-                                                <p className="text-xs text-slate-400">{tenant.owner_phone}</p>
-                                                {tenant.is_free && (
-                                                    <span className="inline-block mt-1 bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                                                        CONTA CORTESIA
-                                                    </span>
-                                                )}
-                                                <span className={`text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
-                                                    Warning: WA {tenant.whatsapp_status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-slate-600">{tenant.saas_plan?.name || '-'}</td>
-                                            <td className="p-4">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {tenant.status === 'ACTIVE' ? 'LIBERADO' : 'BLOQUEADO'}
-                                                    </span>
-                                                    {tenant.saas_plan_expires_at && (
-                                                        <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${new Date(tenant.saas_plan_expires_at) > new Date() ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                                            {new Date(tenant.saas_plan_expires_at) > new Date()
-                                                                ? `VENCE: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`
-                                                                : `VENCEU: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`}
+                    {activeTab === 'gyms' && (
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-slate-100">
+                                <h2 className="text-xl font-bold text-slate-800">Gerenciar Academias</h2>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 text-slate-500 font-medium">
+                                        <tr>
+                                            <th className="p-4">Academia</th>
+                                            <th className="p-4">Plano</th>
+                                            <th className="p-4">Status</th>
+                                            <th className="p-4 text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {tenants.map(tenant => (
+                                            <tr key={tenant.id} className="hover:bg-slate-50 transition">
+                                                <td className="p-4">
+                                                    <p className="font-bold text-slate-800">{tenant.name}</p>
+                                                    <p className="text-xs text-slate-600 font-medium">{tenant.admins?.[0]?.email}</p>
+                                                    <p className="text-xs text-slate-500">{tenant.slug}</p>
+                                                    <p className="text-xs text-slate-400">{tenant.owner_phone}</p>
+                                                    {tenant.is_free && (
+                                                        <span className="inline-block mt-1 bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                                                            CONTA CORTESIA
                                                         </span>
                                                     )}
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-right flex justify-end gap-1">
-                                                <button onClick={() => handleEditTenant(tenant)} className="p-2 text-blue-500 hover:bg-blue-50 rounded" title="Editar">
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button onClick={() => handleToggle(tenant.id)} className={`p-2 rounded ${tenant.status === 'ACTIVE' ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`} title={tenant.status === 'ACTIVE' ? 'Bloquear' : 'Ativar'}>
-                                                    <Power size={18} />
-                                                </button>
-                                                <button onClick={() => handleDisconnect(tenant.id)} className="p-2 text-slate-500 hover:bg-slate-100 rounded" title="Desconectar WhatsApp">
-                                                    <WifiOff size={18} />
-                                                </button>
-                                                <button onClick={() => handleDeleteTenant(tenant.id)} className="p-2 text-red-500 hover:bg-red-50 rounded" title="Excluir Permanentemente">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                                    <span className={`text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
+                                                        Warning: WA {tenant.whatsapp_status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-slate-600">{tenant.saas_plan?.name || '-'}</td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${tenant.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {tenant.status === 'ACTIVE' ? 'LIBERADO' : 'BLOQUEADO'}
+                                                        </span>
+                                                        {tenant.saas_plan_expires_at && (
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold w-fit ${new Date(tenant.saas_plan_expires_at) > new Date() ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                                                {new Date(tenant.saas_plan_expires_at) > new Date()
+                                                                    ? `VENCE: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`
+                                                                    : `VENCEU: ${new Date(tenant.saas_plan_expires_at).toLocaleDateString()}`}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-right flex justify-end gap-1">
+                                                    <button onClick={() => handleEditTenant(tenant)} className="p-2 text-blue-500 hover:bg-blue-50 rounded" title="Editar">
+                                                        <Pencil size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleToggle(tenant.id)} className={`p-2 rounded ${tenant.status === 'ACTIVE' ? 'text-orange-500 hover:bg-orange-50' : 'text-green-500 hover:bg-green-50'}`} title={tenant.status === 'ACTIVE' ? 'Bloquear' : 'Ativar'}>
+                                                        <Power size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDisconnect(tenant.id)} className="p-2 text-slate-500 hover:bg-slate-100 rounded" title="Desconectar WhatsApp">
+                                                        <WifiOff size={18} />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteTenant(tenant.id)} className="p-2 text-red-500 hover:bg-red-50 rounded" title="Excluir Permanentemente">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Plans Management */}
-                    <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-slate-800">Planos SaaS</h2>
-                            <button onClick={() => setShowPlanModal(true)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition">
-                                + Novo Plano
-                            </button>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 text-slate-500 font-medium">
-                                    <tr>
-                                        <th className="p-4">Nome</th>
-                                        <th className="p-4">Preço</th>
-                                        <th className="p-4">Período</th>
-                                        <th className="p-4">Max Membros</th>
-                                        <th className="p-4 text-right">Ação</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {plans.map(plan => (
-                                        <tr key={plan.id} className="hover:bg-slate-50 transition">
-                                            <td className="p-4 font-bold text-slate-800">{plan.name}</td>
-                                            <td className="p-4 text-slate-600">R$ {parseFloat(plan.price).toFixed(2)}</td>
-                                            <td className="p-4 text-slate-600">{plan.duration_months} {plan.duration_months === 1 ? 'mês' : 'meses'}</td>
-                                            <td className="p-4 text-slate-600">{plan.max_members}</td>
-                                            <td className="p-4 text-right">
-                                                <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:text-red-700 p-2">
-                                                    Excluir
-                                                </button>
-                                            </td>
+                    {activeTab === 'plans' && (
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-slate-800">Planos SaaS</h2>
+                                <button onClick={() => setShowPlanModal(true)} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-800 transition">
+                                    + Novo Plano
+                                </button>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 text-slate-500 font-medium">
+                                        <tr>
+                                            <th className="p-4">Nome</th>
+                                            <th className="p-4">Preço</th>
+                                            <th className="p-4">Período</th>
+                                            <th className="p-4">Max Membros</th>
+                                            <th className="p-4 text-right">Ação</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {plans.map(plan => (
+                                            <tr key={plan.id} className="hover:bg-slate-50 transition">
+                                                <td className="p-4 font-bold text-slate-800">{plan.name}</td>
+                                                <td className="p-4 text-slate-600">R$ {parseFloat(plan.price).toFixed(2)}</td>
+                                                <td className="p-4 text-slate-600">{plan.duration_months} {plan.duration_months === 1 ? 'mês' : 'meses'}</td>
+                                                <td className="p-4 text-slate-600">{plan.max_members}</td>
+                                                <td className="p-4 text-right">
+                                                    <button onClick={() => handleDeletePlan(plan.id)} className="text-red-500 hover:text-red-700 p-2">
+                                                        Excluir
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* System Settings Tab */}
+                    {activeTab === 'settings' && (
+                        <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8">
+                            <h2 className="text-xl font-bold text-slate-800 mb-6 border-b pb-4">Configurações Globais do Sistema</h2>
+                            <form onSubmit={handleSaveSettings} className="max-w-xl space-y-6">
+                                <div>
+                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Nome do Sistema</label>
+                                    <input
+                                        type="text"
+                                        value={systemSettings.site_name}
+                                        onChange={(e) => setSystemSettings({ ...systemSettings, site_name: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                        placeholder="Ex: ZapFitness"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-2">URL da Logo do Sistema</label>
+                                    <input
+                                        type="url"
+                                        value={systemSettings.logo_url || ''}
+                                        onChange={(e) => setSystemSettings({ ...systemSettings, logo_url: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+                                        placeholder="https://exemplo.com/logo.png"
+                                    />
+                                    <p className="mt-2 text-xs text-slate-400">Esta logo será exibida em todas as telas públicas e administrativas.</p>
+                                </div>
+                                <div className="p-6 bg-slate-50 rounded-xl flex items-center gap-6 border border-slate-100">
+                                    <div className="w-16 h-16 bg-white rounded-xl shadow-inner flex items-center justify-center overflow-hidden border">
+                                        {systemSettings.logo_url ? (
+                                            <img src={systemSettings.logo_url} alt="Preview" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <Activity className="text-slate-200" size={32} />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Prévia da Identidade</p>
+                                        <h3 className="text-xl font-black text-slate-900">{systemSettings.site_name}</h3>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button type="submit" className="bg-slate-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-800 transition shadow-lg">
+                                        Salvar Configurações
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
                 </div>
 
                 {/* Edit Tenant Modal */}

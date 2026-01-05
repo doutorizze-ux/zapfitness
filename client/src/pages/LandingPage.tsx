@@ -10,6 +10,7 @@ export const LandingPage = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [plansQuery, setPlansQuery] = useState<any[]>([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
+    const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -34,7 +35,19 @@ export const LandingPage = () => {
             }
         };
 
+        const fetchSettings = async () => {
+            let apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
+            if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
+            if (!apiUrl.endsWith('/api')) apiUrl += '/api';
+            const url = `${apiUrl}/system/settings`;
+            try {
+                const res = await fetch(url);
+                if (res.ok) setSystemSettings(await res.json());
+            } catch (err) { console.error(err); }
+        };
+
         fetchPlans();
+        fetchSettings();
 
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -61,11 +74,21 @@ export const LandingPage = () => {
             )}>
                 <div className="max-w-7xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-2 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center border border-white/10 shadow-lg shadow-orange-500/20 group-hover:scale-110 transition-all duration-300">
-                            <Zap className="text-white fill-white" size={20} />
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-white/10 shadow-lg group-hover:scale-110 transition-all duration-300">
+                            {systemSettings.logo_url ? (
+                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/20">
+                                    <Zap className="text-white fill-white" size={20} />
+                                </div>
+                            )}
                         </div>
                         <span className="text-xl md:text-2xl font-black tracking-tight text-white">
-                            Zapp<span className="text-orange-500">Fitness</span>
+                            {systemSettings.site_name === 'ZapFitness' ? (
+                                <>Zapp<span className="text-orange-500">Fitness</span></>
+                            ) : (
+                                systemSettings.site_name
+                            )}
                         </span>
                     </div>
 
@@ -350,8 +373,15 @@ export const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
                     <div className="md:col-span-2">
                         <div className="flex items-center justify-center md:justify-start gap-2 mb-8">
-                            <Zap className="text-orange-500 fill-orange-500" size={32} />
-                            <span className="text-3xl font-black tracking-tighter text-white">ZappFitness</span>
+                            <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
+                                {systemSettings.logo_url ? (
+                                    <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                ) : (
+                                    <Zap className="text-orange-500 fill-orange-500" size={32} />
+                                )
+                                }
+                            </div>
+                            <span className="text-3xl font-black tracking-tighter text-white">{systemSettings.site_name}</span>
                         </div>
                         <p className="max-w-md text-slate-500 mb-8 mx-auto md:mx-0 font-medium">
                             A tecnologia que conecta Academias e Personal Trainers ao futuro da gestão fitness. Atendimento ágil, automatizado e eficiente.
@@ -375,7 +405,7 @@ export const LandingPage = () => {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto px-6 mt-20 pt-10 border-t border-white/5 text-center text-xs font-bold text-slate-600 uppercase tracking-widest">
-                    &copy; 2025 ZapFitness. Transformando academias, mudando vidas.
+                    &copy; 2025 {systemSettings.site_name}. Transformando academias, mudando vidas.
                 </div>
             </footer>
         </div>
