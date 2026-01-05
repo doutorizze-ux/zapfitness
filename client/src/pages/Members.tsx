@@ -8,7 +8,7 @@ export const Members = () => {
     const [members, setMembers] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+    const [formData, setFormData] = useState({ name: '', phone: '', plan_id: '', diet: '', workout: '', cpf: '', address: '' });
     const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'info' | 'workout' | 'diet'>('info');
@@ -42,7 +42,7 @@ export const Members = () => {
             }
             setShowModal(false);
             setEditingId(null);
-            setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+            setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '', cpf: '', address: '' });
             fetchData();
         } catch (e: any) {
             console.error(e);
@@ -57,7 +57,9 @@ export const Members = () => {
             phone: member.phone,
             plan_id: member.plan_id || '',
             diet: member.diet_plan || '',
-            workout: member.workout_routine || ''
+            workout: member.workout_routine || '',
+            cpf: member.cpf || '',
+            address: member.address || ''
         });
         setActiveTab('info');
         setShowModal(true);
@@ -76,7 +78,7 @@ export const Members = () => {
 
     const openForCreate = () => {
         setEditingId(null);
-        setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '' });
+        setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '', cpf: '', address: '' });
         setActiveTab('info');
         setShowModal(true);
     };
@@ -272,6 +274,22 @@ Domingo:
                                         <div className="relative">
                                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
                                             <input required type="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="5511999999999" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="group">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">CPF</label>
+                                            <div className="relative">
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="000.000.000-00" value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="group">
+                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Endereço</label>
+                                            <div className="relative">
+                                                <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
+                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Rua, Número, Bairro" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="group">

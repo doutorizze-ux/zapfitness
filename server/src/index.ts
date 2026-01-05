@@ -417,7 +417,7 @@ app.get('/api/members', authMiddleware, async (req: any, res) => {
 });
 
 app.post('/api/members', authMiddleware, async (req: any, res) => {
-    const { name, phone, plan_id, diet, workout } = req.body;
+    const { name, phone, plan_id, diet, workout, cpf, address } = req.body;
 
     // SaaS Limit Check
     const tenant = await prisma.tenant.findUnique({
@@ -471,6 +471,8 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
             plan_id: plan_id || undefined,
             plan_start_date: new Date(),
             plan_end_date: planEndDate,
+            cpf,
+            address,
             diet_plan: diet,
             workout_routine: workout,
             active: true
@@ -499,7 +501,7 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
 
 app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
     try {
-        const { name, phone, plan_id, diet, workout } = req.body;
+        const { name, phone, plan_id, diet, workout, cpf, address } = req.body;
 
         const member = await prisma.member.findFirst({
             where: { id: req.params.id, tenant_id: req.user.tenant_id }
@@ -543,6 +545,8 @@ app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
                 phone,
                 plan_id: plan_id || null, // Handle empty string as null
                 plan_end_date,
+                cpf,
+                address,
                 diet_plan: diet,
                 workout_routine: workout
             }

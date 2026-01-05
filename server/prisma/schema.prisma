@@ -136,6 +136,9 @@ model Member {
   plan_start_date DateTime?
   plan_end_date   DateTime?
   
+  cpf             String?
+  address         String?
+  
   diet_plan       String?
   workout_routine String?
   
