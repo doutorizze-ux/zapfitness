@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import { Zap } from 'lucide-react';
+import { formatImageUrl } from '../utils/format';
 
 import { useSearchParams } from 'react-router-dom';
 
@@ -59,7 +60,7 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
                     <div className="flex items-center gap-2 group cursor-pointer" onClick={() => navigate('/')}>
                         <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                             {systemSettings.logo_url ? (
-                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                <img src={formatImageUrl(systemSettings.logo_url)} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
                                     <Zap className="text-white fill-white" size={24} />

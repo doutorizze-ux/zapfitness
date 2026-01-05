@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Activity, Users, Store, ShieldAlert, Power, Pencil, Trash2, WifiOff } from 'lucide-react';
 import clsx from 'clsx';
+import { formatImageUrl } from '../utils/format';
 
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
@@ -13,6 +14,7 @@ export const SuperAdminDashboard = () => {
     const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
     const [activeTab, setActiveTab] = useState<'gyms' | 'plans' | 'settings'>('gyms');
+    const [uploading, setUploading] = useState(false);
 
     // Edit Tenant State
     const [editingTenant, setEditingTenant] = useState<any>(null);
@@ -143,6 +145,26 @@ export const SuperAdminDashboard = () => {
             fetchData();
         } catch (e: any) {
             alert('Erro ao salvar as configurações.');
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setSystemSettings({ ...systemSettings, logo_url: res.data.url });
+        } catch (err) {
+            alert('Erro ao fazer upload da imagem.');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -338,20 +360,41 @@ export const SuperAdminDashboard = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-2">URL da Logo do Sistema</label>
-                                    <input
-                                        type="url"
-                                        value={systemSettings.logo_url || ''}
-                                        onChange={(e) => setSystemSettings({ ...systemSettings, logo_url: e.target.value })}
-                                        className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                        placeholder="https://exemplo.com/logo.png"
-                                    />
-                                    <p className="mt-2 text-xs text-slate-400">Esta logo será exibida em todas as telas públicas e administrativas.</p>
+                                    <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-2">Logo do Sistema (Upload)</label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileUpload}
+                                            className="hidden"
+                                            id="logo-upload"
+                                            disabled={uploading}
+                                        />
+                                        <label
+                                            htmlFor="logo-upload"
+                                            className={clsx(
+                                                "cursor-pointer px-6 py-3 rounded-lg font-bold border-2 border-dashed transition-all",
+                                                uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-primary/5"
+                                            )}
+                                        >
+                                            {uploading ? 'Enviando...' : 'Selecionar Imagem'}
+                                        </label>
+                                        {systemSettings.logo_url && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setSystemSettings({ ...systemSettings, logo_url: '' })}
+                                                className="text-red-500 text-xs font-bold hover:underline"
+                                            >
+                                                Remover
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-400">Tamanho recomendado: 512x512px. Formatos: PNG, JPG.</p>
                                 </div>
                                 <div className="p-6 bg-slate-50 rounded-xl flex items-center gap-6 border border-slate-100">
                                     <div className="w-16 h-16 bg-white rounded-xl shadow-inner flex items-center justify-center overflow-hidden border">
                                         {systemSettings.logo_url ? (
-                                            <img src={systemSettings.logo_url} alt="Preview" className="w-full h-full object-cover" />
+                                            <img src={formatImageUrl(systemSettings.logo_url)} alt="Preview" className="w-full h-full object-cover" />
                                         ) : (
                                             <Activity className="text-slate-200" size={32} />
                                         )}

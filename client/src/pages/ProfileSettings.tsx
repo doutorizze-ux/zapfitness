@@ -14,6 +14,7 @@ import {
     CreditCard
 } from 'lucide-react';
 import clsx from 'clsx';
+import { formatImageUrl } from '../utils/format';
 
 export const ProfileSettings = () => {
     const { user, login } = useAuth();
@@ -21,6 +22,7 @@ export const ProfileSettings = () => {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [uploading, setUploading] = useState(false);
 
     // Form states
     const [profileData, setProfileData] = useState({ name: '', logo_url: '' });
@@ -129,6 +131,26 @@ export const ProfileSettings = () => {
         }
     };
 
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setProfileData({ ...profileData, logo_url: res.data.url });
+        } catch (err) {
+            alert('Erro ao fazer upload da imagem.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const tabs = [
         { id: 'profile', label: 'Perfil', icon: Building2 },
         { id: 'security', label: 'Segurança', icon: Lock },
@@ -201,24 +223,43 @@ export const ProfileSettings = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">URL da Logo (PNG/JPG)</label>
-                                            <div className="relative">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Logo da Academia (Upload)</label>
+                                            <div className="flex items-center gap-4">
                                                 <input
-                                                    type="url"
-                                                    value={profileData.logo_url}
-                                                    onChange={(e) => setProfileData({ ...profileData, logo_url: e.target.value })}
-                                                    className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all pl-12"
-                                                    placeholder="https://sua-logo.com/logo.png"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleFileUpload}
+                                                    className="hidden"
+                                                    id="logo-upload"
+                                                    disabled={uploading}
                                                 />
-                                                <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                                <label
+                                                    htmlFor="logo-upload"
+                                                    className={clsx(
+                                                        "cursor-pointer px-6 py-4 rounded-2xl font-black transition-all flex items-center gap-2 border-2 border-dashed",
+                                                        uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-orange-500 text-orange-500 hover:bg-orange-50/50"
+                                                    )}
+                                                >
+                                                    {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
+                                                    {uploading ? 'ENVIANDO...' : 'SELECIONAR LOGO'}
+                                                </label>
+                                                {profileData.logo_url && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setProfileData({ ...profileData, logo_url: '' })}
+                                                        className="text-red-500 text-xs font-black hover:underline uppercase tracking-tighter"
+                                                    >
+                                                        Remover
+                                                    </button>
+                                                )}
                                             </div>
-                                            <p className="mt-2 text-[10px] text-slate-400 font-bold">A logo aparecerá no seu painel e comunicações.</p>
+                                            <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Formatos aceitos: PNG, JPG (Máx. 5MB).</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] p-8 border-2 border-dashed border-slate-200">
                                         <div className="w-24 h-24 rounded-3xl bg-white shadow-inner flex items-center justify-center mb-4 overflow-hidden outline outline-4 outline-white">
                                             {profileData.logo_url ? (
-                                                <img src={profileData.logo_url} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={formatImageUrl(profileData.logo_url)} alt="Preview" className="w-full h-full object-cover" />
                                             ) : (
                                                 <Building2 size={40} className="text-slate-200" />
                                             )}

@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Zap, Shield, Smartphone, ArrowRight, MessageSquare, Target, UserCheck, Menu, X } from 'lucide-react';
+import { formatImageUrl } from '../utils/format';
 import clsx from 'clsx';
 
 export const LandingPage = () => {
@@ -76,7 +76,7 @@ export const LandingPage = () => {
                     <div className="flex items-center gap-2 group cursor-pointer z-50" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center border border-white/10 shadow-lg group-hover:scale-110 transition-all duration-300">
                             {systemSettings.logo_url ? (
-                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                <img src={formatImageUrl(systemSettings.logo_url)} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/20">
                                     <Zap className="text-white fill-white" size={20} />
@@ -375,7 +375,7 @@ export const LandingPage = () => {
                         <div className="flex items-center justify-center md:justify-start gap-2 mb-8">
                             <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center">
                                 {systemSettings.logo_url ? (
-                                    <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    <img src={formatImageUrl(systemSettings.logo_url)} alt="Logo" className="w-full h-full object-cover" />
                                 ) : (
                                     <Zap className="text-orange-500 fill-orange-500" size={32} />
                                 )

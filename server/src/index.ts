@@ -12,6 +12,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { eventBus, EVENTS } from './events.js';
+import multer from 'multer';
+import cors from 'cors';
 
 // --- PREVENTION FOR CRASHES ---
 process.on('unhandledRejection', (reason, promise) => {
@@ -59,7 +61,37 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(cors());
 
+// Configure Multer for uploads
+const uploadsDir = path.resolve('uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir);
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Somente imagens são permitidas'));
+        }
+    }
+});
+
+app.use('/uploads', express.static(uploadsDir));
 const JWT_SECRET = process.env.JWT_SECRET || 'zapfitness_secret_key_123';
 
 
@@ -263,6 +295,29 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
         console.error("Error in /api/me:", e);
         res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
     }
+});
+
+// Update Tenant Profile
+app.put('/api/system/settings', saasAuthMiddleware, async (req: any, res) => {
+    try {
+        const { site_name, logo_url } = req.body;
+        const updated = await prisma.systemSettings.upsert({
+            where: { id: 'global' },
+            update: { site_name, logo_url },
+            create: { id: 'global', site_name, logo_url }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao salvar configurações' });
+    }
+});
+
+app.post('/api/upload', authMiddleware, upload.single('file'), (req: any, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+    const publicUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: publicUrl });
 });
 
 // Update Tenant Profile

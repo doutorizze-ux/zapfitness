@@ -13,6 +13,7 @@ import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import clsx from 'clsx';
 import api from '../api';
+import { formatImageUrl } from '../utils/format';
 
 export const Dashboard = () => {
     const { user, logout } = useAuth();
@@ -55,7 +56,7 @@ export const Dashboard = () => {
                     <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
                             {systemSettings.logo_url ? (
-                                <img src={systemSettings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                <img src={formatImageUrl(systemSettings.logo_url)} alt="Logo" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
                                     <Zap className="text-white fill-white" size={20} />
