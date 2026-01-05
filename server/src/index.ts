@@ -297,7 +297,18 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
     }
 });
 
-// Update Tenant Profile
+// --- SYSTEM SETTINGS ---
+app.get('/api/system/settings', async (req, res) => {
+    try {
+        const settings = await prisma.systemSettings.findFirst({
+            where: { id: 'global' }
+        });
+        res.json(settings || { site_name: 'ZapFitness', logo_url: '' });
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao buscar configurações' });
+    }
+});
+
 app.put('/api/system/settings', saasAuthMiddleware, async (req: any, res) => {
     try {
         const { site_name, logo_url } = req.body;
