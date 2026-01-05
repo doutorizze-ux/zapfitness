@@ -152,7 +152,7 @@ export const Dashboard = () => {
 
                 {/* Content Container */}
                 <main id="main-content" className="flex-1 overflow-y-auto min-h-0 pb-24 md:pb-8 touch-pan-y">
-                    <div className="p-5 md:p-10 max-w-7xl mx-auto">
+                    <div className="p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
                             <Route path="/plans" element={<Plans />} />
@@ -186,10 +186,10 @@ export const Dashboard = () => {
                                     <item.icon size={20} className={isActive ? "fill-orange-500/10" : ""} />
                                 </div>
                                 <span className={clsx(
-                                    "text-[9px] font-black uppercase tracking-tighter truncate w-full text-center",
+                                    "text-[8px] font-black uppercase tracking-tighter truncate w-full text-center leading-none",
                                     isActive ? "opacity-100" : "opacity-60"
                                 )}>
-                                    {item.label}
+                                    {item.label === 'WhatsApp' ? 'Whats' : item.label === 'Configurações' ? 'Config.' : item.label}
                                 </span>
                             </Link>
                         );

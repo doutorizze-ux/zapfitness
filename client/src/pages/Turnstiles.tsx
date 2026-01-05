@@ -179,7 +179,7 @@ export const Turnstiles = () => {
                             <div className="space-y-6">
                                 {selectedBrand === 'controlid' ? (
                                     <div className="space-y-4">
-                                        <p className="text-slate-400 font-medium">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
+                                        <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
                                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
                                             <div className="text-xs font-black text-orange-400 uppercase tracking-widest mb-4">Configuração na Catraca</div>
                                             <div className="space-y-3 font-mono text-sm">
@@ -199,7 +199,7 @@ export const Turnstiles = () => {
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        <p className="text-slate-400 font-medium">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
+                                        <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
                                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl mb-6">
                                             <div className="text-xs font-black text-orange-400 uppercase tracking-widest mb-2">Seu Token de Acesso</div>
                                             <div className="flex items-center justify-between gap-4">
