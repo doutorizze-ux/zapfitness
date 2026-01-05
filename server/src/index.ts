@@ -1091,7 +1091,7 @@ app.get('/api/saas/payment-status', authMiddleware, async (req: any, res) => {
 
 // Endpoint to get Pix QR Code for the current pending payment of the subscription
 // Webhook do Asaas
-app.post('/webhook/asaas', async (req, res) => {
+app.post('/api/webhook/asaas', async (req, res) => {
     try {
         const { event, payment } = req.body;
         console.log(`[Webhook Asaas] Event: ${event}, Payment ID: ${payment?.id}`);
