@@ -151,7 +151,7 @@ export const LandingPage = () => {
                             Entrar no Sistema
                         </button>
                         <button
-                            onClick={() => { setMobileMenuOpen(false); navigate('/register'); }}
+                            onClick={() => { setMobileMenuOpen(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}
                             className="w-full py-5 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-xl active:scale-95 transition-all"
                         >
                             Criar Conta
