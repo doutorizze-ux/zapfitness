@@ -500,7 +500,7 @@ export const ProfileSettings = () => {
                                     <div className="bg-slate-50 rounded-2xl p-8 text-center border-2 border-dashed border-slate-200">
                                         <p className="text-slate-500 font-medium mb-4">Deseja liberar mais alunos ou funcionalidades?</p>
                                         <button
-                                            onClick={() => window.open('https://wa.me/5511999999999?text=Quero%20fazer%20upgrade%20do%20meu%20plano%20ZapFitness', '_blank')}
+                                            onClick={() => window.open('https://wa.me/5562995347257?text=Quero%20fazer%20upgrade%20do%20meu%20plano%20ZapFitness', '_blank')}
                                             className="bg-green-500 text-white px-8 py-4 rounded-xl font-black hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all active:scale-95 inline-flex items-center gap-2"
                                         >
                                             <MessageSquare size={20} />
