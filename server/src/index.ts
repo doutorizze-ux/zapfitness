@@ -1220,6 +1220,20 @@ app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
     res.status(501).json({ error: 'Not implemented yet' });
 });
 
+// --- SERVE FRONTEND (AFTER ALL API ROUTES) ---
+const clientDist = path.resolve('../client/dist');
+if (fs.existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    app.get('*', (req, res) => {
+        if (req.path.startsWith('/api')) {
+            return res.status(404).json({ error: 'Not found' });
+        }
+        res.sendFile(path.join(clientDist, 'index.html'));
+    });
+} else {
+    console.log('Frontend build not found at:', clientDist);
+}
+
 import { initScheduler } from './scheduler.js';
 
 const port = process.env.PORT || 3000;
