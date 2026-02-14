@@ -8,10 +8,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - zapfitness_data:/app/server/data
+      - zapfitness_data:/app/server/database.sqlite
       - zapfitness_sessions:/app/server/sessions
     environment:
-      - DATABASE_URL=file:/app/server/data/database.sqlite
+      - DATABASE_URL=file:/app/server/database.sqlite
       - TZ=America/Sao_Paulo
       - PORT=3000
       - ASAAS_ENV=sandbox
