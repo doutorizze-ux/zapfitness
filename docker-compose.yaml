@@ -3,15 +3,15 @@ version: '3.8'
 services:
   zapfitness:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
-      - zapfitness_data:/app/server/database.sqlite
-      - zapfitness_sessions:/app/server/sessions
+      - zapfitness_data:/app/database.sqlite
+      - zapfitness_sessions:/app/sessions
     environment:
-      - DATABASE_URL=file:/app/server/database.sqlite
+      - DATABASE_URL=file:/app/database.sqlite
       - TZ=America/Sao_Paulo
       - PORT=3000
       - ASAAS_ENV=sandbox
