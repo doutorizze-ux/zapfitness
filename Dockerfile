@@ -1,34 +1,46 @@
-FROM node:18-alpine
+FROM node:20-alpine AS builder
 
-WORKDIR /app
+# --- Stage 1: Build Client ---
+WORKDIR /app/client
+COPY client/package*.json ./
+RUN npm install
+COPY client/ .
+# Define a URL da API como relativa para funcionar no mesmo domínio
+ARG VITE_API_URL=/
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
 
-# Instalar dependências do sistema necessárias para o Prisma e outras libs nativas
-RUN apk add --no-cache openssl
-
-# Copiar apenas os arquivos de dependência do servidor primeiro para aproveitar o cache
-COPY server/package*.json ./server/
-COPY server/prisma ./server/prisma/
+# --- Stage 2: Serve ---
+FROM node:20-alpine
 
 WORKDIR /app/server
 
-# Instalar dependências
+# Instalar dependências de sistema
+RUN apk add --no-cache openssl
+
+# Copiar arquivos de dependência do servidor
+COPY server/package*.json ./
+COPY server/prisma ./prisma/
+
+# Instalar dependências do servidor
 RUN npm install
 
-# Gerar o cliente Prisma
+# Gerar cliente Prisma
 RUN npx prisma generate
 
-# Copiar o restante do código fonte do servidor
+# Copiar código fonte do servidor
 COPY server/ .
 
-# Compilar o TypeScript
+# Compilar servidor
 RUN npm run build
 
-# Expor a porta da aplicação
-EXPOSE 3000
+# Copiar o build do frontend gerado no estágio anterior para a pasta 'public' do servidor
+COPY --from=builder /app/client/dist ./public
 
-# Definir variáveis de ambiente padrão (podem ser sobrescritas pelo docker-compose)
+# Variáveis de ambiente
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# Comando de inicialização
+# Expor porta e rodar
+EXPOSE 3000
 CMD ["npm", "start"]

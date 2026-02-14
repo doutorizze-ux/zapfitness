@@ -141,6 +141,12 @@ export const io = new Server(server, {
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'Backend is alive' }));
 
+// --- SERVE FRONTEND (STATIC FILES) ---
+const publicDir = path.resolve('public');
+if (fs.existsSync(publicDir)) {
+    app.use(express.static(publicDir));
+    console.log(`[Static] Serving frontend from ${publicDir}`);
+}
 
 // Seed initial SaaS plans if none exist
 const seedSaasPlans = async () => {
@@ -1221,6 +1227,19 @@ app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
 });
 
 import { initScheduler } from './scheduler.js';
+
+// --- 6. CATCH-ALL ROUTE (SPA HANDLING) ---
+app.get('*', (req, res) => {
+    // Se a requisição não for para API e não for arquivo estático (já tratado), serve index.html
+    const publicDir = path.resolve('public');
+    const indexHtml = path.join(publicDir, 'index.html');
+
+    if (fs.existsSync(indexHtml)) {
+        res.sendFile(indexHtml);
+    } else {
+        res.status(404).json({ error: 'Frontend not found/built' });
+    }
+});
 
 const port = process.env.PORT || 3000;
 // Explicitly listen on 0.0.0.0 for external access (Coolify proxy)
