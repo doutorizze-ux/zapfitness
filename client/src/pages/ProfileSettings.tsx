@@ -466,11 +466,11 @@ export const ProfileSettings = () => {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <p className="text-slate-400 font-bold text-sm uppercase tracking-widest mb-2">Seu Plano Atual</p>
-                                                <h2 className="text-4xl font-black mb-1">{tenantData?.saas_plan?.name || "Gratuito"}</h2>
+                                                <h2 className="text-4xl font-black mb-1">{tenantData?.saas_plan?.name || "Assinatura Premium"}</h2>
                                                 <p className="text-slate-300 font-medium">
                                                     {tenantData?.saas_plan_expires_at
                                                         ? `Válido até ${new Date(tenantData.saas_plan_expires_at).toLocaleDateString()}`
-                                                        : 'Plano vitalício ou não informado'}
+                                                        : 'Acesso total liberado'}
                                                 </p>
                                             </div>
                                             <div className="px-4 py-2 bg-green-500/20 border border-green-500/30 text-green-400 rounded-full text-xs font-black uppercase tracking-widest">
@@ -481,11 +481,11 @@ export const ProfileSettings = () => {
                                         <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-6">
                                             <div className="bg-white/5 rounded-2xl p-4">
                                                 <p className="text-xs text-slate-400 font-bold uppercase mb-1">Limite de Alunos</p>
-                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.max_members || 50}</p>
+                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.max_members || "Ilimitado"}</p>
                                             </div>
                                             <div className="bg-white/5 rounded-2xl p-4">
                                                 <p className="text-xs text-slate-400 font-bold uppercase mb-1">Preço Atual</p>
-                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.price ? `R$ ${tenantData.saas_plan.price}` : 'Grátis'}</p>
+                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.price ? `R$ ${tenantData.saas_plan.price}` : 'Personalizado'}</p>
                                             </div>
                                         </div>
                                     </div>
