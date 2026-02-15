@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Activity, Users, Store, ShieldAlert, Power, Pencil, Trash2, WifiOff } from 'lucide-react';
+import { LogOut, Activity, Users, Store, ShieldAlert, Power, Pencil, Trash2, WifiOff, DollarSign, Key } from 'lucide-react';
 import clsx from 'clsx';
 import { formatImageUrl } from '../utils/format';
 
@@ -10,15 +10,20 @@ export const SuperAdminDashboard = () => {
     const [stats, setStats] = useState<any>(null);
     const [tenants, setTenants] = useState<any[]>([]);
     const [plans, setPlans] = useState<any[]>([]);
+    const [financeData, setFinanceData] = useState<any>(null);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
-    const [activeTab, setActiveTab] = useState<'gyms' | 'plans' | 'settings'>('gyms');
+    const [activeTab, setActiveTab] = useState<'gyms' | 'plans' | 'finance' | 'settings'>('gyms');
     const [uploading, setUploading] = useState(false);
 
     // Edit Tenant State
     const [editingTenant, setEditingTenant] = useState<any>(null);
     const [showTenantModal, setShowTenantModal] = useState(false);
+
+    // Admin Management State (for the modal)
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminPassword, setAdminPassword] = useState('');
 
     const fetchData = () => {
         api.get('/saas/dashboard').then(res => setStats(res.data)).catch(err => {
@@ -31,6 +36,9 @@ export const SuperAdminDashboard = () => {
             if (err.response?.status === 403) navigate('/admin/login');
         });
         api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
+
+        // Fetch finance data
+        api.get('/saas/finance').then(res => setFinanceData(res.data)).catch(console.error);
     };
 
     const handleCreatePlan = async (e: React.FormEvent) => {
@@ -99,18 +107,35 @@ export const SuperAdminDashboard = () => {
             id: tenant.id,
             name: tenant.name,
             owner_phone: tenant.owner_phone || '',
-            is_free: tenant.is_free || false
+            is_free: tenant.is_free || false,
+            saas_plan_expires_at: tenant.saas_plan_expires_at ? tenant.saas_plan_expires_at.split('T')[0] : ''
         });
+        // Pre-fill admin email if available
+        setAdminEmail(tenant.admins?.[0]?.email || '');
+        setAdminPassword(''); // Reset password field
         setShowTenantModal(true);
     };
 
     const handleSaveTenant = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // 1. Update Tenant Info
             await api.put(`/saas/tenants/${editingTenant.id}`, editingTenant);
+
+            // 2. Update Admin Info (if changed)
+            if (adminEmail || adminPassword) {
+                await api.put(`/saas/tenants/${editingTenant.id}/admin`, {
+                    email: adminEmail,
+                    password: adminPassword || undefined // Only send if not empty
+                });
+            }
+
             setShowTenantModal(false);
             setEditingTenant(null);
+            setAdminEmail('');
+            setAdminPassword('');
             fetchData();
+            alert('Academia atualizada com sucesso!');
         } catch (e: any) {
             alert('Erro ao salvar: ' + e.message);
         }
@@ -229,6 +254,7 @@ export const SuperAdminDashboard = () => {
                 <div className="flex gap-4 mb-8">
                     <button onClick={() => setActiveTab('gyms')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'gyms' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>ACADEMIAS</button>
                     <button onClick={() => setActiveTab('plans')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'plans' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>PLANOS SAAS</button>
+                    <button onClick={() => setActiveTab('finance')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'finance' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>FINANCEIRO</button>
                     <button onClick={() => setActiveTab('settings')} className={clsx("px-6 py-2 rounded-lg font-black transition-all", activeTab === 'settings' ? "bg-slate-900 text-white" : "bg-white text-slate-500 hover:bg-slate-50")}>SISTEMA</button>
                 </div>
 
@@ -262,8 +288,8 @@ export const SuperAdminDashboard = () => {
                                                             CONTA CORTESIA
                                                         </span>
                                                     )}
-                                                    <span className={`text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
-                                                        Warning: WA {tenant.whatsapp_status}
+                                                    <span className={` ml-2 text-[10px] uppercase font-bold ${tenant.whatsapp_status === 'CONNECTED' ? 'text-green-500' : 'text-slate-400'}`}>
+                                                        WA: {tenant.whatsapp_status}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-slate-600">{tenant.saas_plan?.name || '-'}</td>
@@ -343,6 +369,78 @@ export const SuperAdminDashboard = () => {
                         </div>
                     )}
 
+                    {/* Finance Tab */}
+                    {activeTab === 'finance' && (
+                        <div className="grid grid-cols-1 gap-6">
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-slate-500 font-bold text-sm">Receita Total (Pago)</h3>
+                                        <DollarSign className="text-green-500" size={20} />
+                                    </div>
+                                    <p className="text-3xl font-bold text-slate-800">
+                                        R$ {financeData?.summary?.total_revenue?.toFixed(2) || '0.00'}
+                                    </p>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-slate-500 font-bold text-sm">Pendente</h3>
+                                        <Activity className="text-orange-500" size={20} />
+                                    </div>
+                                    <p className="text-3xl font-bold text-slate-800">
+                                        R$ {financeData?.summary?.pending_revenue?.toFixed(2) || '0.00'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Transactions Table */}
+                            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-slate-100">
+                                    <h2 className="text-xl font-bold text-slate-800">Transações Recentes</h2>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-slate-50 text-slate-500 font-medium">
+                                            <tr>
+                                                <th className="p-4">Academia</th>
+                                                <th className="p-4">Valor</th>
+                                                <th className="p-4">Status</th>
+                                                <th className="p-4">Data</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {financeData?.payments?.map((payment: any) => (
+                                                <tr key={payment.id} className="hover:bg-slate-50 transition">
+                                                    <td className="p-4 font-bold text-slate-800">{payment.tenant?.name || 'Academia Removida'}</td>
+                                                    <td className="p-4 font-mono text-slate-600">R$ {parseFloat(payment.amount).toFixed(2)}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 rounded text-xs font-bold ${payment.status === 'PAID' || payment.status === 'CONFIRMED' || payment.status === 'RECEIVED'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : payment.status === 'FAILED'
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-orange-100 text-orange-700'
+                                                            }`}>
+                                                            {payment.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-slate-500">
+                                                        {new Date(payment.created_at).toLocaleDateString()}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {(!financeData?.payments || financeData.payments.length === 0) && (
+                                                <tr>
+                                                    <td colSpan={4} className="p-8 text-center text-slate-400">Nenhuma transação encontrada.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* System Settings Tab */}
                     {activeTab === 'settings' && (
                         <div className="bg-white rounded-xl shadow-sm overflow-hidden p-8">
@@ -418,32 +516,73 @@ export const SuperAdminDashboard = () => {
                 {
                     showTenantModal && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up">
+                            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md animate-fade-in-up max-h-[90vh] overflow-y-auto">
                                 <h2 className="text-xl font-bold mb-4">Editar Academia</h2>
                                 <form onSubmit={handleSaveTenant} className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
-                                        <input required type="text" value={editingTenant?.name} onChange={e => setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                    <div className="border-b pb-4 mb-4">
+                                        <h3 className="text-sm font-bold text-slate-500 uppercase mb-2">Dados da Academia</h3>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
+                                            <input required type="text" value={editingTenant?.name} onChange={e => setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        </div>
+                                        <div className="mt-2">
+                                            <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
+                                            <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                        </div>
+                                        <div className="flex items-center gap-2 py-2 mt-2">
+                                            <input
+                                                type="checkbox"
+                                                id="is_free"
+                                                checked={editingTenant?.is_free}
+                                                onChange={e => setEditingTenant({ ...editingTenant, is_free: e.target.checked })}
+                                                className="w-4 h-4 text-primary rounded"
+                                            />
+                                            <label htmlFor="is_free" className="text-sm font-bold text-slate-700 cursor-pointer">
+                                                Acesso Cortesia (Sem mensalidade)
+                                            </label>
+                                        </div>
+                                        <div className="mt-2">
+                                            <label className="block text-sm font-medium text-slate-700">Data de Expiração (Plano)</label>
+                                            <input
+                                                type="date"
+                                                value={editingTenant?.saas_plan_expires_at}
+                                                onChange={e => setEditingTenant({ ...editingTenant, saas_plan_expires_at: e.target.value })}
+                                                className="mt-1 block w-full border border-gray-300 rounded p-2"
+                                            />
+                                            <p className="text-xs text-slate-500 mt-1">Define quando o acesso será bloqueado automaticamente.</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
-                                        <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+
+                                    <div className="border-b pb-4 mb-4 bg-slate-50 p-4 rounded-lg">
+                                        <h3 className="text-sm font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
+                                            <Key size={14} /> Acesso Admin
+                                        </h3>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">Email de Acesso</label>
+                                            <input
+                                                type="email"
+                                                value={adminEmail}
+                                                onChange={e => setAdminEmail(e.target.value)}
+                                                className="mt-1 block w-full border border-gray-300 rounded p-2"
+                                                placeholder="email@exemplo.com"
+                                            />
+                                        </div>
+                                        <div className="mt-2">
+                                            <label className="block text-sm font-medium text-slate-700">Nova Senha (deixe em branco para manter)</label>
+                                            <input
+                                                type="password"
+                                                value={adminPassword}
+                                                onChange={e => setAdminPassword(e.target.value)}
+                                                className="mt-1 block w-full border border-gray-300 rounded p-2"
+                                                placeholder="********"
+                                            />
+                                            <p className="text-xs text-slate-400 mt-1">Preencha apenas se quiser resetar a senha deste usuário.</p>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-2 py-2">
-                                        <input
-                                            type="checkbox"
-                                            id="is_free"
-                                            checked={editingTenant?.is_free}
-                                            onChange={e => setEditingTenant({ ...editingTenant, is_free: e.target.checked })}
-                                            className="w-4 h-4 text-primary rounded"
-                                        />
-                                        <label htmlFor="is_free" className="text-sm font-bold text-slate-700 cursor-pointer">
-                                            Acesso Cortesia (Sem mensalidade)
-                                        </label>
-                                    </div>
+
                                     <div className="flex justify-end gap-2 mt-6">
                                         <button type="button" onClick={() => setShowTenantModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                                        <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Salvar</button>
+                                        <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">Salvar Alterações</button>
                                     </div>
                                 </form>
                             </div>

@@ -223,6 +223,8 @@ app.post('/api/register', async (req, res) => {
                     name: gymName,
                     slug: gymName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now(),
                     saas_plan_id: validPlanId,
+                    status: 'BLOCKED', // Default to BLOCKED for manual approval
+                    payment_status: 'PENDING',
                     gate_token: crypto.randomBytes(16).toString('hex')
                 }
             });
@@ -275,30 +277,13 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
         if (!tenant) return res.status(404).json({ error: 'Academia não encontrada' });
 
         // Auto-verify if not active and has subscription
+        // Auto-verify if not active and has subscription
+        // COMENTADO: Venda interna / Manual Approval Mode
+        /*
         if (tenant.payment_status !== 'ACTIVE' && tenant.subscription_id && !tenant.is_free) {
-            try {
-                const sub = await getSubscription(tenant.subscription_id);
-                const payment = await getLatestPayment(tenant.subscription_id);
-
-                const isPaidNow = payment && (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED');
-
-                if (isPaidNow) {
-                    tenant = await prisma.tenant.update({
-                        where: { id: tenant.id },
-                        data: { payment_status: 'ACTIVE', status: 'ACTIVE' },
-                        include: {
-                            _count: { select: { members: true, accessLogs: true } },
-                            saas_plan: true,
-                            admins: true,
-                            notificationSettings: true
-                        }
-                    });
-                    console.log(`[API/me] Auto-activated tenant ${tenant.name}`);
-                }
-            } catch (err) {
-                console.warn(`[API/me] Failed auto-verify for ${tenant.id}:`, err);
-            }
+             // ... previous logic commented out ...
         }
+        */
 
         res.json(tenant);
     } catch (e) {
@@ -945,7 +930,7 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
         }
         await prisma.tenant.update({ where: { id: tenant.id }, data: { whatsapp_status: 'DISCONNECTED', status: 'BLOCKED' } });
     } else {
-        await prisma.tenant.update({ where: { id: tenant.id }, data: { status: 'ACTIVE' } });
+        await prisma.tenant.update({ where: { id: tenant.id }, data: { status: 'ACTIVE', payment_status: 'ACTIVE' } });
     }
 
     res.json({ status: newStatus });
@@ -954,10 +939,15 @@ app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) =>
 // Update Tenant
 app.put('/api/saas/tenants/:id', saasAuthMiddleware, async (req: any, res) => {
     try {
-        const { name, owner_phone, is_free } = req.body;
+        const { name, owner_phone, is_free, saas_plan_expires_at } = req.body;
         const updated = await prisma.tenant.update({
             where: { id: req.params.id },
-            data: { name, owner_phone, is_free }
+            data: {
+                name,
+                owner_phone,
+                is_free,
+                saas_plan_expires_at: saas_plan_expires_at ? new Date(saas_plan_expires_at) : undefined
+            }
         });
         res.json(updated);
     } catch (e: any) {
@@ -1059,6 +1049,68 @@ app.delete('/api/saas/plans/:id', saasAuthMiddleware, async (req, res) => {
         res.json({ success: true });
     } catch (e) {
         res.status(400).json({ error: 'Impossível excluir plano em uso' });
+    }
+});
+
+// --- SAAS FINANCE ---
+app.get('/api/saas/finance', saasAuthMiddleware, async (req, res) => {
+    try {
+        const payments = await prisma.paymentHistory.findMany({
+            include: { tenant: { select: { name: true } } },
+            orderBy: { created_at: 'desc' },
+            take: 100
+        });
+
+        // Calculate totals
+        const totalRevenue = await prisma.paymentHistory.aggregate({
+            where: { status: 'PAID' },
+            _sum: { amount: true }
+        });
+
+        const pendingRevenue = await prisma.paymentHistory.aggregate({
+            where: { status: 'PENDING' },
+            _sum: { amount: true }
+        });
+
+        res.json({
+            payments,
+            summary: {
+                total_revenue: totalRevenue._sum.amount || 0,
+                pending_revenue: pendingRevenue._sum.amount || 0
+            }
+        });
+    } catch (e: any) {
+        console.error(e);
+        res.status(500).json({ error: 'Erro ao buscar dados financeiros' });
+    }
+});
+
+// Update Tenant Admin Credentials
+app.put('/api/saas/tenants/:id/admin', saasAuthMiddleware, async (req: any, res) => {
+    try {
+        const { email, password, name } = req.body;
+        const tenantId = req.params.id;
+
+        // Find the admin associated with this tenant
+        const admin = await prisma.gymAdmin.findFirst({ where: { tenant_id: tenantId } });
+
+        if (!admin) return res.status(404).json({ error: 'Administrador não encontrado para esta academia' });
+
+        const data: any = {};
+        if (email) data.email = email;
+        if (name) data.name = name;
+        if (password) {
+            data.password = await bcrypt.hash(password, 10);
+        }
+
+        const updated = await prisma.gymAdmin.update({
+            where: { id: admin.id },
+            data
+        });
+
+        res.json({ success: true, admin: { id: updated.id, email: updated.email, name: updated.name } });
+    } catch (e: any) {
+        res.status(400).json({ error: 'Erro ao atualizar administrador: ' + e.message });
     }
 });
 
