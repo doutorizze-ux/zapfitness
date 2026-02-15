@@ -485,7 +485,9 @@ export const ProfileSettings = () => {
                                             </div>
                                             <div className="bg-white/5 rounded-2xl p-4">
                                                 <p className="text-xs text-slate-400 font-bold uppercase mb-1">Preço Atual</p>
-                                                <p className="text-2xl font-black">{tenantData?.saas_plan?.price ? `R$ ${tenantData.saas_plan.price}` : 'Personalizado'}</p>
+                                                <p className={clsx("font-black", tenantData?.saas_plan?.price ? "text-2xl" : "text-lg")}>
+                                                    {tenantData?.saas_plan?.price ? `R$ ${tenantData.saas_plan.price}` : 'Personalizado'}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
