@@ -2,6 +2,10 @@ import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
 import { initWhatsApp, getSession, reconnectSessions } from './whatsappManager.js';
@@ -98,7 +102,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'zapfitness_secret_key_123';
 // --- 4. MIDDLEWARES DE AUTENTICAÇÃO (DEFINIDOS ANTES DO USO) ---
 const authMiddleware = async (req: any, res: any, next: any) => {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+    if (!token) return res.status(401).json({ error: 'Não autorizado' });
 
     try {
         const decoded: any = jwt.verify(token, JWT_SECRET);
@@ -106,7 +110,7 @@ const authMiddleware = async (req: any, res: any, next: any) => {
         next();
     } catch (e) {
         console.error('[Auth] Token inválido:', e);
-        res.status(401).json({ error: 'Invalid token' });
+        res.status(401).json({ error: 'Token inválido' });
     }
 };
 
@@ -117,13 +121,13 @@ const saasAuthMiddleware = async (req: any, res: any, next: any) => {
         const decoded: any = jwt.verify(token, JWT_SECRET);
         if (decoded.role !== 'SAAS_OWNER') {
             console.warn(`[Auth] Acesso negado: role=${decoded.role}, email=${decoded.email || 'N/A'}. Não é SAAS_OWNER`);
-            return res.status(403).json({ error: 'Forbidden' });
+            return res.status(403).json({ error: 'Proibido' });
         }
         req.user = decoded;
         next();
     } catch (e) {
         console.error('[Auth] Erro no saasAuthMiddleware:', e);
-        res.status(401).json({ error: 'Invalid token' });
+        res.status(401).json({ error: 'Token inválido' });
     }
 };
 
@@ -142,7 +146,7 @@ export const io = new Server(server, {
 app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'Backend is alive' }));
 
 // --- SERVE FRONTEND (STATIC FILES) ---
-const publicDir = path.resolve('public');
+const publicDir = path.join(__dirname, '../public');
 if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir));
     console.log(`[Static] Serving frontend from ${publicDir}`);
@@ -209,7 +213,7 @@ app.post('/api/register', async (req, res) => {
         }
 
         if (!gymName || !email || !password) {
-            return res.status(400).json({ error: 'Missing required fields' });
+            return res.status(400).json({ error: 'Campos obrigatórios faltando' });
         }
 
         // Transaction to ensure atomic creation
@@ -240,7 +244,7 @@ app.post('/api/register', async (req, res) => {
         res.json({ tenant, admin, token });
     } catch (e: any) {
         console.error(e);
-        res.status(400).json({ error: 'Registration failed', details: e.message });
+        res.status(400).json({ error: 'Falha no registro', details: e.message });
     }
 });
 
@@ -249,7 +253,7 @@ app.post('/api/login', async (req, res) => {
     const admin = await prisma.gymAdmin.findUnique({ where: { email } });
 
     if (!admin || !await bcrypt.compare(password, admin.password)) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
     const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
@@ -268,7 +272,7 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
             }
         });
 
-        if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+        if (!tenant) return res.status(404).json({ error: 'Academia não encontrada' });
 
         // Auto-verify if not active and has subscription
         if (tenant.payment_status !== 'ACTIVE' && tenant.subscription_id && !tenant.is_free) {
@@ -739,7 +743,7 @@ app.post('/api/finance/invoices/:id/pay', authMiddleware, async (req: any, res) 
         where: { id: req.params.id, tenant_id: req.user.tenant_id }
     });
 
-    if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+    if (!invoice) return res.status(404).json({ error: 'Fatura não encontrada' });
 
     const updated = await prisma.invoice.update({
         where: { id: invoice.id },
@@ -898,7 +902,7 @@ app.post('/api/saas/login', async (req, res) => {
     const { email, password } = req.body;
     const admin = await prisma.saasOwner.findUnique({ where: { email } });
     if (!admin || !await bcrypt.compare(password, admin.password)) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Credenciais inválidas' });
     }
     const token = jwt.sign({ id: admin.id, email: admin.email, role: 'SAAS_OWNER' }, JWT_SECRET, { expiresIn: '1d' });
     res.json({ token, admin });
@@ -929,7 +933,7 @@ app.get('/api/saas/tenants', saasAuthMiddleware, async (req, res) => {
 
 app.post('/api/saas/tenants/:id/toggle', saasAuthMiddleware, async (req, res) => {
     const tenant = await prisma.tenant.findUnique({ where: { id: req.params.id } });
-    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    if (!tenant) return res.status(404).json({ error: 'Academia não encontrada' });
 
     const newStatus = tenant.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
 
@@ -1231,13 +1235,26 @@ import { initScheduler } from './scheduler.js';
 // --- 6. CATCH-ALL ROUTE (SPA HANDLING) ---
 app.get('*', (req, res) => {
     // Se a requisição não for para API e não for arquivo estático (já tratado), serve index.html
-    const publicDir = path.resolve('public');
+    const publicDir = path.join(__dirname, '../public');
     const indexHtml = path.join(publicDir, 'index.html');
+
+    console.log(`[Debug] CWD: ${process.cwd()}`);
+    console.log(`[Debug] Public Dir resolved to: ${publicDir}`);
+    if (fs.existsSync(publicDir)) {
+        console.log(`[Debug] Public dir contents:`, fs.readdirSync(publicDir));
+    } else {
+        console.log(`[Debug] Public dir does not exist!`);
+    }
 
     if (fs.existsSync(indexHtml)) {
         res.sendFile(indexHtml);
     } else {
-        res.status(404).json({ error: 'Frontend not found/built' });
+        res.status(404).json({
+            error: 'Frontend não encontrado/compilado',
+            cwd: process.cwd(),
+            publicDir: publicDir,
+            exists: fs.existsSync(publicDir)
+        });
     }
 });
 
