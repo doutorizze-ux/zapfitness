@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
-import { initWhatsApp, getSession, reconnectSessions } from './whatsappManager.js';
+import { initWhatsApp, getSession, reconnectSessions, logoutSession } from './whatsappManager.js';
 import { createCustomer, createSubscription, getSubscription, getLatestPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -276,6 +276,23 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
 
         if (!tenant) return res.status(404).json({ error: 'Academia não encontrada' });
 
+        // Verifica se a sessão está realmente ativa no servidor
+        const session = getSession(tenant.id);
+        const realConnected = !!(session && (session as any).user);
+
+        // Se no banco diz que está conectado, mas a sessão morreu, corrige o dado para o frontend
+        let currentStatus = tenant.whatsapp_status;
+        if (currentStatus === 'CONNECTED' && !realConnected) {
+            currentStatus = 'DISCONNECTED';
+            // Opcional: Atualizar o banco de forma assíncrona para sincronizar
+            prisma.tenant.update({ where: { id: tenant.id }, data: { whatsapp_status: 'DISCONNECTED' } }).catch(() => { });
+        }
+
+        const responseData = {
+            ...tenant,
+            whatsapp_status: currentStatus
+        };
+
         // Auto-verify if not active and has subscription
         // Auto-verify if not active and has subscription
         // COMENTADO: Venda interna / Manual Approval Mode
@@ -285,7 +302,7 @@ app.get('/api/me', authMiddleware, async (req: any, res) => {
         }
         */
 
-        res.json(tenant);
+        res.json(responseData);
     } catch (e) {
         console.error("Error in /api/me:", e);
         res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
@@ -431,26 +448,21 @@ app.post('/api/whatsapp/disconnect', authMiddleware, async (req: any, res) => {
     const tenantId = req.user.tenant_id;
     console.log(`[API] /api/whatsapp/disconnect called for tenant=${tenantId}`);
 
-    const session = getSession(tenantId);
-    if (session) {
-        try {
-            await session.end(undefined);
-        } catch (e) {
-            console.error('[WA] Error ending session:', e);
-        }
+    try {
+        await logoutSession(tenantId);
+
+        // Force DB update
+        await prisma.tenant.update({
+            where: { id: tenantId },
+            data: { whatsapp_status: 'DISCONNECTED' }
+        });
+
+        io.to(tenantId).emit('whatsapp_status', 'DISCONNECTED');
+        res.json({ status: 'DISCONNECTED' });
+    } catch (e) {
+        console.error('[API] Error during disconnect:', e);
+        res.status(500).json({ error: 'Falha ao desconectar sessao' });
     }
-
-    // Force DB update
-    await prisma.tenant.update({
-        where: { id: tenantId },
-        data: { whatsapp_status: 'DISCONNECTED' }
-    });
-
-    // Clear session folder if exists
-    // (Optional: FS implementation dependent, simpler to rely on Baileys cleanup or next init)
-
-    io.to(tenantId).emit('whatsapp_status', 'DISCONNECTED');
-    res.json({ status: 'DISCONNECTED' });
 });
 
 app.get('/api/whatsapp/status', authMiddleware, async (req: any, res) => {

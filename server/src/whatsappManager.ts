@@ -91,13 +91,17 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
             console.log(`[WA] Connection closed for tenant ${tenantId}. Error: ${JSON.stringify(lastDisconnect?.error, null, 2)}`);
-            console.log(`[WA] Reconnecting: ${shouldReconnect}`);
-            if (shouldReconnect) {
-                initWhatsApp(tenantId, onQr);
-            } else {
-                console.log(`Tenant ${tenantId} logged out.`);
+
+            // Remove from session map if we are not reconnecting or if it's a permanent error
+            if (!shouldReconnect) {
+                console.log(`Tenant ${tenantId} logged out or permanent disconnect.`);
                 sessions.delete(tenantId);
                 await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'DISCONNECTED' } });
+            } else {
+                console.log(`[WA] Attempting auto-reconnect for ${tenantId}...`);
+                // Ensure the previous session is cleaned up before re-init
+                sessions.delete(tenantId);
+                setTimeout(() => initWhatsApp(tenantId, onQr), 3000);
             }
         } else if (connection === 'open') {
             console.log(`Connection opened for tenant ${tenantId}`);
@@ -120,76 +124,99 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
     return sock;
 };
 
-async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
-    const remoteJid = msg.key.remoteJid;
-    const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
+export const logoutSession = async (tenantId: string) => {
+    console.log(`[WA] Performe logout for tenant ${tenantId}`);
+    const session = sessions.get(tenantId);
 
-    if (!text) return;
-
-    // Check Tenant Status and Expiry
-    const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        include: { saas_plan: true }
-    });
-
-    if (!tenant) return;
-
-    if ((tenant as any).status === 'BLOCKED') {
-        console.log(`Tenant ${tenantId} is blocked.Ignoring.`);
-        return;
-    }
-
-    if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
-        console.log(`Tenant ${tenantId} plan expired.Ignoring or Sending warning.`);
-        // Optional: Send a specific message to the tenant owner or just fail silently/gracefully to user?
-        // Requirement says: "Show WhatsApp message informing suspension"
-        await sock.sendMessage(remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
-        return;
-    }
-
-    console.log(`Received message from ${remoteJid} for tenant ${tenantId}: ${text} `);
-
-    // Normalize text
-    const cleanText = text.trim().toLowerCase();
-    const phone = remoteJid.split('@')[0];
-
-    // Check if member exists
-    // Using slice(-8) as heuristic matching strategy similar to existing logic
-    const member = await prisma.member.findFirst({
-        where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
-        include: { plan: true } // Include plan for status check
-    });
-
-    if (!member) {
-        console.log(`Non-member ${phone} contacted tenant ${tenantId}`);
-        await sock.sendMessage(remoteJid, {
-            text: 'Olá! 👋\n\nVerifiquei aqui e *não encontrei seu cadastro* em nosso sistema.\n\nPara acessar as funcionalidades do bot (Treinos, Dieta, Check-in), você precisa ser um aluno matriculado.\n\nPor favor, procure a recepção para se matricular ou atualizar seu cadastro!'
-        });
-        // We could also log a security event here if we wanted to track "Unknown Interactions"
-        // await handleSuspiciousActivity(tenantId, phone, remoteJid);
-        return;
-    }
-
-    // Menu Navigation
-    if (['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText)) {
-        await sendMainMenu(member, sock, remoteJid);
-        return;
-    }
-
-    if (cleanText === '1' || cleanText.includes('ver treino')) {
-        await handleGetWorkout(member, sock, remoteJid);
-    } else if (cleanText === '2' || cleanText.includes('ver dieta')) {
-        await handleGetDiet(member, sock, remoteJid);
-    } else if (cleanText === '3' || cleanText.includes('status') || cleanText.includes('plano')) {
-        await handleGetStatus(member, sock, remoteJid);
-    } else if (cleanText === '4' || cleanText.includes('checkin') || cleanText.includes('entrada') || cleanText.includes('cheguei')) {
-        await handleCheckin(tenantId, member, sock, remoteJid, tenant);
-    } else if (cleanText === '5' || cleanText.includes('falar')) {
-        await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
-    } else {
-        if (cleanText.includes('cheguei')) {
-            await handleCheckin(tenantId, member, sock, remoteJid, tenant);
+    if (session) {
+        try {
+            await session.logout();
+            session.end(undefined);
+        } catch (err) {
+            console.error(`[WA] Error during session logout:`, err);
         }
+        sessions.delete(tenantId);
+    }
+
+    const authPath = path.join(process.cwd(), 'sessions', tenantId.trim());
+    if (fs.existsSync(authPath)) {
+        try {
+            console.log(`[WA] Removing session folder: ${authPath}`);
+            fs.rmSync(authPath, { recursive: true, force: true });
+        } catch (err) {
+            console.error(`[WA] Error removing session folder:`, err);
+        }
+    }
+};
+
+async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
+    try {
+        const remoteJid = msg.key.remoteJid;
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.title;
+
+        if (!text) return;
+
+        // Check Tenant Status and Expiry
+        const tenant = await prisma.tenant.findUnique({
+            where: { id: tenantId },
+            include: { saas_plan: true }
+        });
+
+        if (!tenant) return;
+
+        if ((tenant as any).status === 'BLOCKED') {
+            console.log(`Tenant ${tenantId} is blocked. Ignoring.`);
+            return;
+        }
+
+        if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
+            console.log(`Tenant ${tenantId} plan expired. Ignoring or Sending warning.`);
+            await sock.sendMessage(remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
+            return;
+        }
+
+        console.log(`Received message from ${remoteJid} for tenant ${tenantId}: ${text} `);
+
+        // Normalize text
+        const cleanText = text.trim().toLowerCase();
+        const phone = remoteJid.split('@')[0];
+
+        // Check if member exists
+        const member = await prisma.member.findFirst({
+            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
+            include: { plan: true }
+        });
+
+        if (!member) {
+            console.log(`Non-member ${phone} contacted tenant ${tenantId}`);
+            await sock.sendMessage(remoteJid, {
+                text: 'Olá! 👋\n\nVerifiquei aqui e *não encontrei seu cadastro* em nosso sistema.\n\nPara acessar as funcionalidades do bot (Treinos, Dieta, Check-in), você precisa ser um aluno matriculado.\n\nPor favor, procure a recepção para se matricular ou atualizar seu cadastro!'
+            });
+            return;
+        }
+
+        // Menu Navigation
+        if (['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText)) {
+            await sendMainMenu(member, sock, remoteJid);
+            return;
+        }
+
+        if (cleanText === '1' || cleanText.includes('ver treino')) {
+            await handleGetWorkout(member, sock, remoteJid);
+        } else if (cleanText === '2' || cleanText.includes('ver dieta')) {
+            await handleGetDiet(member, sock, remoteJid);
+        } else if (cleanText === '3' || cleanText.includes('status') || cleanText.includes('plano')) {
+            await handleGetStatus(member, sock, remoteJid);
+        } else if (cleanText === '4' || cleanText.includes('checkin') || cleanText.includes('entrada') || cleanText.includes('cheguei')) {
+            await handleCheckin(tenantId, member, sock, remoteJid, tenant);
+        } else if (cleanText === '5' || cleanText.includes('falar')) {
+            await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
+        } else {
+            // Se não entendeu, manda o menu para ajudar
+            await sendMainMenu(member, sock, remoteJid);
+        }
+    } catch (err) {
+        console.error(`[WA] Critical error handling message from tenant ${tenantId}:`, err);
     }
 }
 
