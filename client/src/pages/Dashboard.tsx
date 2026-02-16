@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal, X } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -17,6 +17,7 @@ import api from '../api';
 import { formatImageUrl } from '../utils/format';
 
 export const Dashboard = () => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -175,7 +176,7 @@ export const Dashboard = () => {
                 </header>
 
                 {/* Content Container */}
-                <main id="main-content" className="flex-1 overflow-y-auto min-h-0 pb-24 md:pb-8 touch-pan-y">
+                <main id="main-content" className="flex-1 overflow-y-auto min-h-0 pb-32 md:pb-8 touch-pan-y">
                     <div className="p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
@@ -191,44 +192,108 @@ export const Dashboard = () => {
                     </div>
                 </main>
 
-                {/* Mobile Bottom Navigation Bar (Refined & Responsive) */}
-                <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-2xl border-t border-slate-200 px-2 py-1 flex items-center justify-around z-40 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path;
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={clsx(
-                                    "flex flex-col items-center justify-center py-2 px-1 rounded-2xl transition-all duration-300 flex-1 min-w-0",
-                                    isActive ? "text-orange-600 scale-105" : "text-slate-400"
-                                )}
-                            >
-                                <div className={clsx(
-                                    "p-1.5 rounded-xl transition-colors mb-0.5",
-                                    isActive ? "bg-orange-50" : "bg-transparent"
-                                )}>
-                                    <item.icon size={20} className={isActive ? "fill-orange-500/10" : ""} />
-                                </div>
-                                <span className={clsx(
-                                    "text-[8px] font-black uppercase tracking-tighter truncate w-full text-center leading-none",
-                                    isActive ? "opacity-100" : "opacity-60"
-                                )}>
-                                    {item.label === 'WhatsApp' ? 'Whats' : item.label === 'Configurações' ? 'Config.' : item.label}
-                                </span>
-                            </Link>
-                        );
-                    })}
-                    <button
-                        onClick={handleLogout}
-                        className="flex flex-col items-center justify-center py-2 px-1 text-slate-400 flex-1 min-w-0"
-                    >
-                        <div className="p-1.5 bg-transparent mb-0.5">
-                            <LogOut size={20} />
+                {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
+                <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50">
+                    <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-orange-900/20">
+                        {/* Primary Items (Top 4) */}
+                        {[
+                            { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
+                            { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
+                            { label: 'Membros', path: '/dashboard/members', icon: Users },
+                        ].map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={clsx(
+                                        "relative flex flex-col items-center justify-center py-2 px-1 transition-all duration-300 flex-1",
+                                        isActive ? "text-orange-500" : "text-white/40 hover:text-white/60"
+                                    )}
+                                >
+                                    <div className={clsx(
+                                        "p-2.5 rounded-2xl transition-all duration-500",
+                                        isActive ? "bg-orange-500/10 scale-110" : "bg-transparent"
+                                    )}>
+                                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                    </div>
+                                    <span className={clsx(
+                                        "text-[9px] font-black uppercase tracking-widest mt-1 scale-90",
+                                        isActive ? "opacity-100" : "opacity-0 invisible h-0"
+                                    )}>
+                                        {item.label}
+                                    </span>
+                                    {isActive && (
+                                        <div className="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,1)]" />
+                                    )}
+                                </Link>
+                            );
+                        })}
+
+                        {/* Expand Button */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className={clsx(
+                                "flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-300 flex-1",
+                                isMobileMenuOpen ? "text-orange-500 bg-orange-500/10 scale-110 rotate-90" : "text-white/40"
+                            )}
+                        >
+                            <MoreHorizontal size={24} />
+                            <span className={clsx(
+                                "text-[9px] font-black uppercase tracking-widest mt-1 scale-90",
+                                isMobileMenuOpen ? "opacity-100" : "opacity-0 invisible h-0"
+                            )}>
+                                Mais
+                            </span>
+                        </button>
+                    </nav>
+
+                    {/* Expandable Menu Overlay (Glassmorphism Modal) */}
+                    {isMobileMenuOpen && (
+                        <div className="absolute bottom-20 left-0 right-0 animate-fade-in-up">
+                            <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
+                                {[
+                                    { label: 'Planos', path: '/dashboard/plans', icon: Activity },
+                                    { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
+                                    { label: 'Dinheiro', path: '/dashboard/finance', icon: CreditCard },
+                                    { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
+                                    { label: 'Ajustes', path: '/dashboard/settings', icon: Settings },
+                                ].map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="flex flex-col items-center gap-2 group"
+                                    >
+                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white/60 group-hover:bg-orange-500/20 group-hover:text-orange-500 transition-all border border-white/5">
+                                            <item.icon size={24} />
+                                        </div>
+                                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center">{item.label}</span>
+                                    </Link>
+                                ))}
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex flex-col items-center gap-2 group"
+                                >
+                                    <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500/60 group-hover:bg-red-500 group-hover:text-white transition-all border border-red-500/20">
+                                        <LogOut size={24} />
+                                    </div>
+                                    <span className="text-[10px] font-black text-red-500/40 uppercase tracking-widest">Sair</span>
+                                </button>
+                            </div>
                         </div>
-                        <span className="text-[9px] font-black uppercase tracking-tighter opacity-60">Sair</span>
-                    </button>
-                </nav>
+                    )}
+                </div>
+
+                {/* Overlay Background to close menu */}
+                {isMobileMenuOpen && (
+                    <div
+                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                )}
             </div>
         </div>
     );
