@@ -208,50 +208,48 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             include: { plan: true }
         });
 
-        // 2. Manage Lead (even if member, we might want to update lead info or just rely on member)
-        let leadId = null;
-        try {
-            if (!member) {
-                const lead = await prisma.lead.upsert({
-                    where: { phone_tenant_id: { phone, tenant_id: tenantId } },
-                    update: {
-                        last_message: text,
-                        last_message_at: new Date(),
-                        name: senderName
-                    },
-                    create: {
-                        phone,
+        // 2 & 3. Background Processing (Lead & Chat Logging)
+        // We do this without 'await' to respond to the user FAST
+        (async () => {
+            try {
+                let leadId = null;
+                if (!member) {
+                    const lead = await prisma.lead.upsert({
+                        where: { phone_tenant_id: { phone, tenant_id: tenantId } },
+                        update: {
+                            last_message: text,
+                            last_message_at: new Date(),
+                            name: senderName
+                        },
+                        create: {
+                            phone,
+                            tenant_id: tenantId,
+                            last_message: text,
+                            name: senderName
+                        }
+                    });
+                    leadId = lead.id;
+                }
+
+                const chatMsg = await prisma.chatMessage.create({
+                    data: {
                         tenant_id: tenantId,
-                        last_message: text,
-                        name: senderName
+                        content: text,
+                        jid: remoteJid,
+                        from_me: false,
+                        member_id: member?.id,
+                        lead_id: leadId,
+                        type: msg.message?.imageMessage ? 'image' : 'text'
                     }
                 });
-                leadId = lead.id;
+
+                eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
+            } catch (err) {
+                console.error('[WA] Background logging error:', err);
             }
-        } catch (e) {
-            console.error('[WA] Error managing lead:', e);
-        }
+        })();
 
-        // 3. Save ChatMessage
-        try {
-            const chatMsg = await prisma.chatMessage.create({
-                data: {
-                    tenant_id: tenantId,
-                    content: text,
-                    jid: remoteJid,
-                    from_me: false,
-                    member_id: member?.id,
-                    lead_id: leadId,
-                    type: 'text'
-                }
-            });
-
-            // 4. Emit event instantly via EventBus (fastest way)
-            eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
-        } catch (e) {
-            console.error('[WA] Error saving chat message:', e);
-        }
-
+        // --- AUTH & PLAN CHECKS (FAST) ---
         if ((tenant as any).status === 'BLOCKED') return;
 
         if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {

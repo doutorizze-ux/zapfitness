@@ -35,7 +35,7 @@ COPY server/ .
 RUN npm run build
 
 # Criar pastas para persistência (essencial para Coolify/Docker)
-RUN mkdir -p uploads sessions
+RUN mkdir -p uploads sessions data
 
 # Copiar o build do frontend gerado no estágio anterior para a pasta 'public' do servidor
 COPY --from=builder /app/client/dist ./public
