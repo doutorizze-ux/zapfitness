@@ -8,7 +8,6 @@ import {
     Send,
     User,
     Clock,
-    Check,
     CheckCheck,
     Phone,
     MoreVertical,
