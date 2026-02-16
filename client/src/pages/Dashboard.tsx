@@ -54,21 +54,23 @@ export const Dashboard = () => {
             <aside className="hidden md:flex w-72 bg-slate-900 text-white flex-col shadow-2xl z-20">
                 <div className="p-8 border-b border-slate-800">
                     <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-                            {systemSettings.logo_url ? (
-                                <img src={formatImageUrl(systemSettings.logo_url)} alt="Logo" className="w-full h-full object-cover" />
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 bg-white">
+                            {user?.logo_url ? (
+                                <img src={formatImageUrl(user.logo_url)} alt="Gym Logo" className="w-full h-full object-contain p-1" />
+                            ) : systemSettings.logo_url ? (
+                                <img src={formatImageUrl(systemSettings.logo_url)} alt="SaaS Logo" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
                                     <Zap className="text-white fill-white" size={20} />
                                 </div>
                             )}
                         </div>
-                        <span className="text-2xl font-black tracking-tighter text-white">
-                            {systemSettings.site_name === 'ZapFitness' ? (
+                        <span className="text-2xl font-black tracking-tighter text-white truncate max-w-[180px]">
+                            {user?.name || (systemSettings.site_name === 'ZapFitness' ? (
                                 <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span></>
                             ) : (
                                 systemSettings.site_name
-                            )}
+                            ))}
                         </span>
                     </div>
                 </div>
@@ -93,8 +95,12 @@ export const Dashboard = () => {
 
                 <div className="p-6 border-t border-slate-800 bg-slate-950/50">
                     <div className="flex items-center gap-3 mb-6 p-3 rounded-2xl bg-slate-800/50">
-                        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-inner">
-                            {user?.name?.charAt(0) || 'A'}
+                        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
+                            {user?.logo_url ? (
+                                <img src={formatImageUrl(user.logo_url)} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                user?.name?.charAt(0) || 'A'
+                            )}
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <p className="text-sm font-bold text-white truncate">{user?.name || 'Academia'}</p>
@@ -132,18 +138,26 @@ export const Dashboard = () => {
                 {/* Mobile Top Header */}
                 <header className="md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-md">
-                            <Zap className="text-white fill-white" size={16} />
+                        <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-md overflow-hidden">
+                            {user?.logo_url ? (
+                                <img src={formatImageUrl(user.logo_url)} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <Zap className="text-white fill-white" size={16} />
+                            )}
                         </div>
-                        <h1 className="text-lg font-black text-slate-900 tracking-tight">{currentItem.label}</h1>
+                        <h1 className="text-lg font-black text-slate-900 tracking-tight truncate max-w-[150px]">{user?.name || currentItem.label}</h1>
                     </div>
                     <div className="flex items-center gap-3">
                         <button className="p-2 text-slate-500 hover:text-orange-500 transition-colors relative">
                             <Bell size={20} />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs shadow-sm">
-                            {user?.name?.charAt(0) || 'A'}
+                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 text-xs shadow-sm overflow-hidden">
+                            {user?.logo_url ? (
+                                <img src={formatImageUrl(user.logo_url)} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                user?.name?.charAt(0) || 'A'
+                            )}
                         </div>
                     </div>
                 </header>
