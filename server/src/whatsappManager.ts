@@ -149,10 +149,46 @@ export const logoutSession = async (tenantId: string) => {
     }
 };
 
+export const sendMessageToJid = async (tenantId: string, jid: string, text: string) => {
+    const sock = sessions.get(tenantId);
+    if (!sock) throw new Error('WhatsApp não conectado');
+
+    const result = await sock.sendMessage(jid, { text });
+
+    // Save outgoing message
+    const phone = jid.split('@')[0];
+
+    // Try to find lead or member
+    const member = await prisma.member.findFirst({
+        where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
+    });
+
+    const lead = member ? null : await prisma.lead.upsert({
+        where: { phone_tenant_id: { phone, tenant_id: tenantId } },
+        update: { last_message: text, last_message_at: new Date() },
+        create: { phone, tenant_id: tenantId, last_message: text }
+    });
+
+    await prisma.chatMessage.create({
+        data: {
+            tenant_id: tenantId,
+            content: text,
+            from_me: true,
+            jid: jid,
+            member_id: member?.id,
+            lead_id: lead?.id,
+            type: 'text'
+        }
+    });
+
+    return result;
+};
+
 async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
     try {
         const remoteJid = msg.key.remoteJid;
-        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.title;
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.title || (msg.message.imageMessage ? "[Imagem]" : null);
+        const senderName = msg.pushName || "Interessado";
 
         if (!text) return;
 
@@ -164,13 +200,54 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         if (!tenant) return;
 
-        if ((tenant as any).status === 'BLOCKED') {
-            console.log(`Tenant ${tenantId} is blocked. Ignoring.`);
-            return;
+        const phone = remoteJid.split('@')[0];
+
+        // 1. Identify if it's a member
+        const member = await prisma.member.findFirst({
+            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
+            include: { plan: true }
+        });
+
+        // 2. Manage Lead (even if member, we might want to update lead info or just rely on member)
+        let leadId = null;
+        if (!member) {
+            const lead = await prisma.lead.upsert({
+                where: { phone_tenant_id: { phone, tenant_id: tenantId } },
+                update: {
+                    last_message: text,
+                    last_message_at: new Date(),
+                    name: senderName
+                },
+                create: {
+                    phone,
+                    tenant_id: tenantId,
+                    last_message: text,
+                    name: senderName
+                }
+            });
+            leadId = lead.id;
         }
 
+        // 3. Save ChatMessage
+        const chatMsg = await prisma.chatMessage.create({
+            data: {
+                tenant_id: tenantId,
+                content: text,
+                jid: remoteJid,
+                from_me: false,
+                member_id: member?.id,
+                lead_id: leadId,
+                type: 'text'
+            }
+        });
+
+        // 4. Emit real-time event via Socket.IO
+        const { io } = await import('./index.js');
+        io.to(tenantId).emit('new_message', chatMsg);
+
+        if ((tenant as any).status === 'BLOCKED') return;
+
         if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
-            console.log(`Tenant ${tenantId} plan expired. Ignoring or Sending warning.`);
             await sock.sendMessage(remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
             return;
         }
@@ -179,23 +256,18 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // Normalize text
         const cleanText = text.trim().toLowerCase();
-        const phone = remoteJid.split('@')[0];
-
-        // Check if member exists
-        const member = await prisma.member.findFirst({
-            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
-            include: { plan: true }
-        });
 
         if (!member) {
             console.log(`Non-member ${phone} contacted tenant ${tenantId}`);
+            // No longer sending auto-reply here to allow human to take over or just standard welcome
+            // Let's send a standard lead message
             await sock.sendMessage(remoteJid, {
-                text: 'Olá! 👋\n\nVerifiquei aqui e *não encontrei seu cadastro* em nosso sistema.\n\nPara acessar as funcionalidades do bot (Treinos, Dieta, Check-in), você precisa ser um aluno matriculado.\n\nPor favor, procure a recepção para se matricular ou atualizar seu cadastro!'
+                text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenant.name}*.\n\nVerifiquei aqui e você ainda não é nosso aluno. Deseja conhecer nossos planos ou falar com a recepção?\n\nDigite *Planos* ou *Recepção*.`
             });
             return;
         }
 
-        // Menu Navigation
+        // Menu Navigation for Members
         if (['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText)) {
             await sendMainMenu(member, sock, remoteJid);
             return;
@@ -209,8 +281,16 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             await handleGetStatus(member, sock, remoteJid);
         } else if (cleanText === '4' || cleanText.includes('checkin') || cleanText.includes('entrada') || cleanText.includes('cheguei')) {
             await handleCheckin(tenantId, member, sock, remoteJid, tenant);
-        } else if (cleanText === '5' || cleanText.includes('falar')) {
+        } else if (cleanText === '5' || cleanText.includes('falar') || cleanText === 'recepção') {
             await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
+        } else if (cleanText === 'planos') {
+            const plans = await prisma.plan.findMany({ where: { tenant_id: tenantId } });
+            let plansText = `🏋️ *Nossos Planos:*\n\n`;
+            plans.forEach(p => {
+                plansText += `✅ *${p.name}*: R$ ${p.price}\n`;
+            });
+            plansText += `\nVenha nos visitar para se matricular!`;
+            await sock.sendMessage(remoteJid, { text: plansText });
         } else {
             // Se não entendeu, manda o menu para ajudar
             await sendMainMenu(member, sock, remoteJid);

@@ -168,6 +168,39 @@ model Invoice {
   created_at      DateTime @default(now())
 }
 
+model Lead {
+  id              String   @id @default(uuid())
+  tenant_id       String
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  name            String?
+  phone           String
+  last_message    String?
+  last_message_at DateTime @default(now())
+  created_at      DateTime @default(now())
+  
+  messages        ChatMessage[]
+
+  @@unique([phone, tenant_id])
+}
+
+model ChatMessage {
+  id              String   @id @default(uuid())
+  tenant_id       String
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id])
+  lead_id         String?
+  lead            Lead?    @relation(fields: [lead_id], references: [id])
+  member_id       String?
+  member          Member?  @relation(fields: [member_id], references: [id])
+  
+  content         String
+  from_me         Boolean  @default(false)
+  jid             String   // @s.whatsapp.net
+  media_url       String?
+  type            String   @default("text") // text, image, audio, etc
+  
+  created_at      DateTime @default(now())
+}
+
 model AccessLog {
   id        String   @id @default(uuid())
   scanned_at DateTime @default(now())

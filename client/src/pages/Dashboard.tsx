@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -11,6 +11,7 @@ import { Members } from './Members';
 import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
+import { Leads } from './Leads';
 import clsx from 'clsx';
 import api from '../api';
 import { formatImageUrl } from '../utils/format';
@@ -43,6 +44,7 @@ export const Dashboard = () => {
         { label: 'Financeiro', path: '/dashboard/finance', icon: CreditCard },
         { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
         { label: 'WhatsApp', path: '/dashboard/whatsapp', icon: Zap },
+        { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
         { label: 'Configurações', path: '/dashboard/settings', icon: Settings },
     ];
 
@@ -183,6 +185,7 @@ export const Dashboard = () => {
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
                             <Route path="/whatsapp" element={<WhatsAppConnect />} />
+                            <Route path="/leads" element={<Leads />} />
                             <Route path="/settings" element={<ProfileSettings />} />
                         </Routes>
                     </div>

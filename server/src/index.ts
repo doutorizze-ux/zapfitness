@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
-import { initWhatsApp, getSession, reconnectSessions, logoutSession } from './whatsappManager.js';
+import { initWhatsApp, getSession, reconnectSessions, logoutSession, sendMessageToJid } from './whatsappManager.js';
 import { createCustomer, createSubscription, getSubscription, getLatestPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -442,6 +442,52 @@ app.post('/api/whatsapp/connect', authMiddleware, async (req: any, res) => {
     });
 
     res.json({ status: 'INITIALIZING' });
+});
+
+// --- Leads & Chat Routes ---
+app.get('/api/leads', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+    try {
+        const leads = await prisma.lead.findMany({
+            where: { tenant_id: tenantId },
+            include: {
+                messages: {
+                    orderBy: { created_at: 'desc' },
+                    take: 1
+                }
+            },
+            orderBy: { last_message_at: 'desc' }
+        });
+        res.json(leads);
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao buscar leads' });
+    }
+});
+
+app.get('/api/chat/:jid', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+    const { jid } = req.params;
+    try {
+        const messages = await prisma.chatMessage.findMany({
+            where: { tenant_id: tenantId, jid },
+            orderBy: { created_at: 'asc' },
+            take: 100
+        });
+        res.json(messages);
+    } catch (e) {
+        res.status(500).json({ error: 'Erro ao buscar chat' });
+    }
+});
+
+app.post('/api/chat/send', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+    const { jid, text } = req.body;
+    try {
+        const result = await sendMessageToJid(tenantId, jid, text);
+        res.json(result);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message || 'Erro ao enviar mensagem' });
+    }
 });
 
 app.post('/api/whatsapp/disconnect', authMiddleware, async (req: any, res) => {
