@@ -56,6 +56,8 @@ model Tenant {
   accessLogs       AccessLog[]
   securityLogs     SecurityLog[]
   invoices         Invoice[]
+  leads            Lead[]
+  chatMessages     ChatMessage[]
 }
 
 model SecurityLog {
@@ -147,6 +149,7 @@ model Member {
 
   accessLogs      AccessLog[]
   invoices        Invoice[]
+  chatMessages    ChatMessage[]
 
   @@unique([phone, tenant_id])
 }
