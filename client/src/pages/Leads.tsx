@@ -16,7 +16,9 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const socket = io(import.meta.env.VITE_API_URL || '/', {
+    transports: ['websocket', 'polling']
+});
 
 export const Leads = () => {
     const { user } = useAuth();
@@ -86,7 +88,7 @@ export const Leads = () => {
     const fetchMessages = async (jid: string) => {
         setLoading(true);
         try {
-            const res = await api.get(`/chat/${jid}`);
+            const res = await api.get(`/chat/${encodeURIComponent(jid)}`);
             setMessages(res.data);
         } catch (err) {
             console.error('Error fetching messages:', err);

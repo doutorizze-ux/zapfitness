@@ -909,7 +909,11 @@ io.on('connection', (socket: any) => {
     });
 });
 
-// --- TURNSTILE INTEGRATION ---
+// --- TURNSTILE & CHAT INTEGRATION ---
+eventBus.on(EVENTS.NEW_MESSAGE, (msg) => {
+    io.to(msg.tenant_id).emit('new_message', msg);
+});
+
 eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
     console.log(`[Events] Check-in GRANTED for tenant ${data.tenantId}, member ${data.memberName}`);
     // Emit to the specific gym's room

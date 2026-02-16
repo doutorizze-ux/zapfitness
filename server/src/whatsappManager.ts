@@ -210,40 +210,47 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // 2. Manage Lead (even if member, we might want to update lead info or just rely on member)
         let leadId = null;
-        if (!member) {
-            const lead = await prisma.lead.upsert({
-                where: { phone_tenant_id: { phone, tenant_id: tenantId } },
-                update: {
-                    last_message: text,
-                    last_message_at: new Date(),
-                    name: senderName
-                },
-                create: {
-                    phone,
-                    tenant_id: tenantId,
-                    last_message: text,
-                    name: senderName
-                }
-            });
-            leadId = lead.id;
+        try {
+            if (!member) {
+                const lead = await prisma.lead.upsert({
+                    where: { phone_tenant_id: { phone, tenant_id: tenantId } },
+                    update: {
+                        last_message: text,
+                        last_message_at: new Date(),
+                        name: senderName
+                    },
+                    create: {
+                        phone,
+                        tenant_id: tenantId,
+                        last_message: text,
+                        name: senderName
+                    }
+                });
+                leadId = lead.id;
+            }
+        } catch (e) {
+            console.error('[WA] Error managing lead:', e);
         }
 
         // 3. Save ChatMessage
-        const chatMsg = await prisma.chatMessage.create({
-            data: {
-                tenant_id: tenantId,
-                content: text,
-                jid: remoteJid,
-                from_me: false,
-                member_id: member?.id,
-                lead_id: leadId,
-                type: 'text'
-            }
-        });
+        try {
+            const chatMsg = await prisma.chatMessage.create({
+                data: {
+                    tenant_id: tenantId,
+                    content: text,
+                    jid: remoteJid,
+                    from_me: false,
+                    member_id: member?.id,
+                    lead_id: leadId,
+                    type: 'text'
+                }
+            });
 
-        // 4. Emit real-time event via Socket.IO
-        const { io } = await import('./index.js');
-        io.to(tenantId).emit('new_message', chatMsg);
+            // 4. Emit event instantly via EventBus (fastest way)
+            eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
+        } catch (e) {
+            console.error('[WA] Error saving chat message:', e);
+        }
 
         if ((tenant as any).status === 'BLOCKED') return;
 
