@@ -9,3 +9,6 @@ client/dist
 client/node_modules
 server/dist
 server/node_modules
+.env
+server/.env
+client/.env
