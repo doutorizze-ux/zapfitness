@@ -197,7 +197,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         const tenant = await prisma.tenant.findUnique({
             where: { id: tenantId },
             include: { saas_plan: true }
-        });
+        }) as any;
 
         if (!tenant) return;
 
@@ -206,7 +206,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         // 1. Identify if it's a member
         const member = await prisma.member.findFirst({
             where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
-            include: { plan: true }
+            include: { plan: true, tenant: true }
         });
 
         // 2 & 3. Background Processing (Lead & Chat Logging)
@@ -289,7 +289,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             await handleCheckin(tenantId, member, sock, remoteJid, tenant);
         } else if (cleanText === '5' || cleanText.includes('falar') || cleanText === 'recepção') {
             await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
-        } else if (cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) {
+        } else if ((cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) && tenant.enable_scheduling) {
             await handleGetAppointments(member, sock, remoteJid);
         } else if (cleanText === 'planos') {
             const plans = await prisma.plan.findMany({ where: { tenant_id: tenantId } });
@@ -315,8 +315,8 @@ async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
         `2️⃣ *Ver Dieta*\n` +
         `3️⃣ *Status do Plano*\n` +
         `4️⃣ *Registrar Entrada (Check-in)*\n` +
-        `5️⃣ *Falar com a Academia*\n` +
-        `6️⃣ *Meus Agendamentos*`;
+        `5️⃣ *Falar com a Academia*` +
+        (member.tenant?.enable_scheduling ? `\n6️⃣ *Meus Agendamentos*` : ``);
 
     await sock.sendMessage(remoteJid, { text: menu });
 }
@@ -407,34 +407,36 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
     let textResponse = msg.replace('{name}', member.name.split(' ')[0]);
 
-    // Check for appointments today (Fixed OR One-off)
-    const dayOfWeek = now.getDay();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
+    if (tenant.enable_scheduling) {
+        // Check for appointments today (Fixed OR One-off)
+        const dayOfWeek = now.getDay();
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(now);
+        endOfDay.setHours(23, 59, 59, 999);
 
-    // Check fixed schedule for today
-    const fixedSchedule = await prisma.memberSchedule.findFirst({
-        where: { member_id: member.id, day_of_week: dayOfWeek }
-    });
+        // Check fixed schedule for today
+        const fixedSchedule = await prisma.memberSchedule.findFirst({
+            where: { member_id: member.id, day_of_week: dayOfWeek }
+        });
 
-    // Check one-off appointment for today
-    const oneOffApp = await prisma.appointment.findFirst({
-        where: {
-            member_id: member.id,
-            dateTime: { gte: startOfDay, lte: endOfDay },
-            status: { not: 'CANCELLED' }
+        // Check one-off appointment for today
+        const oneOffApp = await prisma.appointment.findFirst({
+            where: {
+                member_id: member.id,
+                dateTime: { gte: startOfDay, lte: endOfDay },
+                status: { not: 'CANCELLED' }
+            }
+        });
+
+        if (fixedSchedule || oneOffApp) {
+            const time = fixedSchedule ? fixedSchedule.start_time : format(new Date(oneOffApp!.dateTime), 'HH:mm');
+            const type = fixedSchedule ? fixedSchedule.type : oneOffApp!.type;
+            const typeLabel = type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
+                type === 'PERSONAL' ? 'um *Treino com Personal*' : 'seu *Treino Agendado*';
+
+            textResponse += `\n\n📌 *Check-in no Horário:* Você está no seu horário de ${typeLabel} das *${time}*. Bom treino!`;
         }
-    });
-
-    if (fixedSchedule || oneOffApp) {
-        const time = fixedSchedule ? fixedSchedule.start_time : format(new Date(oneOffApp!.dateTime), 'HH:mm');
-        const type = fixedSchedule ? fixedSchedule.type : oneOffApp!.type;
-        const typeLabel = type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
-            type === 'PERSONAL' ? 'um *Treino com Personal*' : 'seu *Treino Agendado*';
-
-        textResponse += `\n\n📌 *Check-in no Horário:* Você está no seu horário de ${typeLabel} das *${time}*. Bom treino!`;
     }
 
     await sock.sendMessage(remoteJid, { text: textResponse });

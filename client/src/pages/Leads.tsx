@@ -163,7 +163,7 @@ export const Leads = () => {
                                 )}
                             >
                                 <div className="relative">
-                                    <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black group-hover:scale-110 transition-transform">
                                         {lead.name?.charAt(0) || <User size={20} />}
                                     </div>
                                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-50 rounded-full"></div>
@@ -194,7 +194,7 @@ export const Leads = () => {
                         {/* Chat Header */}
                         <div className="p-5 md:px-8 border-b border-slate-100 flex items-center justify-between z-10 bg-white/80 backdrop-blur-md sticky top-0">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black shadow-lg shadow-orange-500/20">
+                                <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-black shadow-lg shadow-primary/20">
                                     {selectedLead.name?.charAt(0) || <User size={20} />}
                                 </div>
                                 <div>
@@ -221,7 +221,7 @@ export const Leads = () => {
                         <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed custom-scrollbar">
                             {loading && messages.length === 0 ? (
                                 <div className="h-full flex items-center justify-center">
-                                    <div className="w-8 h-8 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
+                                    <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
                                 </div>
                             ) : (
                                 messages.map((msg, i) => (
@@ -242,7 +242,7 @@ export const Leads = () => {
                                                 {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                             {msg.from_me && (
-                                                <CheckCheck size={12} className="text-orange-500" />
+                                                <CheckCheck size={12} className="text-primary" />
                                             )}
                                         </div>
                                     </div>
@@ -261,13 +261,13 @@ export const Leads = () => {
                                         placeholder="Digite sua mensagem aqui..."
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
-                                        className="w-full bg-slate-50 border-none rounded-[1.5rem] py-4 px-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all placeholder:text-slate-400 shadow-inner"
+                                        className="w-full bg-slate-50 border-none rounded-[1.5rem] py-4 px-6 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all placeholder:text-slate-400 shadow-inner"
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={!newMessage.trim()}
-                                    className="bg-orange-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 hover:bg-orange-600 hover:scale-110 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                                    className="bg-primary text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-primary/30 hover:bg-primary/90 hover:scale-110 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
                                 >
                                     <Send size={24} className="ml-1" />
                                 </button>
@@ -280,18 +280,18 @@ export const Leads = () => {
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-slate-50/30">
                         <div className="w-32 h-32 bg-white rounded-[3rem] shadow-2xl flex items-center justify-center mb-8 relative group">
-                            <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full scale-125 group-hover:scale-150 transition-transform duration-500"></div>
-                            <Zap size={64} className="text-orange-500 fill-orange-500 relative z-10" />
+                            <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-125 group-hover:scale-150 transition-transform duration-500"></div>
+                            <Zap size={64} className="text-primary fill-primary relative z-10" />
                         </div>
                         <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-3">Bem-vindo ao Leads Hub</h2>
                         <p className="text-slate-500 font-medium max-w-sm leading-relaxed">
                             Selecione um contato ao lado para iniciar um atendimento manual. <br />
-                            <span className="text-orange-500">Transforme interessados em alunos reais!</span>
+                            <span className="text-primary">Transforme interessados em alunos reais!</span>
                         </p>
 
                         <div className="mt-12 grid grid-cols-2 gap-4 max-w-md w-full">
                             <div className="bg-white p-4 rounded-3xl border border-slate-100 text-left">
-                                <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center mb-3">
+                                <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
                                     <Clock size={16} />
                                 </div>
                                 <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1">Histórico</p>

@@ -32,6 +32,7 @@ model Tenant {
   
   gate_token        String?  @unique
   turnstile_brand   String?  @default("generic")
+  enable_scheduling Boolean  @default(false)
 
 
   saas_plan_id     String?

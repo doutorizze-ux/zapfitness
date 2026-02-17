@@ -121,7 +121,7 @@ Domingo:
                     <button
                         id="btn-new-member"
                         onClick={openForCreate}
-                        className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
+                        className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95"
                     >
                         <Plus size={20} />
                         NOVO MEMBRO
@@ -227,7 +227,7 @@ Domingo:
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{editingId ? formData.name : 'Cadastro Inteligente'}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button type="button" onClick={handleSubmit} className="bg-orange-500 text-white px-6 py-3 rounded-2xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95">
+                                <button type="button" onClick={handleSubmit} className="bg-primary text-white px-6 py-3 rounded-2xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95">
                                     SALVAR
                                 </button>
                                 <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition flex items-center justify-center">
@@ -248,12 +248,12 @@ Domingo:
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={clsx(
                                         "flex-1 py-5 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all relative",
-                                        activeTab === tab.id ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600'
+                                        activeTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                                     )}
                                 >
                                     <tab.icon size={18} />
                                     <span className="hidden sm:inline">{tab.label}</span>
-                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1 bg-orange-500 rounded-t-full"></span>}
+                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full"></span>}
                                 </button>
                             ))}
                         </div>
@@ -265,38 +265,38 @@ Domingo:
                                     <div className="group">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome Completo</label>
                                         <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                            <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                            <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                         </div>
                                     </div>
                                     <div className="group">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">WhatsApp (com DDD)</label>
                                         <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                            <input required type="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="5511999999999" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                            <input required type="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="5511999999999" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="group">
                                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">CPF</label>
                                             <div className="relative">
-                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="000.000.000-00" value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="000.000.000-00" value={formData.cpf} onChange={e => setFormData({ ...formData, cpf: e.target.value })} />
                                             </div>
                                         </div>
                                         <div className="group">
                                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Endereço</label>
                                             <div className="relative">
-                                                <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Rua, Número, Bairro" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
+                                                <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                                <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="Rua, Número, Bairro" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} />
                                             </div>
                                         </div>
                                     </div>
                                     <div className="group">
                                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Plano da Academia</label>
                                         <div className="relative">
-                                            <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800 appearance-none pointer-events-auto" value={formData.plan_id} onChange={e => setFormData({ ...formData, plan_id: e.target.value })}>
+                                            <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                            <select className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800 appearance-none pointer-events-auto" value={formData.plan_id} onChange={e => setFormData({ ...formData, plan_id: e.target.value })}>
                                                 <option value="">Selecione um plano...</option>
                                                 {plans.map(p => (
                                                     <option key={p.id} value={p.id}>{p.name} - R$ {p.price} ({p.duration_days} dias)</option>
@@ -317,7 +317,7 @@ Domingo:
                                         </button>
                                     </div>
                                     <textarea
-                                        className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
+                                        className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
                                         placeholder="Digite o treino aqui..."
                                         value={formData.workout}
                                         onChange={e => setFormData({ ...formData, workout: e.target.value })}
@@ -334,7 +334,7 @@ Domingo:
                                         </button>
                                     </div>
                                     <textarea
-                                        className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
+                                        className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
                                         placeholder="Digite a dieta aqui..."
                                         value={formData.diet}
                                         onChange={e => setFormData({ ...formData, diet: e.target.value })}

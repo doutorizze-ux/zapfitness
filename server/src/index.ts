@@ -382,14 +382,15 @@ app.put('/api/settings/security', authMiddleware, async (req: any, res) => {
 // Update Access/Operational Settings
 app.put('/api/settings/access', authMiddleware, async (req: any, res) => {
     try {
-        const { opening_time, closing_time, access_cooldown, max_daily_access } = req.body;
+        const { opening_time, closing_time, access_cooldown, max_daily_access, enable_scheduling } = req.body;
         const updated = await prisma.tenant.update({
             where: { id: req.user.tenant_id },
             data: {
                 opening_time,
                 closing_time,
                 access_cooldown: parseInt(access_cooldown),
-                max_daily_access: parseInt(max_daily_access)
+                max_daily_access: parseInt(max_daily_access),
+                enable_scheduling: enable_scheduling === true
             }
         });
         res.json(updated);

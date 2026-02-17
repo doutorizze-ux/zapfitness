@@ -51,7 +51,12 @@ export const Dashboard = () => {
         { label: 'Configurações', path: '/dashboard/settings', icon: Settings },
     ];
 
-    const currentItem = navItems.find(item => item.path === location.pathname) || navItems[0];
+    const filteredNavItems = navItems.filter(item => {
+        if (item.label === 'Agenda' && !user?.enable_scheduling) return false;
+        return true;
+    });
+
+    const currentItem = filteredNavItems.find(item => item.path === location.pathname) || filteredNavItems[0];
 
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -65,14 +70,14 @@ export const Dashboard = () => {
                             ) : systemSettings.logo_url ? (
                                 <img src={formatImageUrl(systemSettings.logo_url)} alt="SaaS Logo" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-tr from-primary to-orange-600 flex items-center justify-center shadow-primary/30">
+                                <div className="w-full h-full bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center shadow-primary/30">
                                     <Zap className="text-white fill-white" size={20} />
                                 </div>
                             )}
                         </div>
                         <span className="text-2xl font-black tracking-tighter text-white truncate max-w-[180px]">
                             {user?.name || (systemSettings.site_name === 'ZapFitness' ? (
-                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">Fitness</span></>
+                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/70">Fitness</span></>
                             ) : (
                                 systemSettings.site_name
                             ))}
@@ -81,7 +86,7 @@ export const Dashboard = () => {
                 </div>
 
                 <nav id="sidebar-nav" className="flex-1 p-6 space-y-1 overflow-y-auto">
-                    {navItems.map((item) => (
+                    {filteredNavItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
@@ -100,7 +105,7 @@ export const Dashboard = () => {
 
                 <div className="p-6 border-t border-slate-800 bg-slate-950/50">
                     <div className="flex items-center gap-3 mb-6 p-3 rounded-2xl bg-slate-800/50">
-                        <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
                             {user?.logo_url ? (
                                 <img src={formatImageUrl(user.logo_url)} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
@@ -201,7 +206,7 @@ export const Dashboard = () => {
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
-                            { label: 'Agenda', path: '/dashboard/appointments', icon: Calendar },
+                            ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
                         ].map((item) => {
@@ -313,7 +318,7 @@ const Welcome = () => {
         <div className="animate-fade-in-up">
             <div className="mb-8 p-4 md:p-0">
                 <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                    Olá, <span className="text-orange-600">{stats?.name || 'Academia'}</span>! 👋
+                    Olá, <span className="text-primary">{stats?.name || 'Academia'}</span>! 👋
                 </h1>
                 <p className="text-slate-500 font-medium">Aqui está o que está acontecendo hoje.</p>
             </div>
@@ -337,7 +342,7 @@ const Welcome = () => {
 
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group col-span-2 md:col-span-1">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl group-hover:scale-110 transition-transform"><Zap size={24} /></div>
+                        <div className="p-3 bg-primary/10 text-primary rounded-2xl group-hover:scale-110 transition-transform"><Zap size={24} /></div>
                         <span className={clsx("px-2 py-1 rounded-full text-[10px] font-black tracking-widest uppercase", stats?.whatsapp_status === 'CONNECTED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
                             {stats?.whatsapp_status === 'CONNECTED' ? 'CONECTADO' : 'OFFLINE'}
                         </span>
@@ -362,10 +367,10 @@ const Welcome = () => {
 
             {/* Onboarding Tips */}
             <div className="bg-slate-900 rounded-[2rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
                 <div className="relative z-10">
                     <h3 className="text-2xl font-black mb-6 tracking-tight flex items-center gap-2">
-                        <Zap className="text-orange-500 fill-orange-500" size={24} />
+                        <Zap className="text-primary fill-primary" size={24} />
                         Próximos Passos
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -375,7 +380,7 @@ const Welcome = () => {
                             { step: '3', title: 'Membros', color: 'text-purple-400', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
                         ].map((item, i) => (
                             <div key={i} className="flex gap-4 group/item cursor-pointer">
-                                <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-xl text-slate-400 group-hover/item:border-orange-500 transition-colors">
+                                <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-xl text-slate-400 group-hover/item:border-primary transition-colors">
                                     {item.step}
                                 </div>
                                 <div>

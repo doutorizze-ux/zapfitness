@@ -27,7 +27,6 @@ export const WhatsAppConnect = () => {
             setStatus(res.data.whatsapp_status);
         });
 
-        // Corrigido: Enviar objeto esperado pelo servidor
         socket.emit('join_room', { room: user.tenant_id });
 
         socket.on('qr_code', (code) => {
@@ -67,8 +66,6 @@ export const WhatsAppConnect = () => {
                 <p className="text-slate-500 font-medium">Ative o bot para responder seus alunos automaticamente.</p>
             </div>
 
-
-
             <div id="whatsapp-panel" className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 flex flex-col items-center">
                 {status === 'CONNECTED' ? (
                     <div className="text-center w-full max-w-md animate-fade-in">
@@ -104,7 +101,7 @@ export const WhatsAppConnect = () => {
                     <div className="text-center w-full max-w-sm">
                         {!qr && status !== 'SCAN_QR' && (
                             <div className="animate-fade-in">
-                                <div className="w-20 h-20 bg-orange-50 text-orange-500 rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-3 shadow-lg shadow-orange-500/10">
+                                <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-3 shadow-lg shadow-primary/10">
                                     <Smartphone size={40} />
                                 </div>
                                 <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Vincular Dispositivo</h3>
@@ -112,16 +109,16 @@ export const WhatsAppConnect = () => {
                                     Escaneie o QR Code conforme faria no WhatsApp Web para ativar as automações da academia.
                                 </p>
 
-                                <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-8 flex items-start gap-3">
-                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
-                                    <p className="text-xs font-bold text-orange-800 leading-relaxed text-left">
+                                <div className="bg-primary/5 border border-primary/10 p-4 rounded-2xl mb-8 flex items-start gap-3">
+                                    <AlertTriangle className="text-primary shrink-0 mt-0.5" size={18} />
+                                    <p className="text-xs font-bold text-slate-800 leading-relaxed text-left">
                                         IMPORTANTE: Caso seu WhatsApp desconecte por qualquer motivo, gere um novo QR Code imediatamente para que não fique sem os serviços de automação.
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleConnect}
                                     disabled={loading}
-                                    className="w-full bg-orange-500 text-white px-8 py-5 rounded-[1.5rem] font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-3"
+                                    className="w-full bg-primary text-white px-8 py-5 rounded-[1.5rem] font-black hover:bg-primary/90 shadow-xl shadow-primary/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center gap-3"
                                 >
                                     {loading ? (
                                         <>
@@ -141,7 +138,7 @@ export const WhatsAppConnect = () => {
                         {qr && status !== 'CONNECTED' && (
                             <div className="flex flex-col items-center animate-fade-in-up">
                                 <div className="bg-slate-900 p-6 md:p-8 rounded-[3rem] shadow-2xl mb-8 relative">
-                                    <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full -z-10 animate-pulse"></div>
+                                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full -z-10 animate-pulse"></div>
                                     <div className="bg-white p-4 rounded-[2rem]">
                                         <QRCode value={qr} size={240} className="w-full h-auto" />
                                     </div>
@@ -149,14 +146,14 @@ export const WhatsAppConnect = () => {
                                 <h3 className="text-xl font-black text-slate-900 mb-2">Escaneie o Código</h3>
                                 <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-6">Aguardando leitura pelo WhatsApp</p>
                                 <div className="flex gap-2 mb-8">
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                                 </div>
 
-                                <div className="bg-orange-50 border border-orange-100 p-4 rounded-2xl flex items-start gap-3 max-w-xs">
-                                    <AlertTriangle className="text-orange-500 shrink-0 mt-0.5" size={18} />
-                                    <p className="text-[10px] font-bold text-orange-800 leading-relaxed text-left">
+                                <div className="bg-primary/5 border border-primary/10 p-4 rounded-2xl flex items-start gap-3 max-w-xs">
+                                    <AlertTriangle className="text-primary shrink-0 mt-0.5" size={18} />
+                                    <p className="text-[10px] font-bold text-slate-800 leading-relaxed text-left">
                                         IMPORTANTE: Mantenha esta tela aberta até a conexão ser confirmada. Caso desconecte no futuro, basta gerar um novo código aqui.
                                     </p>
                                 </div>
@@ -165,6 +162,6 @@ export const WhatsAppConnect = () => {
                     </div>
                 )}
             </div>
-        </div >
+        </div>
     );
 };

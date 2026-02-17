@@ -59,7 +59,7 @@ export const Plans = () => {
                 <button
                     id="btn-new-plan"
                     onClick={() => setShowModal(true)}
-                    className="flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-orange-600 transition shadow-lg shadow-orange-500/20 active:scale-95"
+                    className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95"
                 >
                     <Plus size={20} />
                     NOVO PLANO
@@ -73,7 +73,7 @@ export const Plans = () => {
                         <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] -z-10 transition-colors group-hover:bg-orange-50"></div>
 
                         <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-slate-50 text-orange-500 rounded-2xl group-hover:bg-orange-500 group-hover:text-white transition-all duration-500">
+                            <div className="p-3 bg-slate-50 text-primary rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-500">
                                 <Tag size={24} />
                             </div>
                             <button onClick={() => handleDelete(plan.id)} className="p-3 text-slate-200 hover:text-red-500 transition-colors">
@@ -124,24 +124,24 @@ export const Plans = () => {
                             <div className="group">
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Nome do Plano</label>
                                 <div className="relative">
-                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                    <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: Mensal Platinum" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                    <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="Ex: Mensal Platinum" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                                 </div>
                             </div>
 
                             <div className="group">
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Valor do Plano (R$)</label>
                                 <div className="relative">
-                                    <BadgeDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                    <input required type="number" step="0.01" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: 99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
+                                    <BadgeDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                    <input required type="number" step="0.01" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="Ex: 99.90" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                                 </div>
                             </div>
 
                             <div className="group">
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Duração do Plano</label>
                                 <div className="relative mb-3">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-orange-500 transition-colors" size={20} />
-                                    <input required type="number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 outline-none transition-all font-bold text-slate-800" placeholder="Ex: 30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                    <input required type="number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold text-slate-800" placeholder="Ex: 30" value={formData.duration_days} onChange={e => setFormData({ ...formData, duration_days: e.target.value })} />
                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase">Dias</span>
                                 </div>
                                 <div className="grid grid-cols-4 gap-2">
@@ -158,8 +158,8 @@ export const Plans = () => {
                                             className={clsx(
                                                 "py-2 rounded-xl text-[10px] font-black border transition-all",
                                                 formData.duration_days === d.days.toString()
-                                                    ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20"
-                                                    : "bg-white border-slate-100 text-slate-500 hover:border-orange-200"
+                                                    ? "bg-primary border-primary text-white shadow-md shadow-primary/20"
+                                                    : "bg-white border-slate-100 text-slate-500 hover:border-primary/30"
                                             )}
                                         >
                                             {d.label}
@@ -169,7 +169,7 @@ export const Plans = () => {
                             </div>
 
                             <div className="flex flex-col gap-3 pt-4">
-                                <button type="submit" className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all active:scale-95">
+                                <button type="submit" className="w-full bg-primary text-white py-5 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95">
                                     CRIAR PLANO AGORA
                                 </button>
                                 <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors">

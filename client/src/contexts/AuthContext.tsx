@@ -8,6 +8,7 @@ interface User {
     role?: string;
     logo_url?: string;
     primary_color?: string;
+    enable_scheduling?: boolean;
 }
 
 interface AuthContextType {

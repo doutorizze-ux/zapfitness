@@ -249,7 +249,7 @@ export const Appointments = () => {
                                         <span className={clsx(
                                             "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
                                             item.type === 'TREINO' ? 'bg-blue-50 text-blue-500' :
-                                                item.type === 'AVALIAÇÃO' ? 'bg-purple-50 text-purple-500' : 'bg-orange-50 text-orange-500'
+                                                item.type === 'AVALIAÇÃO' ? 'bg-purple-50 text-purple-500' : 'bg-primary/10 text-primary'
                                         )}>
                                             {item.type}
                                         </span>

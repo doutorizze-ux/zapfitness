@@ -96,7 +96,7 @@ export const Finance = () => {
                             placeholder="Buscar aluno..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 transition-all font-medium text-slate-700"
+                            className="w-full pl-12 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all font-medium text-slate-700"
                         />
                     </div>
                 </div>
@@ -139,7 +139,7 @@ export const Finance = () => {
                                         {inv.status !== 'PAID' && (
                                             <button
                                                 onClick={() => handleMarkAsPaid(inv.id)}
-                                                className="p-3 bg-white border border-slate-100 rounded-xl text-green-500 hover:bg-green-500 hover:text-white transition-all shadow-sm flex items-center gap-2 mx-auto font-black text-[10px] uppercase"
+                                                className="p-3 bg-white border border-slate-100 rounded-xl text-primary hover:bg-primary hover:text-white transition-all shadow-sm flex items-center gap-2 mx-auto font-black text-[10px] uppercase"
                                             >
                                                 <CheckCircle size={16} />
                                                 Confirmar Pago

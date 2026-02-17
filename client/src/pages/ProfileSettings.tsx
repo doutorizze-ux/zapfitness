@@ -12,7 +12,8 @@ import {
     Image as ImageIcon,
     RefreshCw,
     CreditCard,
-    Palette
+    Palette,
+    Calendar
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatImageUrl } from '../utils/format';
@@ -28,7 +29,7 @@ export const ProfileSettings = () => {
     // Form states
     const [profileData, setProfileData] = useState({ name: '', logo_url: '', primary_color: '#f97316' });
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    const [accessData, setAccessData] = useState({ opening_time: '', closing_time: '', access_cooldown: 5, max_daily_access: 1 });
+    const [accessData, setAccessData] = useState({ opening_time: '', closing_time: '', access_cooldown: 5, max_daily_access: 1, enable_scheduling: false });
     const [notificationData, setNotificationData] = useState({ checkin_success: '', plan_warning: '', plan_expired: '' });
     const [tenantData, setTenantData] = useState<any>(null);
 
@@ -50,7 +51,8 @@ export const ProfileSettings = () => {
                 opening_time: tenant.opening_time || '06:00',
                 closing_time: tenant.closing_time || '23:00',
                 access_cooldown: tenant.access_cooldown,
-                max_daily_access: tenant.max_daily_access
+                max_daily_access: tenant.max_daily_access,
+                enable_scheduling: tenant.enable_scheduling || false
             });
             if (tenant.notificationSettings) {
                 setNotificationData({
@@ -118,6 +120,10 @@ export const ProfileSettings = () => {
         try {
             await api.put('/settings/access', accessData);
             setSuccess('Configurações de acesso atualizadas!');
+            // Update auth context to reflect sidebar change immediately
+            if (user) {
+                login(localStorage.getItem('token') || '', { ...user, enable_scheduling: accessData.enable_scheduling });
+            }
             setTimeout(() => setSuccess(null), 3000);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Erro ao atualizar configurações');
@@ -190,7 +196,7 @@ export const ProfileSettings = () => {
                             className={clsx(
                                 "flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all whitespace-nowrap",
                                 activeTab === tab.id
-                                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/20"
                                     : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-100 shadow-sm"
                             )}
                         >
@@ -227,7 +233,7 @@ export const ProfileSettings = () => {
                                                 type="text"
                                                 value={profileData.name}
                                                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                 placeholder="Ex: Matrix Fitness"
                                                 required
                                             />
@@ -249,7 +255,7 @@ export const ProfileSettings = () => {
                                                         type="text"
                                                         value={profileData.primary_color}
                                                         onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
-                                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all uppercase"
+                                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all uppercase"
                                                         placeholder="#000000"
                                                     />
                                                 </div>
@@ -282,7 +288,7 @@ export const ProfileSettings = () => {
                                                 htmlFor="logo-upload"
                                                 className={clsx(
                                                     "cursor-pointer px-6 py-4 rounded-2xl font-black transition-all flex items-center gap-2 border-2 border-dashed",
-                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-orange-50/50"
+                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-primary/5"
                                                 )}
                                             >
                                                 {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
@@ -315,7 +321,7 @@ export const ProfileSettings = () => {
                                     <button
                                         disabled={loading}
                                         type="submit"
-                                        className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+                                        className="bg-primary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
                                         SALVAR ALTERAÇÕES
@@ -333,7 +339,7 @@ export const ProfileSettings = () => {
                                             type="password"
                                             value={passwordData.currentPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                             required
                                         />
                                     </div>
@@ -344,7 +350,7 @@ export const ProfileSettings = () => {
                                                 type="password"
                                                 value={passwordData.newPassword}
                                                 onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                 required
                                                 minLength={6}
                                             />
@@ -355,7 +361,7 @@ export const ProfileSettings = () => {
                                                 type="password"
                                                 value={passwordData.confirmPassword}
                                                 onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                 required
                                             />
                                         </div>
@@ -380,7 +386,7 @@ export const ProfileSettings = () => {
                                     <div className="space-y-6">
                                         <div>
                                             <h4 className="text-sm font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
-                                                <Clock size={16} className="text-orange-500" />
+                                                <Clock size={16} className="text-primary" />
                                                 Horário de Funcionamento
                                             </h4>
                                             <div className="grid grid-cols-2 gap-4">
@@ -390,7 +396,7 @@ export const ProfileSettings = () => {
                                                         type="time"
                                                         value={accessData.opening_time}
                                                         onChange={(e) => setAccessData({ ...accessData, opening_time: e.target.value })}
-                                                        className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                        className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                         required
                                                     />
                                                 </div>
@@ -400,7 +406,7 @@ export const ProfileSettings = () => {
                                                         type="time"
                                                         value={accessData.closing_time}
                                                         onChange={(e) => setAccessData({ ...accessData, closing_time: e.target.value })}
-                                                        className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                        className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                         required
                                                     />
                                                 </div>
@@ -410,7 +416,7 @@ export const ProfileSettings = () => {
 
                                     <div className="space-y-6">
                                         <h4 className="text-sm font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
-                                            <AlertCircle size={16} className="text-orange-500" />
+                                            <AlertCircle size={16} className="text-primary" />
                                             Regras de Catraca
                                         </h4>
                                         <div className="grid grid-cols-2 gap-4">
@@ -421,7 +427,7 @@ export const ProfileSettings = () => {
                                                     min="0"
                                                     value={accessData.access_cooldown}
                                                     onChange={(e) => setAccessData({ ...accessData, access_cooldown: parseInt(e.target.value) })}
-                                                    className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                    className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                     required
                                                 />
                                             </div>
@@ -432,7 +438,7 @@ export const ProfileSettings = () => {
                                                     min="1"
                                                     value={accessData.max_daily_access}
                                                     onChange={(e) => setAccessData({ ...accessData, max_daily_access: parseInt(e.target.value) })}
-                                                    className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all"
+                                                    className="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                     required
                                                 />
                                             </div>
@@ -440,11 +446,33 @@ export const ProfileSettings = () => {
                                         <p className="text-[10px] text-slate-400 font-bold">O intervalo evita que o aluno valide o acesso várias vezes seguidas.</p>
                                     </div>
                                 </div>
+
+                                <div className="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100/50 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-primary/20">
+                                    <div className="flex gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-primary flex-shrink-0">
+                                            <Calendar size={28} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-black text-slate-900 mb-1">Habilitar Agendamento / Horários Fixos</h4>
+                                            <p className="text-slate-500 text-xs font-medium max-w-md">Ative esta opção se sua academia trabalha com horários reservados para treinos, avaliações ou personal trainers.</p>
+                                        </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={accessData.enable_scheduling}
+                                            onChange={(e) => setAccessData({ ...accessData, enable_scheduling: e.target.checked })}
+                                        />
+                                        <div className="w-16 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-7 after:transition-all peer-checked:bg-primary shadow-inner"></div>
+                                    </label>
+                                </div>
+
                                 <div className="pt-4">
                                     <button
                                         disabled={loading}
                                         type="submit"
-                                        className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+                                        className="bg-primary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
                                         SALVAR OPERACIONAL
@@ -464,7 +492,7 @@ export const ProfileSettings = () => {
                                         <textarea
                                             value={notificationData.checkin_success}
                                             onChange={(e) => setNotificationData({ ...notificationData, checkin_success: e.target.value })}
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all h-24 resize-none"
+                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all h-24 resize-none"
                                             required
                                         />
                                     </div>
@@ -474,7 +502,7 @@ export const ProfileSettings = () => {
                                             <textarea
                                                 value={notificationData.plan_warning}
                                                 onChange={(e) => setNotificationData({ ...notificationData, plan_warning: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all h-32 resize-none"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all h-32 resize-none"
                                                 required
                                             />
                                         </div>
@@ -483,7 +511,7 @@ export const ProfileSettings = () => {
                                             <textarea
                                                 value={notificationData.plan_expired}
                                                 onChange={(e) => setNotificationData({ ...notificationData, plan_expired: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all h-32 resize-none"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all h-32 resize-none"
                                                 required
                                             />
                                         </div>
@@ -493,7 +521,7 @@ export const ProfileSettings = () => {
                                     <button
                                         disabled={loading}
                                         type="submit"
-                                        className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black hover:bg-orange-600 shadow-xl shadow-orange-500/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+                                        className="bg-primary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
                                         SALVAR MENSAGENS
@@ -505,7 +533,7 @@ export const ProfileSettings = () => {
                         {activeTab === 'subscription' && (
                             <div className="space-y-8 animate-fade-in">
                                 <div className="bg-slate-900 rounded-[2rem] p-8 text-white relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                                     <div className="relative z-10">
                                         <div className="flex items-start justify-between">
                                             <div>
@@ -539,7 +567,7 @@ export const ProfileSettings = () => {
 
                                 <div>
                                     <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-widest">
-                                        <CreditCard size={20} className="text-orange-500" />
+                                        <CreditCard size={20} className="text-primary" />
                                         Fazer Upgrade
                                     </h3>
 
@@ -547,7 +575,7 @@ export const ProfileSettings = () => {
                                         <p className="text-slate-500 font-medium mb-4">Deseja liberar mais alunos ou funcionalidades?</p>
                                         <button
                                             onClick={() => window.open('https://wa.me/5562995347257?text=Quero%20fazer%20upgrade%20do%20meu%20plano%20ZapFitness', '_blank')}
-                                            className="bg-green-500 text-white px-8 py-4 rounded-xl font-black hover:bg-green-600 shadow-xl shadow-green-500/20 transition-all active:scale-95 inline-flex items-center gap-2"
+                                            className="bg-primary text-white px-8 py-4 rounded-xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95 inline-flex items-center gap-2"
                                         >
                                             <MessageSquare size={20} />
                                             FALAR COM O SUPORTE

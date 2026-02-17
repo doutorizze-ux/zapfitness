@@ -168,7 +168,7 @@ export const Turnstiles = () => {
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="p-4 bg-white/10 rounded-2xl">
-                                    <Wifi className="text-orange-400" size={32} />
+                                    <Wifi className="text-primary" size={32} />
                                 </div>
                                 <span className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/30">
                                     Servidor Pronto
@@ -181,7 +181,7 @@ export const Turnstiles = () => {
                                     <div className="space-y-4">
                                         <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
                                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-                                            <div className="text-xs font-black text-orange-400 uppercase tracking-widest mb-4">Configuração na Catraca</div>
+                                            <div className="text-xs font-black text-primary uppercase tracking-widest mb-4">Configuração na Catraca</div>
                                             <div className="space-y-3 font-mono text-sm">
                                                 <div className="flex flex-col sm:flex-row justify-between border-b border-white/5 pb-2 overflow-hidden gap-2">
                                                     <span className="text-slate-500 shrink-0">URL do Servidor:</span>
@@ -190,7 +190,7 @@ export const Turnstiles = () => {
                                                 <div className="flex flex-col sm:flex-row justify-between pt-1 gap-2">
                                                     <span className="text-slate-500 shrink-0">Seu Token:</span>
                                                     <div className="flex items-center justify-between sm:justify-end gap-2 overflow-hidden">
-                                                        <span className="text-orange-300 select-all font-bold truncate">{token}</span>
+                                                        <span className="text-primary font-bold truncate select-all">{token}</span>
                                                         <button onClick={handleRegenerateToken} className="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20 shrink-0">Regerar</button>
                                                     </div>
                                                 </div>
@@ -201,16 +201,16 @@ export const Turnstiles = () => {
                                     <div className="space-y-4">
                                         <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
                                         <div className="bg-white/5 border border-white/10 p-6 rounded-2xl mb-6">
-                                            <div className="text-xs font-black text-orange-400 uppercase tracking-widest mb-2">Seu Token de Acesso</div>
+                                            <div className="text-xs font-black text-primary uppercase tracking-widest mb-2">Seu Token de Acesso</div>
                                             <div className="flex items-center justify-between gap-4">
-                                                <span className="text-lg md:text-xl font-mono font-bold text-orange-300 truncate">{token}</span>
+                                                <span className="text-lg md:text-xl font-mono font-bold text-primary truncate">{token}</span>
                                                 <button onClick={handleRegenerateToken} className="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 transition-colors shrink-0">Novo Token</button>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 sm:flex sm:flex-row gap-4">
                                             <button
                                                 onClick={handleDownload}
-                                                className="bg-orange-500 text-white px-6 md:px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 text-sm md:text-base"
+                                                className="bg-primary text-white px-6 md:px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm md:text-base"
                                             >
                                                 <Download size={20} />
                                                 Baixar ZappBridge (.js)
