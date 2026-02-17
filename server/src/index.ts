@@ -252,14 +252,29 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
-    const admin = await prisma.gymAdmin.findUnique({ where: { email } });
+    const admin = await prisma.gymAdmin.findUnique({
+        where: { email },
+        include: { tenant: true }
+    });
 
     if (!admin || !await bcrypt.compare(password, admin.password)) {
         return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
     const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, admin, tenant_id: admin.tenant_id });
+
+    // Merge tenant customization into the user object for the frontend
+    const userResponse = {
+        ...admin,
+        logo_url: admin.tenant.logo_url,
+        primary_color: admin.tenant.primary_color,
+        enable_scheduling: admin.tenant.enable_scheduling,
+        // You might want to use the gym name as the display name, or keep the admin name.
+        // Usually for the dashboard header, the gym name is preferred if available.
+        // name: admin.tenant.name || admin.name 
+    };
+
+    res.json({ token, admin: userResponse, tenant_id: admin.tenant_id });
 });
 
 app.get('/api/me', authMiddleware, async (req: any, res) => {

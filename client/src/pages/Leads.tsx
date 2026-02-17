@@ -77,7 +77,7 @@ export const Leads = () => {
             // Transform leads to include JID for uniform messaging
             const formatted = res.data.map((l: any) => ({
                 ...l,
-                jid: `${l.phone}@s.whatsapp.net`
+                jid: `${l.phone.replace(/\D/g, '')}@s.whatsapp.net`
             }));
             setLeads(formatted);
         } catch (err) {

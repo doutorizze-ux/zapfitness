@@ -220,7 +220,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                         update: {
                             last_message: text,
                             last_message_at: new Date(),
-                            name: senderName
+                            // Don't overwrite name if it already exists
                         },
                         create: {
                             phone,

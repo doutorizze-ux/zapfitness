@@ -13,7 +13,7 @@ import { ThemeHandler } from './components/ThemeHandler';
 import api from './api';
 
 const PrivateRoute = ({ children, requirePayment = true }: { children: React.ReactNode, requirePayment?: boolean }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, login, loading: authLoading } = useAuth();
   const [isPaid, setIsPaid] = React.useState<boolean | null>(null);
   const [checking, setChecking] = React.useState(false);
 
@@ -22,7 +22,20 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
       setChecking(true);
       api.get('/me')
         .then(res => {
-          const { payment_status, is_free } = res.data;
+          const { payment_status, is_free, primary_color, logo_url, enable_scheduling } = res.data;
+
+          // Sync user context if vital customization data changed on server
+          if (user.primary_color !== primary_color || user.logo_url !== logo_url) {
+            const updatedUser = {
+              ...user,
+              primary_color: primary_color,
+              logo_url: logo_url,
+              enable_scheduling: enable_scheduling
+            };
+            // Update context and localStorage silently
+            login(localStorage.getItem('token') || '', updatedUser);
+          }
+
           // Allow if ACTIVE or is_free
           if (payment_status === 'ACTIVE' || is_free) {
             setIsPaid(true);
@@ -33,7 +46,7 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
         .catch(() => setIsPaid(false))
         .finally(() => setChecking(false));
     }
-  }, [user]);
+  }, [user, login]);
 
   if (authLoading || checking) return <div className="min-h-screen flex items-center justify-center text-primary">Verificando acesso...</div>;
 
