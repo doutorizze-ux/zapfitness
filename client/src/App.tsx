@@ -8,6 +8,7 @@ import { AdminLogin } from './pages/AdminLogin';
 import { Dashboard } from './pages/Dashboard';
 import { PaymentPage } from './pages/PaymentPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
+import { ThemeHandler } from './components/ThemeHandler';
 
 import api from './api';
 
@@ -48,6 +49,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <ThemeHandler />
         <TutorialProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />

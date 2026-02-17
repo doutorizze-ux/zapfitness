@@ -22,6 +22,7 @@ model Tenant {
   status           String   @default("ACTIVE") // ACTIVE, BLOCKED
   owner_phone      String?
   logo_url         String?
+  primary_color    String   @default("#f97316") // Default Orange
   
   // Access Control Settings
   access_cooldown   Int     @default(5) // minutes between checkins

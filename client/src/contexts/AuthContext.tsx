@@ -7,6 +7,7 @@ interface User {
     tenant_id: string;
     role?: string;
     logo_url?: string;
+    primary_color?: string;
 }
 
 interface AuthContextType {

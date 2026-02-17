@@ -63,14 +63,14 @@ export const Dashboard = () => {
                             ) : systemSettings.logo_url ? (
                                 <img src={formatImageUrl(systemSettings.logo_url)} alt="SaaS Logo" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="w-full h-full bg-gradient-to-tr from-orange-500 to-red-600 flex items-center justify-center shadow-orange-500/30">
+                                <div className="w-full h-full bg-gradient-to-tr from-primary to-orange-600 flex items-center justify-center shadow-primary/30">
                                     <Zap className="text-white fill-white" size={20} />
                                 </div>
                             )}
                         </div>
                         <span className="text-2xl font-black tracking-tighter text-white truncate max-w-[180px]">
                             {user?.name || (systemSettings.site_name === 'ZapFitness' ? (
-                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600">Fitness</span></>
+                                <>Zapp<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">Fitness</span></>
                             ) : (
                                 systemSettings.site_name
                             ))}
@@ -86,7 +86,7 @@ export const Dashboard = () => {
                             className={clsx(
                                 "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group",
                                 location.pathname === item.path
-                                    ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/30"
                                     : "text-slate-400 hover:bg-slate-800 hover:text-white"
                             )}
                         >
@@ -151,7 +151,7 @@ export const Dashboard = () => {
                         <h1 className="text-lg font-black text-slate-900 tracking-tight truncate max-w-[150px]">{user?.name || currentItem.label}</h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="p-2 text-slate-500 hover:text-orange-500 transition-colors relative">
+                        <button className="p-2 text-slate-500 hover:text-primary transition-colors relative">
                             <Bell size={20} />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
@@ -194,7 +194,7 @@ export const Dashboard = () => {
 
                 {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
                 <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50">
-                    <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-orange-900/20">
+                    <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
@@ -210,12 +210,12 @@ export const Dashboard = () => {
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className={clsx(
                                         "relative flex flex-col items-center justify-center py-2 px-1 transition-all duration-300 flex-1",
-                                        isActive ? "text-orange-500" : "text-white/40 hover:text-white/60"
+                                        isActive ? "text-primary" : "text-white/40 hover:text-white/60"
                                     )}
                                 >
                                     <div className={clsx(
                                         "p-2.5 rounded-2xl transition-all duration-500",
-                                        isActive ? "bg-orange-500/10 scale-110" : "bg-transparent"
+                                        isActive ? "bg-primary/10 scale-110" : "bg-transparent"
                                     )}>
                                         <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                     </div>
@@ -226,7 +226,7 @@ export const Dashboard = () => {
                                         {item.label}
                                     </span>
                                     {isActive && (
-                                        <div className="absolute -bottom-1 w-1 h-1 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,1)]" />
+                                        <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_var(--primary-color)]" />
                                     )}
                                 </Link>
                             );
@@ -237,7 +237,7 @@ export const Dashboard = () => {
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className={clsx(
                                 "flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-300 flex-1",
-                                isMobileMenuOpen ? "text-orange-500 bg-orange-500/10 scale-110 rotate-90" : "text-white/40"
+                                isMobileMenuOpen ? "text-primary bg-primary/10 scale-110 rotate-90" : "text-white/40"
                             )}
                         >
                             <MoreHorizontal size={24} />

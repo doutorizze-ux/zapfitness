@@ -346,10 +346,10 @@ app.post('/api/upload', authMiddleware, upload.single('file'), (req: any, res) =
 // Update Tenant Profile
 app.put('/api/settings/profile', authMiddleware, async (req: any, res) => {
     try {
-        const { name, logo_url } = req.body;
+        const { name, logo_url, primary_color } = req.body;
         const updated = await prisma.tenant.update({
             where: { id: req.user.tenant_id },
-            data: { name, logo_url } as any
+            data: { name, logo_url, primary_color } as any
         });
         res.json(updated);
     } catch (e: any) {

@@ -11,7 +11,8 @@ import {
     Save,
     Image as ImageIcon,
     RefreshCw,
-    CreditCard
+    CreditCard,
+    Palette
 } from 'lucide-react';
 import clsx from 'clsx';
 import { formatImageUrl } from '../utils/format';
@@ -25,7 +26,7 @@ export const ProfileSettings = () => {
     const [uploading, setUploading] = useState(false);
 
     // Form states
-    const [profileData, setProfileData] = useState({ name: '', logo_url: '' });
+    const [profileData, setProfileData] = useState({ name: '', logo_url: '', primary_color: '#f97316' });
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [accessData, setAccessData] = useState({ opening_time: '', closing_time: '', access_cooldown: 5, max_daily_access: 1 });
     const [notificationData, setNotificationData] = useState({ checkin_success: '', plan_warning: '', plan_expired: '' });
@@ -40,7 +41,11 @@ export const ProfileSettings = () => {
             const res = await api.get('/me');
             const tenant = res.data;
             setTenantData(tenant);
-            setProfileData({ name: tenant.name, logo_url: tenant.logo_url || '' });
+            setProfileData({
+                name: tenant.name,
+                logo_url: tenant.logo_url || '',
+                primary_color: tenant.primary_color || '#f97316'
+            });
             setAccessData({
                 opening_time: tenant.opening_time || '06:00',
                 closing_time: tenant.closing_time || '23:00',
@@ -68,7 +73,12 @@ export const ProfileSettings = () => {
             setSuccess('Perfil atualizado com sucesso!');
             // Update auth context
             if (user) {
-                const updatedUser = { ...user, name: res.data.name, logo_url: res.data.logo_url };
+                const updatedUser = {
+                    ...user,
+                    name: res.data.name,
+                    logo_url: res.data.logo_url,
+                    primary_color: res.data.primary_color
+                };
                 login(localStorage.getItem('token') || '', updatedUser);
             }
             setTimeout(() => setSuccess(null), 3000);
@@ -223,38 +233,72 @@ export const ProfileSettings = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Logo da Academia (Upload)</label>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
+                                                <Palette size={14} className="text-primary" />
+                                                Cor Primária do Tema
+                                            </label>
                                             <div className="flex items-center gap-4">
                                                 <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleFileUpload}
-                                                    className="hidden"
-                                                    id="logo-upload"
-                                                    disabled={uploading}
+                                                    type="color"
+                                                    value={profileData.primary_color}
+                                                    onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
+                                                    className="w-14 h-14 rounded-2xl border-none p-1 bg-slate-100 cursor-pointer transition-transform hover:scale-105"
                                                 />
-                                                <label
-                                                    htmlFor="logo-upload"
-                                                    className={clsx(
-                                                        "cursor-pointer px-6 py-4 rounded-2xl font-black transition-all flex items-center gap-2 border-2 border-dashed",
-                                                        uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-orange-500 text-orange-500 hover:bg-orange-50/50"
-                                                    )}
-                                                >
-                                                    {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
-                                                    {uploading ? 'ENVIANDO...' : 'SELECIONAR LOGO'}
-                                                </label>
-                                                {profileData.logo_url && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setProfileData({ ...profileData, logo_url: '' })}
-                                                        className="text-red-500 text-xs font-black hover:underline uppercase tracking-tighter"
-                                                    >
-                                                        Remover
-                                                    </button>
-                                                )}
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="text"
+                                                        value={profileData.primary_color}
+                                                        onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
+                                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-orange-500 transition-all uppercase"
+                                                        placeholder="#000000"
+                                                    />
+                                                </div>
                                             </div>
-                                            <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Formatos aceitos: PNG, JPG (Máx. 5MB).</p>
+                                            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                                                {['#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ef4444', '#facc15'].map(c => (
+                                                    <button
+                                                        key={c}
+                                                        type="button"
+                                                        onClick={() => setProfileData({ ...profileData, primary_color: c })}
+                                                        className="w-6 h-6 rounded-full border border-white shadow-sm flex-shrink-0"
+                                                        style={{ backgroundColor: c }}
+                                                    />
+                                                ))}
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Logo da Academia (Upload)</label>
+                                        <div className="flex items-center gap-4">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFileUpload}
+                                                className="hidden"
+                                                id="logo-upload"
+                                                disabled={uploading}
+                                            />
+                                            <label
+                                                htmlFor="logo-upload"
+                                                className={clsx(
+                                                    "cursor-pointer px-6 py-4 rounded-2xl font-black transition-all flex items-center gap-2 border-2 border-dashed",
+                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-orange-50/50"
+                                                )}
+                                            >
+                                                {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
+                                                {uploading ? 'ENVIANDO...' : 'SELECIONAR LOGO'}
+                                            </label>
+                                            {profileData.logo_url && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setProfileData({ ...profileData, logo_url: '' })}
+                                                    className="text-red-500 text-xs font-black hover:underline uppercase tracking-tighter"
+                                                >
+                                                    Remover
+                                                </button>
+                                            )}
+                                        </div>
+                                        <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Formatos aceitos: PNG, JPG (Máx. 5MB).</p>
                                     </div>
                                     <div className="flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] p-8 border-2 border-dashed border-slate-200">
                                         <div className="w-24 h-24 rounded-3xl bg-white shadow-inner flex items-center justify-center mb-4 overflow-hidden outline outline-4 outline-white">
