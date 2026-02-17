@@ -288,6 +288,8 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             await handleCheckin(tenantId, member, sock, remoteJid, tenant);
         } else if (cleanText === '5' || cleanText.includes('falar') || cleanText === 'recepção') {
             await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
+        } else if (cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) {
+            await handleGetAppointments(member, sock, remoteJid);
         } else if (cleanText === 'planos') {
             const plans = await prisma.plan.findMany({ where: { tenant_id: tenantId } });
             let plansText = `🏋️ *Nossos Planos:*\n\n`;
@@ -312,7 +314,8 @@ async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
         `2️⃣ *Ver Dieta*\n` +
         `3️⃣ *Status do Plano*\n` +
         `4️⃣ *Registrar Entrada (Check-in)*\n` +
-        `5️⃣ *Falar com a Academia*`;
+        `5️⃣ *Falar com a Academia*\n` +
+        `6️⃣ *Meus Agendamentos*`;
 
     await sock.sendMessage(remoteJid, { text: menu });
 }
@@ -401,7 +404,32 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
     // Access Granted
     const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
-    await sock.sendMessage(remoteJid, { text: msg.replace('{name}', member.name.split(' ')[0]) });
+    let textResponse = msg.replace('{name}', member.name.split(' ')[0]);
+
+    // Check for appointments today
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const appointmentToday = await prisma.appointment.findFirst({
+        where: {
+            member_id: member.id,
+            dateTime: { gte: startOfDay, lte: endOfDay },
+            status: { not: 'CANCELLED' }
+        },
+        orderBy: { dateTime: 'asc' }
+    });
+
+    if (appointmentToday) {
+        const time = appointmentToday.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const typeLabel = appointmentToday.type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
+            appointmentToday.type === 'PERSONAL' ? 'um *Treino com Personal*' : 'um *Treino Agendado*';
+
+        textResponse += `\n\n📌 *Lembrete:* Você tem ${typeLabel} hoje às *${time}*!`;
+    }
+
+    await sock.sendMessage(remoteJid, { text: textResponse });
     await logAccess(tenantId, member.id, 'GRANTED', remoteJid);
 
     // Emit event for Turnstile integration
@@ -463,4 +491,36 @@ async function handleGetStatus(member: any, sock: WASocket, remoteJid: string) {
     } else {
         await sock.sendMessage(remoteJid, { text: 'ℹ️ Cadastro não encontrado.' });
     }
+}
+
+async function handleGetAppointments(member: any, sock: WASocket, remoteJid: string) {
+    const appointments = await prisma.appointment.findMany({
+        where: {
+            member_id: member.id,
+            dateTime: { gte: new Date() } // Only future appointments
+        },
+        orderBy: { dateTime: 'asc' },
+        take: 5
+    });
+
+    if (appointments.length === 0) {
+        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você não possui agendamentos futuros.\n\nPara marcar um horário (Treino, Avaliação ou Personal), fale com a recepção digitando *5*.' });
+        return;
+    }
+
+    let text = `📅 *Seus Próximos Agendamentos:*\n\n`;
+    appointments.forEach(app => {
+        const date = app.dateTime.toLocaleDateString('pt-BR');
+        const time = app.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const type = app.type === 'TREINO' ? '🏋️ Treino' :
+            app.type === 'AVALIAÇÃO' ? '📊 Avaliação' : '👤 Personal';
+
+        text += `🔹 *${date} às ${time}*\n`;
+        text += `   Tipo: ${type}\n`;
+        if (app.notes) text += `   Obs: ${app.notes}\n`;
+        text += `\n`;
+    });
+
+    text += `Para cancelar ou reagendar, fale com a recepção.`;
+    await sock.sendMessage(remoteJid, { text });
 }
