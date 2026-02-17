@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { prisma } from './db.js';
 import pino from 'pino';
+import { format } from 'date-fns';
 import { fileURLToPath } from 'url';
 import { eventBus, EVENTS } from './events.js';
 
@@ -406,27 +407,34 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
     let textResponse = msg.replace('{name}', member.name.split(' ')[0]);
 
-    // Check for appointments today
-    const startOfDay = new Date();
+    // Check for appointments today (Fixed OR One-off)
+    const dayOfWeek = now.getDay();
+    const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
+    const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const appointmentToday = await prisma.appointment.findFirst({
+    // Check fixed schedule for today
+    const fixedSchedule = await prisma.memberSchedule.findFirst({
+        where: { member_id: member.id, day_of_week: dayOfWeek }
+    });
+
+    // Check one-off appointment for today
+    const oneOffApp = await prisma.appointment.findFirst({
         where: {
             member_id: member.id,
             dateTime: { gte: startOfDay, lte: endOfDay },
             status: { not: 'CANCELLED' }
-        },
-        orderBy: { dateTime: 'asc' }
+        }
     });
 
-    if (appointmentToday) {
-        const time = appointmentToday.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const typeLabel = appointmentToday.type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
-            appointmentToday.type === 'PERSONAL' ? 'um *Treino com Personal*' : 'um *Treino Agendado*';
+    if (fixedSchedule || oneOffApp) {
+        const time = fixedSchedule ? fixedSchedule.start_time : format(new Date(oneOffApp!.dateTime), 'HH:mm');
+        const type = fixedSchedule ? fixedSchedule.type : oneOffApp!.type;
+        const typeLabel = type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
+            type === 'PERSONAL' ? 'um *Treino com Personal*' : 'seu *Treino Agendado*';
 
-        textResponse += `\n\n📌 *Lembrete:* Você tem ${typeLabel} hoje às *${time}*!`;
+        textResponse += `\n\n📌 *Check-in no Horário:* Você está no seu horário de ${typeLabel} das *${time}*. Bom treino!`;
     }
 
     await sock.sendMessage(remoteJid, { text: textResponse });
@@ -494,33 +502,42 @@ async function handleGetStatus(member: any, sock: WASocket, remoteJid: string) {
 }
 
 async function handleGetAppointments(member: any, sock: WASocket, remoteJid: string) {
-    const appointments = await prisma.appointment.findMany({
-        where: {
-            member_id: member.id,
-            dateTime: { gte: new Date() } // Only future appointments
-        },
-        orderBy: { dateTime: 'asc' },
-        take: 5
+    // Get recurring schedules
+    const fixedSchedules = await prisma.memberSchedule.findMany({
+        where: { member_id: member.id },
+        orderBy: [{ day_of_week: 'asc' }, { start_time: 'asc' }]
     });
 
-    if (appointments.length === 0) {
-        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você não possui agendamentos futuros.\n\nPara marcar um horário (Treino, Avaliação ou Personal), fale com a recepção digitando *5*.' });
+    // Get next 3 one-off appointments
+    const oneOffs = await prisma.appointment.findMany({
+        where: { member_id: member.id, dateTime: { gte: new Date() }, status: { not: 'CANCELLED' } },
+        orderBy: { dateTime: 'asc' },
+        take: 3
+    });
+
+    if (fixedSchedules.length === 0 && oneOffs.length === 0) {
+        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você não possui horários fixos ou agendamentos ativos.\n\nPara definir sua rotina semanal de treinos, fale com a recepção digitando *5*.' });
         return;
     }
 
-    let text = `📅 *Seus Próximos Agendamentos:*\n\n`;
-    appointments.forEach(app => {
-        const date = app.dateTime.toLocaleDateString('pt-BR');
-        const time = app.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const type = app.type === 'TREINO' ? '🏋️ Treino' :
-            app.type === 'AVALIAÇÃO' ? '📊 Avaliação' : '👤 Personal';
+    const DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    let text = `🗓️ *Sua Agenda na Academia:*\n\n`;
 
-        text += `🔹 *${date} às ${time}*\n`;
-        text += `   Tipo: ${type}\n`;
-        if (app.notes) text += `   Obs: ${app.notes}\n`;
+    if (fixedSchedules.length > 0) {
+        text += `⏰ *Horários Fixos Semanais:*\n`;
+        fixedSchedules.forEach(s => {
+            text += `• *${DAYS[s.day_of_week]}* às *${s.start_time}* (${s.type})\n`;
+        });
         text += `\n`;
-    });
+    }
 
-    text += `Para cancelar ou reagendar, fale com a recepção.`;
+    if (oneOffs.length > 0) {
+        text += `🎯 *Próximos Eventos:* \n`;
+        oneOffs.forEach((o: any) => {
+            text += `• *${o.dateTime.toLocaleDateString('pt-BR')}* às *${o.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}* (${o.type})\n`;
+        });
+    }
+
+    text += `\nPara alterar qualquer horário, procure a recepção.`;
     await sock.sendMessage(remoteJid, { text });
 }

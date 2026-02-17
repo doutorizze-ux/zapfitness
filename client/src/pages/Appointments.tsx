@@ -4,46 +4,87 @@ import {
     Calendar as CalendarIcon,
     Plus,
     Clock,
-    CheckCircle2,
     XCircle,
     Trash2,
     ChevronLeft,
     ChevronRight,
-    Search
+    Search,
+    Repeat,
+    CalendarDays
 } from 'lucide-react';
 import clsx from 'clsx';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+const DAYS_OF_WEEK = [
+    'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
+];
+
 export const Appointments = () => {
+    const [viewMode, setViewMode] = useState<'daily' | 'fixed'>('daily');
     const [appointments, setAppointments] = useState<any[]>([]);
+    const [schedules, setSchedules] = useState<any[]>([]);
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showModal, setShowModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // New Appointment Form
+    // Form states
     const [formData, setFormData] = useState({
         member_id: '',
         time: '08:00',
         type: 'TREINO',
-        notes: ''
+        day_of_week: selectedDate.getDay(),
+        isRecurring: true
     });
 
     useEffect(() => {
-        fetchAppointments();
+        if (viewMode === 'daily') {
+            fetchDailyData();
+        } else {
+            fetchFixedSchedules();
+        }
         fetchMembers();
-    }, [selectedDate]);
+    }, [selectedDate, viewMode]);
 
-    const fetchAppointments = async () => {
+    const fetchDailyData = async () => {
         setLoading(true);
         try {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            const res = await api.get(`/appointments?date=${dateStr}`);
-            setAppointments(res.data);
+            const dayOfWeek = selectedDate.getDay();
+
+            // Fetch both one-off and fixed schedules for this day
+            const [appRes, schRes] = await Promise.all([
+                api.get(`/appointments?date=${dateStr}`),
+                api.get(`/schedules?day=${dayOfWeek}`)
+            ]);
+
+            // Merge them
+            const merged = [
+                ...appRes.data.map((a: any) => ({ ...a, isFixed: false })),
+                ...schRes.data.map((s: any) => ({ ...s, isFixed: true, dateTime: s.start_time }))
+            ].sort((a, b) => {
+                const timeA = a.isFixed ? a.start_time : format(new Date(a.dateTime), 'HH:mm');
+                const timeB = b.isFixed ? b.start_time : format(new Date(b.dateTime), 'HH:mm');
+                return timeA.localeCompare(timeB);
+            });
+
+            setAppointments(merged);
         } catch (err) {
-            console.error('Erro ao buscar agendamentos:', err);
+            console.error('Erro ao buscar dados:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchFixedSchedules = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/schedules');
+            setSchedules(res.data);
+        } catch (err) {
+            console.error('Erro ao buscar horários fixos:', err);
         } finally {
             setLoading(false);
         }
@@ -61,53 +102,45 @@ export const Appointments = () => {
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const [hours, minutes] = formData.time.split(':');
-            const dateTime = new Date(selectedDate);
-            dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            if (formData.isRecurring) {
+                await api.post('/schedules', {
+                    member_id: formData.member_id,
+                    day_of_week: formData.day_of_week,
+                    start_time: formData.time,
+                    type: formData.type
+                });
+            } else {
+                const [hours, minutes] = formData.time.split(':');
+                const dateTime = new Date(selectedDate);
+                dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-            await api.post('/appointments', {
-                member_id: formData.member_id,
-                dateTime,
-                type: formData.type,
-                notes: formData.notes
-            });
+                await api.post('/appointments', {
+                    member_id: formData.member_id,
+                    dateTime,
+                    type: formData.type,
+                    notes: 'Agendamento pontual'
+                });
+            }
             setShowModal(false);
-            setFormData({ member_id: '', time: '08:00', type: 'TREINO', notes: '' });
-            fetchAppointments();
+            setFormData({ ...formData, member_id: '' });
+            if (viewMode === 'daily') fetchDailyData(); else fetchFixedSchedules();
         } catch (err) {
             alert('Erro ao criar agendamento');
         }
     };
 
-    const handleStatusUpdate = async (id: string, status: string) => {
-        try {
-            await api.put(`/appointments/${id}`, { status });
-            fetchAppointments();
-        } catch (err) {
-            alert('Erro ao atualizar status');
-        }
-    };
-
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: string, isFixed: boolean) => {
         if (!confirm('Excluir este agendamento?')) return;
         try {
-            await api.delete(`/appointments/${id}`);
-            fetchAppointments();
+            if (isFixed) {
+                await api.delete(`/schedules/${id}`);
+            } else {
+                await api.delete(`/appointments/${id}`);
+            }
+            if (viewMode === 'daily') fetchDailyData(); else fetchFixedSchedules();
         } catch (err) {
             alert('Erro ao excluir');
         }
-    };
-
-    const nextDay = () => {
-        const next = new Date(selectedDate);
-        next.setDate(next.getDate() + 1);
-        setSelectedDate(next);
-    };
-
-    const prevDay = () => {
-        const prev = new Date(selectedDate);
-        prev.setDate(prev.getDate() - 1);
-        setSelectedDate(prev);
     };
 
     const filteredMembers = members.filter(m =>
@@ -117,161 +150,238 @@ export const Appointments = () => {
 
     return (
         <div className="animate-fade-in-up">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
                 <div>
                     <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight flex items-center gap-3">
                         <CalendarIcon className="text-primary" size={32} />
-                        Agenda
+                        Gestão de Agenda
                     </h1>
-                    <p className="text-slate-500 font-medium">Controle os horários e atendimentos da sua academia.</p>
+                    <p className="text-slate-500 font-medium text-lg italic">Organize os horários fixos e pontuais dos seus alunos.</p>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-primary text-white px-6 py-4 rounded-2xl font-black hover:opacity-90 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 active:scale-95"
-                >
-                    <Plus size={20} />
-                    NOVO AGENDAMENTO
-                </button>
+
+                <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                    <button
+                        onClick={() => setViewMode('daily')}
+                        className={clsx(
+                            "px-6 py-3 rounded-xl font-black transition-all flex items-center gap-2",
+                            viewMode === 'daily' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <CalendarDays size={18} />
+                        DIÁRIO
+                    </button>
+                    <button
+                        onClick={() => setViewMode('fixed')}
+                        className={clsx(
+                            "px-6 py-3 rounded-xl font-black transition-all flex items-center gap-2",
+                            viewMode === 'fixed' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        <Repeat size={18} />
+                        HORÁRIOS FIXOS
+                    </button>
+                </div>
             </div>
 
-            {/* Date Selector */}
-            <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
-                <button onClick={prevDay} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
-                    <ChevronLeft size={24} />
-                </button>
-                <div className="text-center">
-                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
-                        {format(selectedDate, 'eeee', { locale: ptBR })}
-                    </p>
-                    <h2 className="text-xl font-black text-slate-900">
-                        {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
-                    </h2>
+            {viewMode === 'daily' && (
+                <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
+                        <ChevronLeft size={24} />
+                    </button>
+                    <div className="text-center">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
+                            {format(selectedDate, 'eeee', { locale: ptBR })}
+                        </p>
+                        <h2 className="text-xl font-black text-slate-900">
+                            {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                        </h2>
+                    </div>
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
+                        <ChevronRight size={24} />
+                    </button>
                 </div>
-                <button onClick={nextDay} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
-                    <ChevronRight size={24} />
-                </button>
-            </div>
+            )}
 
-            {/* Appointments List */}
+            <button
+                onClick={() => setShowModal(true)}
+                className="w-full mb-8 bg-primary text-white p-6 rounded-[2rem] font-black hover:opacity-90 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-[0.98]"
+            >
+                <Plus size={24} />
+                {viewMode === 'daily' ? 'ADICIONAR AGENDAMENTO PARA HOJE' : 'CADASTRAR NOVO HORÁRIO RECORRENTE'}
+            </button>
+
+            {/* List */}
             <div className="space-y-4">
                 {loading ? (
                     <div className="bg-white rounded-[2rem] p-12 flex flex-col items-center justify-center border border-slate-100">
                         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4" />
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando agenda...</p>
+                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando...</p>
                     </div>
-                ) : appointments.length === 0 ? (
+                ) : (viewMode === 'daily' ? appointments : schedules).length === 0 ? (
                     <div className="bg-white rounded-[3rem] p-16 text-center border border-slate-100">
-                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                            <Clock className="text-slate-200" size={40} />
+                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-200">
+                            {viewMode === 'daily' ? <CalendarDays size={40} /> : <Repeat size={40} />}
                         </div>
-                        <h3 className="text-xl font-black text-slate-900 mb-2">Sem horários para hoje</h3>
-                        <p className="text-slate-500 mb-8 max-w-xs mx-auto">Aproveite para organizar a casa ou agendar novas avaliações.</p>
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="text-primary font-black uppercase text-sm tracking-widest hover:underline"
-                        >
-                            + AGENDAR AGORA
-                        </button>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Nada por aqui</h3>
+                        <p className="text-slate-500 max-w-xs mx-auto">Comece a organizar os treinos clicando no botão acima.</p>
                     </div>
                 ) : (
-                    appointments.map((app) => (
-                        <div key={app.id} className="group bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all flex flex-col md:flex-row md:items-center gap-6 relative overflow-hidden">
-                            <div className={clsx(
-                                "absolute left-0 top-0 bottom-0 w-2",
-                                app.status === 'CONFIRMED' ? 'bg-green-500' :
-                                    app.status === 'CANCELLED' ? 'bg-red-500' : 'bg-amber-500'
-                            )} />
-
-                            <div className="flex items-center gap-4 min-w-[120px]">
-                                <div className="w-14 h-14 rounded-2xl bg-slate-50 flex flex-col items-center justify-center text-slate-900">
+                    (viewMode === 'daily' ? appointments : schedules).map((item) => (
+                        <div key={item.id} className="group bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all flex flex-col md:flex-row md:items-center gap-6">
+                            <div className="flex items-center gap-6 min-w-[200px]">
+                                <div className="w-16 h-16 rounded-2xl bg-slate-900 flex flex-col items-center justify-center text-white shadow-lg">
                                     <Clock size={16} className="text-primary mb-1" />
-                                    <span className="font-black text-sm">{format(new Date(app.dateTime), 'HH:mm')}</span>
+                                    <span className="font-black text-sm">{item.isFixed ? item.start_time : format(new Date(item.dateTime), 'HH:mm')}</span>
                                 </div>
                                 <div className="md:hidden flex-1">
-                                    <h4 className="font-black text-lg text-slate-900 truncate">{app.member.name}</h4>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{app.type}</p>
+                                    <h4 className="font-black text-xl text-slate-900">{item.member.name}</h4>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">{item.type}</span>
+                                        {item.isFixed && <Repeat size={14} className="text-slate-300" />}
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="hidden md:block flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-black text-xl text-slate-900 truncate">{app.member.name}</h4>
-                                    <span className={clsx(
-                                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
-                                        app.type === 'TREINO' ? 'bg-blue-50 text-blue-500' :
-                                            app.type === 'AVALIAÇÃO' ? 'bg-purple-50 text-purple-500' : 'bg-orange-50 text-orange-500'
-                                    )}>
-                                        {app.type}
-                                    </span>
+                                <div className="flex items-center gap-3 mb-1">
+                                    <h4 className="font-black text-2xl text-slate-900 truncate">{item.member.name}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <span className={clsx(
+                                            "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
+                                            item.type === 'TREINO' ? 'bg-blue-50 text-blue-500' :
+                                                item.type === 'AVALIAÇÃO' ? 'bg-purple-50 text-purple-500' : 'bg-orange-50 text-orange-500'
+                                        )}>
+                                            {item.type}
+                                        </span>
+                                        {item.isFixed ? (
+                                            <span className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
+                                                <Repeat size={12} />
+                                                Recorrente ({DAYS_OF_WEEK[item.day_of_week]})
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-50 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                                                Eventual
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <p className="text-sm font-medium text-slate-500 italic">
-                                    {app.notes || "Sem observações adicionais"}
+                                <p className="text-slate-400 font-medium flex items-center gap-2">
+                                    <User size={14} />
+                                    {item.member.phone}
                                 </p>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                                {app.status === 'PENDING' && (
-                                    <button
-                                        onClick={() => handleStatusUpdate(app.id, 'CONFIRMED')}
-                                        className="p-3 bg-green-50 text-green-600 rounded-xl hover:bg-green-500 hover:text-white transition-all shadow-sm"
-                                        title="Confirmar"
-                                    >
-                                        <CheckCircle2 size={20} />
-                                    </button>
-                                )}
-                                <button
-                                    onClick={() => handleStatusUpdate(app.id, app.status === 'CANCELLED' ? 'PENDING' : 'CANCELLED')}
-                                    className={clsx(
-                                        "p-3 rounded-xl transition-all shadow-sm",
-                                        app.status === 'CANCELLED' ? "bg-amber-50 text-amber-600 hover:bg-amber-500 hover:text-white" : "bg-red-50 text-red-600 hover:bg-red-500 hover:text-white"
-                                    )}
-                                    title={app.status === 'CANCELLED' ? "Reativar" : "Cancelar"}
-                                >
-                                    <XCircle size={20} />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(app.id)}
-                                    className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-slate-900 hover:text-white transition-all shadow-sm"
-                                    title="Excluir"
-                                >
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => handleDelete(item.id, item.isFixed)}
+                                className="p-4 bg-slate-50 text-slate-300 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                                <Trash2 size={24} />
+                            </button>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* Modal Novo Agendamento */}
+            {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowModal(false)} />
-                    <div className="bg-white w-full max-w-xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 animate-fade-in-up">
-                        <div className="flex items-center justify-between mb-8">
+                    <div className="bg-white w-full max-w-2xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 animate-fade-in-up">
+                        <div className="flex items-center justify-between mb-10">
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Novo Agendamento</h3>
-                                <p className="text-slate-500 font-medium">Reserve um horário para seu aluno.</p>
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Novo Agendamento</h3>
+                                <p className="text-slate-500 font-medium text-lg italic">Defina o compromisso do aluno.</p>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                                <XCircle size={24} className="text-slate-400" />
+                            <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
+                                <XCircle size={32} className="text-slate-300" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="space-y-6">
-                            <div className="space-y-4">
+                        <form onSubmit={handleCreate} className="space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Tipo de Agendamento</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, isRecurring: true })}
+                                                className={clsx(
+                                                    "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
+                                                    formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
+                                                )}
+                                            >
+                                                <Repeat size={20} />
+                                                FIXO / RECORRENTE
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, isRecurring: false })}
+                                                className={clsx(
+                                                    "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
+                                                    !formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
+                                                )}
+                                            >
+                                                <CalendarDays size={20} />
+                                                EVENTUAL / ÚNICO
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {formData.isRecurring && (
+                                        <div>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Dia da Semana</label>
+                                            <select
+                                                value={formData.day_of_week}
+                                                onChange={(e) => setFormData({ ...formData, day_of_week: parseInt(e.target.value) })}
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
+                                            >
+                                                {DAYS_OF_WEEK.map((day, i) => (
+                                                    <option key={i} value={i}>{day}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Horário</label>
+                                            <input
+                                                type="time"
+                                                value={formData.time}
+                                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Atividade</label>
+                                            <select
+                                                value={formData.type}
+                                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
+                                            >
+                                                <option value="TREINO">TREINO</option>
+                                                <option value="AVALIAÇÃO">AVALIAÇÃO</option>
+                                                <option value="PERSONAL">PERSONAL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div>
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Selecionar Aluno</label>
-                                    <div className="relative mb-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Buscar Aluno</label>
+                                    <div className="relative mb-4">
                                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                         <input
                                             type="text"
-                                            placeholder="Buscar por nome ou celular..."
+                                            placeholder="Nome ou telefone..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
+                                            className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                         />
                                     </div>
-                                    <div className="max-h-40 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                         {filteredMembers.map(m => (
                                             <button
                                                 key={m.id}
@@ -281,57 +391,22 @@ export const Appointments = () => {
                                                     setSearchTerm(m.name);
                                                 }}
                                                 className={clsx(
-                                                    "w-full text-left p-4 rounded-2xl font-bold transition-all border-2",
-                                                    formData.member_id === m.id ? "bg-primary/5 border-primary text-primary" : "bg-white border-slate-100 text-slate-600 hover:border-primary/30"
+                                                    "w-full text-left p-4 rounded-2xl font-bold transition-all border-4",
+                                                    formData.member_id === m.id ? "bg-primary/5 border-primary text-primary" : "bg-white border-slate-50 text-slate-500 hover:border-slate-100"
                                                 )}
                                             >
                                                 {m.name}
-                                                <span className="block text-[10px] text-slate-400 mt-0.5">{m.phone}</span>
+                                                <span className="block text-[10px] text-slate-400 uppercase tracking-widest mt-1">{m.phone}</span>
                                             </button>
                                         ))}
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Horário</label>
-                                        <input
-                                            type="time"
-                                            value={formData.time}
-                                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Tipo</label>
-                                        <select
-                                            value={formData.type}
-                                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                            className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
-                                        >
-                                            <option value="TREINO">TREINO</option>
-                                            <option value="AVALIAÇÃO">AVALIAÇÃO</option>
-                                            <option value="PERSONAL">PERSONAL</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Observações (Opcional)</label>
-                                    <textarea
-                                        value={formData.notes}
-                                        onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all h-24 resize-none"
-                                        placeholder="Alguma restrição ou lembrete..."
-                                    />
                                 </div>
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={!formData.member_id}
-                                className="w-full bg-primary text-white py-5 rounded-[2rem] font-black shadow-xl shadow-primary/20 hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
+                                className="w-full bg-primary text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
                             >
                                 CONFIRMAR AGENDAMENTO
                             </button>
@@ -342,3 +417,20 @@ export const Appointments = () => {
         </div>
     );
 };
+
+const User = ({ size, className = '' }: { size: number, className?: string }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+    </svg>
+)

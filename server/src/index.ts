@@ -699,6 +699,61 @@ app.delete('/api/appointments/:id', authMiddleware, async (req: any, res) => {
     }
 });
 
+// --- MEMBER SCHEDULES (FIXED TIMES) ROUTES ---
+app.get('/api/schedules', authMiddleware, async (req: any, res) => {
+    try {
+        const { day } = req.query; // dayOfWeek 0-6
+        let where: any = { tenant_id: req.user.tenant_id };
+
+        if (day !== undefined) {
+            where.day_of_week = parseInt(day as string);
+        }
+
+        const schedules = await prisma.memberSchedule.findMany({
+            where,
+            include: { member: true },
+            orderBy: { start_time: 'asc' }
+        });
+        res.json(schedules);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/schedules', authMiddleware, async (req: any, res) => {
+    try {
+        const { member_id, day_of_week, start_time, type } = req.body;
+        if (member_id === undefined || day_of_week === undefined || !start_time) {
+            return res.status(400).json({ error: 'Membro, dia da semana e horário são obrigatórios.' });
+        }
+
+        const schedule = await prisma.memberSchedule.create({
+            data: {
+                tenant_id: req.user.tenant_id,
+                member_id,
+                day_of_week: parseInt(day_of_week),
+                start_time,
+                type: type || 'TREINO'
+            },
+            include: { member: true }
+        });
+        res.json(schedule);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/schedules/:id', authMiddleware, async (req: any, res) => {
+    try {
+        await prisma.memberSchedule.delete({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
     try {
         const { name, phone, plan_id, diet, workout, cpf, address } = req.body;

@@ -60,6 +60,7 @@ model Tenant {
   leads            Lead[]
   chatMessages     ChatMessage[]
   appointments     Appointment[]
+  memberSchedules  MemberSchedule[]
 }
 
 model SecurityLog {
@@ -87,6 +88,20 @@ model Appointment {
   
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+}
+
+model MemberSchedule {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  member_id   String
+  day_of_week Int      // 0-6 (Sunday to Saturday)
+  start_time  String   // "08:00"
+  type        String   @default("TREINO")
+  
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id])
+  member      Member   @relation(fields: [member_id], references: [id])
+  
+  created_at   DateTime @default(now())
 }
 
 model NotificationSettings {
@@ -169,6 +184,7 @@ model Member {
   invoices        Invoice[]
   chatMessages    ChatMessage[]
   appointments    Appointment[]
+  memberSchedules MemberSchedule[]
 
   @@unique([phone, tenant_id])
 }
