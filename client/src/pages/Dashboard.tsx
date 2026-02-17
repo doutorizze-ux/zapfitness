@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal, Calendar } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -11,6 +11,7 @@ import { Members } from './Members';
 import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
+import { Appointments } from './Appointments';
 import { Leads } from './Leads';
 import clsx from 'clsx';
 import api from '../api';
@@ -40,6 +41,7 @@ export const Dashboard = () => {
     const navItems = [
         { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
         { label: 'Planos', path: '/dashboard/plans', icon: Activity },
+        { label: 'Agenda', path: '/dashboard/appointments', icon: Calendar },
         { label: 'Membros', path: '/dashboard/members', icon: Users },
         { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
         { label: 'Financeiro', path: '/dashboard/finance', icon: CreditCard },
@@ -181,6 +183,7 @@ export const Dashboard = () => {
                         <Routes>
                             <Route path="/" element={<Welcome />} />
                             <Route path="/plans" element={<Plans />} />
+                            <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
                             <Route path="/logs" element={<AccessLogs />} />
                             <Route path="/finance" element={<Finance />} />
@@ -198,9 +201,9 @@ export const Dashboard = () => {
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Agenda', path: '/dashboard/appointments', icon: Calendar },
                             { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
-                            { label: 'Membros', path: '/dashboard/members', icon: Users },
                         ].map((item) => {
                             const isActive = location.pathname === item.path;
                             return (

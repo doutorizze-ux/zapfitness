@@ -618,6 +618,87 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
     res.json(member);
 });
 
+// --- APPOINTMENTS ROUTES ---
+app.get('/api/appointments', authMiddleware, async (req: any, res) => {
+    try {
+        const { date } = req.query;
+        let where: any = { tenant_id: req.user.tenant_id };
+
+        if (date) {
+            const startOfDay = new Date(date as string);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date as string);
+            endOfDay.setHours(23, 59, 59, 999);
+            where.dateTime = {
+                gte: startOfDay,
+                lte: endOfDay
+            };
+        }
+
+        const appointments = await prisma.appointment.findMany({
+            where,
+            include: { member: true },
+            orderBy: { dateTime: 'asc' }
+        });
+        res.json(appointments);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/appointments', authMiddleware, async (req: any, res) => {
+    try {
+        const { member_id, dateTime, type, notes } = req.body;
+        if (!member_id || !dateTime) {
+            return res.status(400).json({ error: 'Membro e data/hora são obrigatórios.' });
+        }
+
+        const appointment = await prisma.appointment.create({
+            data: {
+                tenant_id: req.user.tenant_id,
+                member_id,
+                dateTime: new Date(dateTime),
+                type: type || 'TREINO',
+                notes,
+                status: 'PENDING'
+            },
+            include: { member: true }
+        });
+        res.json(appointment);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/appointments/:id', authMiddleware, async (req: any, res) => {
+    try {
+        const { status, dateTime, notes, type } = req.body;
+        const updated = await prisma.appointment.update({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id },
+            data: {
+                status,
+                dateTime: dateTime ? new Date(dateTime) : undefined,
+                notes,
+                type
+            }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/appointments/:id', authMiddleware, async (req: any, res) => {
+    try {
+        await prisma.appointment.delete({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
     try {
         const { name, phone, plan_id, diet, workout, cpf, address } = req.body;

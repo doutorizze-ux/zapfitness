@@ -59,6 +59,7 @@ model Tenant {
   invoices         Invoice[]
   leads            Lead[]
   chatMessages     ChatMessage[]
+  appointments     Appointment[]
 }
 
 model SecurityLog {
@@ -70,6 +71,22 @@ model SecurityLog {
   severity    String   // LOW, MEDIUM, HIGH, CRITICAL
   source      String?  // Phone number or RemoteJID
   created_at  DateTime @default(now())
+}
+
+model Appointment {
+  id          String   @id @default(uuid())
+  tenant_id   String
+  member_id   String
+  dateTime    DateTime
+  status      String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED, COMPLETED
+  type        String   @default("TREINO") // TREINO, AVALIAÇÃO, PERSONAL
+  notes       String?
+  
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id])
+  member      Member   @relation(fields: [member_id], references: [id])
+  
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 }
 
 model NotificationSettings {
@@ -151,6 +168,7 @@ model Member {
   accessLogs      AccessLog[]
   invoices        Invoice[]
   chatMessages    ChatMessage[]
+  appointments    Appointment[]
 
   @@unique([phone, tenant_id])
 }
