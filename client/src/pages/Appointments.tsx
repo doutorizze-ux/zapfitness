@@ -63,11 +63,18 @@ export const Appointments = () => {
             // Merge them
             const merged = [
                 ...appRes.data.map((a: any) => ({ ...a, isFixed: false })),
-                ...schRes.data.map((s: any) => ({ ...s, isFixed: true, dateTime: s.start_time }))
+                ...schRes.data.map((s: any) => ({ ...s, isFixed: true }))
             ].sort((a, b) => {
-                const timeA = a.isFixed ? a.start_time : format(new Date(a.dateTime), 'HH:mm');
-                const timeB = b.isFixed ? b.start_time : format(new Date(b.dateTime), 'HH:mm');
-                return timeA.localeCompare(timeB);
+                const getSortTime = (item: any) => {
+                    if (item.isFixed) return item.start_time || '00:00';
+                    if (!item.dateTime) return '00:00';
+                    try {
+                        return format(new Date(item.dateTime), 'HH:mm');
+                    } catch {
+                        return '00:00';
+                    }
+                };
+                return getSortTime(a).localeCompare(getSortTime(b));
             });
 
             setAppointments(merged);
@@ -82,7 +89,7 @@ export const Appointments = () => {
         setLoading(true);
         try {
             const res = await api.get('/schedules');
-            setSchedules(res.data);
+            setSchedules(res.data.map((s: any) => ({ ...s, isFixed: true })));
         } catch (err) {
             console.error('Erro ao buscar horários fixos:', err);
         } finally {
@@ -231,10 +238,12 @@ export const Appointments = () => {
                             <div className="flex items-center gap-6 min-w-[200px]">
                                 <div className="w-16 h-16 rounded-2xl bg-slate-900 flex flex-col items-center justify-center text-white shadow-lg">
                                     <Clock size={16} className="text-primary mb-1" />
-                                    <span className="font-black text-sm">{item.isFixed ? item.start_time : format(new Date(item.dateTime), 'HH:mm')}</span>
+                                    <span className="font-black text-sm">
+                                        {item.isFixed ? item.start_time : (item.dateTime ? format(new Date(item.dateTime), 'HH:mm') : '--:--')}
+                                    </span>
                                 </div>
                                 <div className="md:hidden flex-1">
-                                    <h4 className="font-black text-xl text-slate-900">{item.member.name}</h4>
+                                    <h4 className="font-black text-xl text-slate-900">{item.member?.name || 'Membro não encontrado'}</h4>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="text-[10px] font-black text-primary uppercase tracking-widest">{item.type}</span>
                                         {item.isFixed && <Repeat size={14} className="text-slate-300" />}
@@ -244,7 +253,7 @@ export const Appointments = () => {
 
                             <div className="hidden md:block flex-1 min-w-0">
                                 <div className="flex items-center gap-3 mb-1">
-                                    <h4 className="font-black text-2xl text-slate-900 truncate">{item.member.name}</h4>
+                                    <h4 className="font-black text-2xl text-slate-900 truncate">{item.member?.name || 'Membro não encontrado'}</h4>
                                     <div className="flex items-center gap-2">
                                         <span className={clsx(
                                             "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
@@ -267,7 +276,7 @@ export const Appointments = () => {
                                 </div>
                                 <p className="text-slate-400 font-medium flex items-center gap-2">
                                     <User size={14} />
-                                    {item.member.phone}
+                                    {item.member?.phone || 'Telefone não disponível'}
                                 </p>
                             </div>
 
@@ -283,138 +292,140 @@ export const Appointments = () => {
             </div>
 
             {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowModal(false)} />
-                    <div className="bg-white w-full max-w-2xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 animate-fade-in-up">
-                        <div className="flex items-center justify-between mb-10">
-                            <div>
-                                <h3 className="text-3xl font-black text-slate-900 tracking-tight">Novo Agendamento</h3>
-                                <p className="text-slate-500 font-medium text-lg italic">Defina o compromisso do aluno.</p>
+            {
+                showModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowModal(false)} />
+                        <div className="bg-white w-full max-w-2xl rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10 animate-fade-in-up">
+                            <div className="flex items-center justify-between mb-10">
+                                <div>
+                                    <h3 className="text-3xl font-black text-slate-900 tracking-tight">Novo Agendamento</h3>
+                                    <p className="text-slate-500 font-medium text-lg italic">Defina o compromisso do aluno.</p>
+                                </div>
+                                <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
+                                    <XCircle size={32} className="text-slate-300" />
+                                </button>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
-                                <XCircle size={32} className="text-slate-300" />
-                            </button>
-                        </div>
 
-                        <form onSubmit={handleCreate} className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Tipo de Agendamento</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, isRecurring: true })}
-                                                className={clsx(
-                                                    "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
-                                                    formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
-                                                )}
-                                            >
-                                                <Repeat size={20} />
-                                                FIXO / RECORRENTE
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, isRecurring: false })}
-                                                className={clsx(
-                                                    "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
-                                                    !formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
-                                                )}
-                                            >
-                                                <CalendarDays size={20} />
-                                                EVENTUAL / ÚNICO
-                                            </button>
+                            <form onSubmit={handleCreate} className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Tipo de Agendamento</label>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, isRecurring: true })}
+                                                    className={clsx(
+                                                        "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
+                                                        formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
+                                                    )}
+                                                >
+                                                    <Repeat size={20} />
+                                                    FIXO / RECORRENTE
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, isRecurring: false })}
+                                                    className={clsx(
+                                                        "p-4 rounded-2xl font-black text-xs transition-all flex flex-col items-center gap-2 border-2",
+                                                        !formData.isRecurring ? "bg-primary border-primary text-white" : "bg-white border-slate-100 text-slate-400"
+                                                    )}
+                                                >
+                                                    <CalendarDays size={20} />
+                                                    EVENTUAL / ÚNICO
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {formData.isRecurring && (
+                                            <div>
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Dia da Semana</label>
+                                                <select
+                                                    value={formData.day_of_week}
+                                                    onChange={(e) => setFormData({ ...formData, day_of_week: parseInt(e.target.value) })}
+                                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
+                                                >
+                                                    {DAYS_OF_WEEK.map((day, i) => (
+                                                        <option key={i} value={i}>{day}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Horário</label>
+                                                <input
+                                                    type="time"
+                                                    value={formData.time}
+                                                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Atividade</label>
+                                                <select
+                                                    value={formData.type}
+                                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                                    className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
+                                                >
+                                                    <option value="TREINO">TREINO</option>
+                                                    <option value="AVALIAÇÃO">AVALIAÇÃO</option>
+                                                    <option value="PERSONAL">PERSONAL</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {formData.isRecurring && (
-                                        <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Dia da Semana</label>
-                                            <select
-                                                value={formData.day_of_week}
-                                                onChange={(e) => setFormData({ ...formData, day_of_week: parseInt(e.target.value) })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
-                                            >
-                                                {DAYS_OF_WEEK.map((day, i) => (
-                                                    <option key={i} value={i}>{day}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    )}
-
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Horário</label>
+                                    <div>
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Buscar Aluno</label>
+                                        <div className="relative mb-4">
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                             <input
-                                                type="time"
-                                                value={formData.time}
-                                                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
-                                                required
+                                                type="text"
+                                                placeholder="Nome ou telefone..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Atividade</label>
-                                            <select
-                                                value={formData.type}
-                                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all appearance-none"
-                                            >
-                                                <option value="TREINO">TREINO</option>
-                                                <option value="AVALIAÇÃO">AVALIAÇÃO</option>
-                                                <option value="PERSONAL">PERSONAL</option>
-                                            </select>
+                                        <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                            {filteredMembers.map(m => (
+                                                <button
+                                                    key={m.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, member_id: m.id });
+                                                        setSearchTerm(m.name);
+                                                    }}
+                                                    className={clsx(
+                                                        "w-full text-left p-4 rounded-2xl font-bold transition-all border-4",
+                                                        formData.member_id === m.id ? "bg-primary/5 border-primary text-primary" : "bg-white border-slate-50 text-slate-500 hover:border-slate-100"
+                                                    )}
+                                                >
+                                                    {m.name}
+                                                    <span className="block text-[10px] text-slate-400 uppercase tracking-widest mt-1">{m.phone}</span>
+                                                </button>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 block">Buscar Aluno</label>
-                                    <div className="relative mb-4">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            type="text"
-                                            placeholder="Nome ou telefone..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full bg-slate-50 border-none rounded-2xl pl-12 pr-4 py-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
-                                        />
-                                    </div>
-                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                                        {filteredMembers.map(m => (
-                                            <button
-                                                key={m.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData({ ...formData, member_id: m.id });
-                                                    setSearchTerm(m.name);
-                                                }}
-                                                className={clsx(
-                                                    "w-full text-left p-4 rounded-2xl font-bold transition-all border-4",
-                                                    formData.member_id === m.id ? "bg-primary/5 border-primary text-primary" : "bg-white border-slate-50 text-slate-500 hover:border-slate-100"
-                                                )}
-                                            >
-                                                {m.name}
-                                                <span className="block text-[10px] text-slate-400 uppercase tracking-widest mt-1">{m.phone}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={!formData.member_id}
-                                className="w-full bg-primary text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
-                            >
-                                CONFIRMAR AGENDAMENTO
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={!formData.member_id}
+                                    className="w-full bg-primary text-white py-6 rounded-[2rem] font-black text-xl shadow-2xl shadow-primary/30 hover:opacity-90 transition-all disabled:opacity-50 active:scale-95"
+                                >
+                                    CONFIRMAR AGENDAMENTO
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -12,7 +12,7 @@ import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
-import { Leads } from './Leads';
+
 import clsx from 'clsx';
 import api from '../api';
 import { formatImageUrl } from '../utils/format';
@@ -47,7 +47,7 @@ export const Dashboard = () => {
         { label: 'Financeiro', path: '/dashboard/finance', icon: CreditCard },
         { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
         { label: 'WhatsApp', path: '/dashboard/whatsapp', icon: Zap },
-        { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
+
         { label: 'Configurações', path: '/dashboard/settings', icon: Settings },
     ];
 
@@ -199,7 +199,7 @@ export const Dashboard = () => {
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
                             <Route path="/whatsapp" element={<WhatsAppConnect />} />
-                            <Route path="/leads" element={<Leads />} />
+
                             <Route path="/settings" element={<ProfileSettings />} />
                         </Routes>
                     </div>
@@ -212,8 +212,9 @@ export const Dashboard = () => {
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
-                            { label: 'Leads', path: '/dashboard/leads', icon: MessageCircle },
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
+                            { label: 'Membros', path: '/dashboard/members', icon: Users },
+
                         ].map((item) => {
                             const isActive = location.pathname === item.path;
                             return (

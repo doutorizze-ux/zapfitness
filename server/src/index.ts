@@ -461,51 +461,10 @@ app.post('/api/whatsapp/connect', authMiddleware, async (req: any, res) => {
     res.json({ status: 'INITIALIZING' });
 });
 
-// --- Leads & Chat Routes ---
-app.get('/api/leads', authMiddleware, async (req: any, res) => {
-    const tenantId = req.user.tenant_id;
-    try {
-        const leads = await prisma.lead.findMany({
-            where: { tenant_id: tenantId },
-            include: {
-                messages: {
-                    orderBy: { created_at: 'desc' },
-                    take: 1
-                }
-            },
-            orderBy: { last_message_at: 'desc' }
-        });
-        res.json(leads);
-    } catch (e) {
-        res.status(500).json({ error: 'Erro ao buscar leads' });
-    }
-});
+// --- Leads & Chat Routes REMOVED ---
 
-app.get('/api/chat/:jid', authMiddleware, async (req: any, res) => {
-    const tenantId = req.user.tenant_id;
-    const { jid } = req.params;
-    try {
-        const messages = await prisma.chatMessage.findMany({
-            where: { tenant_id: tenantId, jid },
-            orderBy: { created_at: 'asc' },
-            take: 100
-        });
-        res.json(messages);
-    } catch (e) {
-        res.status(500).json({ error: 'Erro ao buscar chat' });
-    }
-});
 
-app.post('/api/chat/send', authMiddleware, async (req: any, res) => {
-    const tenantId = req.user.tenant_id;
-    const { jid, text } = req.body;
-    try {
-        const result = await sendMessageToJid(tenantId, jid, text);
-        res.json(result);
-    } catch (e: any) {
-        res.status(500).json({ error: e.message || 'Erro ao enviar mensagem' });
-    }
-});
+
 
 app.post('/api/whatsapp/disconnect', authMiddleware, async (req: any, res) => {
     const tenantId = req.user.tenant_id;
@@ -840,6 +799,8 @@ app.delete('/api/members/:id', authMiddleware, async (req: any, res) => {
     await prisma.$transaction([
         prisma.invoice.deleteMany({ where: { member_id: member.id } }),
         prisma.accessLog.deleteMany({ where: { member_id: member.id } }),
+        prisma.appointment.deleteMany({ where: { member_id: member.id } }),
+        prisma.memberSchedule.deleteMany({ where: { member_id: member.id } }),
         prisma.member.delete({ where: { id: member.id } })
     ]);
     res.json({ success: true });
