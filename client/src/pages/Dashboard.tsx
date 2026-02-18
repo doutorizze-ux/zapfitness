@@ -313,6 +313,7 @@ export const Dashboard = () => {
 };
 
 const Welcome = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = React.useState<any>(null);
 
     React.useEffect(() => {
@@ -350,7 +351,7 @@ const Welcome = () => {
                                     <span className="text-sm font-black text-green-400">Oportunidade de Receita</span>
                                 </div>
                                 <p className="text-sm text-slate-300 font-medium">Você tem <span className="text-white font-bold">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
-                                <button className="mt-4 text-[10px] font-black uppercase tracking-widest bg-primary px-4 py-2 rounded-lg hover:scale-105 transition-transform">Executar Ação</button>
+                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-4 text-[10px] font-black uppercase tracking-widest bg-primary px-4 py-2 rounded-lg hover:scale-105 transition-transform">Executar Ação</button>
                             </div>
 
                             <div className="bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-all cursor-pointer">
@@ -359,7 +360,7 @@ const Welcome = () => {
                                     <span className="text-sm font-black text-orange-400">Risco de Churn</span>
                                 </div>
                                 <p className="text-sm text-slate-300 font-medium"><span className="text-white font-bold">5 alunos</span> frequentes não aparecem há mais de 10 dias. Recomenda-se mensagem de incentivo.</p>
-                                <button className="mt-4 text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">Ver Alunos</button>
+                                <button onClick={() => navigate('/dashboard/members')} className="mt-4 text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">Ver Alunos</button>
                             </div>
                         </div>
                     </div>
