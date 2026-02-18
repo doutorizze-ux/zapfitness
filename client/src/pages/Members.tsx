@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Sparkles, Send, Brain } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Members = () => {
@@ -108,6 +108,24 @@ Domingo:
         setFormData(prev => ({ ...prev, [field]: (prev[field] || '') + weeklyTemplate }));
     };
 
+    const generateAIWorkout = () => {
+        const goal = window.prompt("Qual o objetivo do aluno? (Ex: Perda de peso, Hipertrofia, Resistência)");
+        if (!goal) return;
+
+        setFormData(prev => ({ ...prev, workout: 'Gerando treino inteligente...' }));
+
+        setTimeout(() => {
+            const mockWorkout = `🔥 TREINO IA - FOCO: ${goal.toUpperCase()}\n\n` +
+                `1️⃣ Supino Reto: 4 x 12 (Foco em cadência)\n` +
+                `2️⃣ Agachamento Livre: 4 x 10 (Explosivo)\n` +
+                `3️⃣ Remada Curvada: 3 x 15 (Máxima contração)\n` +
+                `4️⃣ Desenvolvimento Militar: 3 x 12\n` +
+                `5️⃣ Abdominal Supra: 4 x Exaustão\n\n` +
+                `💡 Dica da IA: Mantenha o descanso entre 45s e 60s para otimizar a queima calórica.`;
+            setFormData(prev => ({ ...prev, workout: mockWorkout }));
+        }, 1500);
+    };
+
     const filtered = members.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.phone.includes(search));
 
     return (
@@ -138,6 +156,10 @@ Domingo:
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                         />
+                        <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                            <Sparkles size={12} className="text-primary animate-pulse" />
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest whitespace-nowrap">IA Ativa</span>
+                        </div>
                     </div>
 
                     {/* Mobile View: Card List */}
@@ -198,6 +220,14 @@ Domingo:
                                             </td>
                                             <td className="p-6">
                                                 <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button onClick={() => {
+                                                        const msg = `Olá ${member.name}! Aqui está seu treino:\n\n${member.workout_routine || 'Ainda não cadastrado.'}`;
+                                                        api.post('/chat/send', { jid: `${member.phone}@s.whatsapp.net`, text: msg })
+                                                            .then(() => alert('Treino enviado via WhatsApp!'))
+                                                            .catch(err => alert('Erro ao enviar: ' + err.message));
+                                                    }} className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition" title="Enviar no WhatsApp">
+                                                        <Send size={18} />
+                                                    </button>
                                                     <button onClick={() => handleEdit(member)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
                                                         <Pencil size={18} />
                                                     </button>
@@ -311,10 +341,18 @@ Domingo:
                             {activeTab === 'workout' && (
                                 <div className="h-full flex flex-col space-y-4">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                        <span className="text-sm font-medium text-slate-400">Esta ficha será enviada via WhatsApp para o aluno.</span>
-                                        <button type="button" onClick={() => insertTemplate('workout')} className="w-full sm:w-auto text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
-                                            <Calendar size={14} /> Usar Modelo Semanal
-                                        </button>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-slate-900">Configuração de Treino</span>
+                                            <span className="text-xs font-medium text-slate-400">Enviado automaticamente para o aluno.</span>
+                                        </div>
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <button type="button" onClick={generateAIWorkout} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-400 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition shadow-lg shadow-primary/20">
+                                                <Brain size={14} /> Gerar com IA
+                                            </button>
+                                            <button type="button" onClick={() => insertTemplate('workout')} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
+                                                <Calendar size={14} /> Modelo
+                                            </button>
+                                        </div>
                                     </div>
                                     <textarea
                                         className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"

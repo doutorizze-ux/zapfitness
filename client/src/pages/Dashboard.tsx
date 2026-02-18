@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MessageCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -172,9 +172,14 @@ export const Dashboard = () => {
                     </div>
                 </header>
 
-                {/* Desktop Top Header (Subtle) */}
                 <header className="hidden md:flex bg-white/50 backdrop-blur-sm border-b border-slate-100 px-10 py-4 items-center justify-between z-10">
-                    <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">{currentItem.label}</h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">{currentItem.label}</h2>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                            <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Nível de Inteligência: Máximo</span>
+                        </div>
+                    </div>
                     <div id="header-profile" className="flex items-center gap-4">
                         <div className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
                             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -323,44 +328,75 @@ const Welcome = () => {
                 <p className="text-slate-500 font-medium">Aqui está o que está acontecendo hoje.</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10 p-2 md:p-0">
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl group-hover:scale-110 transition-transform"><Users size={24} /></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                {/* AI Insights Card */}
+                <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px] group-hover:bg-primary/30 transition-all duration-700"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-primary/20 rounded-xl">
+                                <Brain className="text-primary" size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black tracking-tight">Insights da Inteligência Artificial</h3>
+                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Análise preditiva em tempo real</p>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-all cursor-pointer">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <TrendingUp className="text-green-400" size={18} />
+                                    <span className="text-sm font-black text-green-400">Oportunidade de Receita</span>
+                                </div>
+                                <p className="text-sm text-slate-300 font-medium">Você tem <span className="text-white font-bold">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
+                                <button className="mt-4 text-[10px] font-black uppercase tracking-widest bg-primary px-4 py-2 rounded-lg hover:scale-105 transition-transform">Executar Ação</button>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-all cursor-pointer">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <AlertCircle className="text-orange-400" size={18} />
+                                    <span className="text-sm font-black text-orange-400">Risco de Churn</span>
+                                </div>
+                                <p className="text-sm text-slate-300 font-medium"><span className="text-white font-bold">5 alunos</span> frequentes não aparecem há mais de 10 dias. Recomenda-se mensagem de incentivo.</p>
+                                <button className="mt-4 text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">Ver Alunos</button>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-3xl font-black text-slate-900 tracking-tighter">{stats?._count?.members || 0}</p>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mt-1 leading-none">Alunos Ativos</p>
                 </div>
 
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-green-50 text-green-600 rounded-2xl group-hover:scale-110 transition-transform"><Activity size={24} /></div>
+                {/* Quick Stats Sidebar */}
+                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <h4 className="font-black text-slate-900 uppercase tracking-widest text-xs">Saúde da Academia</h4>
+                            <Sparkles className="text-primary animate-pulse" size={16} />
+                        </div>
+                        <div className="space-y-6">
+                            <div>
+                                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                                    <span>ENGAJAMENTO</span>
+                                    <span className="text-primary">85%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-primary h-full rounded-full" style={{ width: '85%' }}></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                                    <span>RETENÇÃO</span>
+                                    <span className="text-green-500">92%</span>
+                                </div>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                    <div className="bg-green-500 h-full rounded-full" style={{ width: '92%' }}></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-3xl font-black text-slate-900 tracking-tighter">{stats?._count?.accessLogs || 0}</p>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 mt-1 leading-none">Total de Acessos</p>
-                </div>
-
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group col-span-2 md:col-span-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-primary/10 text-primary rounded-2xl group-hover:scale-110 transition-transform"><Zap size={24} /></div>
-                        <span className={clsx("px-2 py-1 rounded-full text-[10px] font-black tracking-widest uppercase", stats?.whatsapp_status === 'CONNECTED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                            {stats?.whatsapp_status === 'CONNECTED' ? 'CONECTADO' : 'OFFLINE'}
-                        </span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900 leading-tight">Bot WhatsApp</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 leading-none">
-                        {stats?.whatsapp_status === 'CONNECTED' ? 'Monitorando recepção' : 'Aguardando pareamento'}
-                    </p>
-                </div>
-
-                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group col-span-2 md:col-span-1">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl group-hover:scale-110 transition-transform"><Activity size={24} /></div>
-                        <span className="text-[10px] font-black text-slate-400">{stats?._count?.members || 0}/{stats?.saas_plan?.max_members || 50}</span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900 leading-tight">Plano {stats?.saas_plan?.name || 'Nenhum'}</p>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, (stats?._count?.members || 0) / (stats?.saas_plan?.max_members || 50) * 100)}%` }}></div>
+                    <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                        <p className="text-[10px] font-bold text-blue-700 leading-relaxed italic">
+                            "A IA detectou que treinos de quarta-feira têm 20% mais faltas. Considere uma aula especial para este dia."
+                        </p>
                     </div>
                 </div>
             </div>

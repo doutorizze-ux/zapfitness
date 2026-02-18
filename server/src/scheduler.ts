@@ -8,6 +8,7 @@ export const initScheduler = () => {
         console.log('Running daily automation jobs...');
         await checkPlanWarnings();
         await checkPlanExpirations();
+        await checkInactiveMembersChurn();
         await notifyOwners();
     });
 };
@@ -123,6 +124,48 @@ const notifyOwners = async () => {
             const sock = sessions.get(tenant.id);
             if (sock) {
                 const msg = `📅 *Resumo Diário*\n\nHoje venceram ${expiredCount} planos de membros. Verifique o painel para mais detalhes.`;
+                const jid = tenant.owner_phone.includes('@') ? tenant.owner_phone : `${tenant.owner_phone}@s.whatsapp.net`;
+                await sock.sendMessage(jid, { text: msg });
+            }
+        }
+    }
+};
+
+const checkInactiveMembersChurn = async () => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const tenants = await prisma.tenant.findMany({
+        where: { status: 'ACTIVE', whatsapp_status: 'CONNECTED', owner_phone: { not: null } }
+    });
+
+    for (const tenant of tenants) {
+        if (!tenant.owner_phone) continue;
+
+        // Find members who haven't checked in for 7 days but have active plans
+        const riskyMembers = await prisma.member.findMany({
+            where: {
+                tenant_id: tenant.id,
+                active: true,
+                plan_end_date: { gte: new Date() },
+                accessLogs: {
+                    none: {
+                        scanned_at: { gte: sevenDaysAgo }
+                    }
+                }
+            },
+            take: 5
+        });
+
+        if (riskyMembers.length > 0) {
+            const sock = sessions.get(tenant.id);
+            if (sock) {
+                let msg = `🧠 *IA Insight: Alunos em Risco*\n\nIdentifiquei que estes alunos não aparecem há mais de 7 dias:\n\n`;
+                riskyMembers.forEach(m => {
+                    msg += `• *${m.name.split(' ')[0]}* (${m.phone})\n`;
+                });
+                msg += `\nQue tal enviar uma mensagem de incentivo para eles hoje?`;
+
                 const jid = tenant.owner_phone.includes('@') ? tenant.owner_phone : `${tenant.owner_phone}@s.whatsapp.net`;
                 await sock.sendMessage(jid, { text: msg });
             }

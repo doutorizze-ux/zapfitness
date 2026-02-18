@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Zap, Shield, Smartphone, ArrowRight, MessageSquare, Target, UserCheck, Menu, X } from 'lucide-react';
+import { CheckCircle, Zap, Shield, ArrowRight, MessageSquare, Target, UserCheck, Menu, X, Brain, Sparkles, TrendingUp } from 'lucide-react';
 import { formatImageUrl } from '../utils/format';
 import clsx from 'clsx';
 
@@ -54,9 +54,9 @@ export const LandingPage = () => {
 
     const features = [
         { icon: <Zap className="text-orange-500" />, title: "Automação via WhatsApp", desc: "Seu aluno pede treino, dieta e faz check-in direto pelo Whats, sem baixar apps." },
-        { icon: <CheckCircle className="text-green-500" />, title: "Check-in Inteligente", desc: "Controle de acesso por QR Code com validação instantânea de pagamentos e horários." },
-        { icon: <Shield className="text-blue-500" />, title: "Gestão Financeira", desc: "Bloqueio automático de inadimplentes e controle total de planos e renovações." },
-        { icon: <Smartphone className="text-purple-500" />, title: "App do Aluno (Sem App)", desc: "Tudo acontece no chat que eles já usam todo dia. Engajamento máximo." }
+        { icon: <Brain className="text-primary" />, title: "IA Preditiva Anti-Abandono", desc: "O ZapFitness detecta quem está prestes a desistir e te avisa antes de acontecer." },
+        { icon: <Sparkles className="text-purple-500" />, title: "Treinos com IA", desc: "Gere fichas de treino personalizadas em segundos com nossa inteligência artificial." },
+        { icon: <Shield className="text-blue-500" />, title: "Gestão Financeira", desc: "Bloqueio automático de inadimplentes e controle total de planos e renovações." }
     ];
 
     const navLinks = [
@@ -297,6 +297,67 @@ export const LandingPage = () => {
                     <div className="col-span-2 md:col-span-1">
                         <div className="text-4xl md:text-6xl font-black text-orange-500 mb-2">98%</div>
                         <div className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest">Taxa de Renovação</div>
+                    </div>
+                </div>
+            </section>
+
+            {/* IA Section - The Wow Factor */}
+            <section className="py-24 bg-slate-900 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center">
+                        <div className="text-center lg:text-left">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8 backdrop-blur-md">
+                                <Sparkles className="text-primary animate-pulse" size={16} />
+                                <span className="text-[10px] md:text-xs font-black text-primary uppercase tracking-widest">Exclusividade ZapFitness</span>
+                            </div>
+                            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight tracking-tighter">
+                                Uma Academia <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">Gerida por Inteligência</span>
+                            </h2>
+                            <p className="text-lg text-slate-400 mb-10 leading-relaxed font-medium">
+                                Não somos apenas um sistema de catracas. Somos o cérebro que ajuda sua academia a crescer. Nossa IA analisa o comportamento dos alunos e age por você.
+                            </p>
+
+                            <div className="space-y-6">
+                                <div className="flex gap-4 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+                                    <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
+                                        <TrendingUp className="text-primary" size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-white mb-1">Prevenção de Abandono (Churn)</h4>
+                                        <p className="text-sm text-slate-400 font-medium">O sistema identifica alunos que não aparecem há 7 dias e te sugere uma ação imediata de resgate.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
+                                    <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center shrink-0">
+                                        <Brain className="text-primary" size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-white mb-1">Smart Workout Generator</h4>
+                                        <p className="text-sm text-slate-400 font-medium">Crie fichas de treino profissionais em 2 segundos. Nossa IA monta a rotina ideal baseada no objetivo do aluno.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full group-hover:bg-primary/30 transition-all duration-1000"></div>
+                            <div className="relative bg-slate-900 border border-white/10 p-2 rounded-[3rem] shadow-2xl">
+                                <img
+                                    src="/landing/ai-dashboard-preview.png"
+                                    alt="AI Dashboard Preview"
+                                    className="w-full h-auto rounded-[2.5rem] opacity-90 group-hover:opacity-100 transition-opacity"
+                                />
+                                <div className="absolute -right-6 top-1/4 bg-white p-4 rounded-2xl shadow-2xl animate-float hidden md:block">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Brain className="text-primary" size={16} />
+                                        <span className="text-[10px] font-black uppercase text-slate-400">Insight IA</span>
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-900 whitespace-nowrap">"Recuperação de Receita: +12%"</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
