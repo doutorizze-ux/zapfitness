@@ -9,6 +9,7 @@ const __dirname = path.dirname(__filename);
 // import cors from 'cors'; // Switch to manual headers for absolute control
 import { prisma } from './db.js';
 import { initWhatsApp, getSession, reconnectSessions, logoutSession, sendMessageToJid } from './whatsappManager.js';
+import { initScheduler } from './scheduler.js';
 import { createCustomer, createSubscription, getSubscription, getLatestPayment, getPixQrCode } from './services/asaas.js';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -1495,8 +1496,6 @@ app.get('/api/saas/pix-code', authMiddleware, async (req: any, res) => {
     // Better to fetch payments of subscription.
     res.status(501).json({ error: 'Not implemented yet' });
 });
-
-import { initScheduler } from './scheduler.js';
 
 // --- 6. CATCH-ALL ROUTE (SPA HANDLING) ---
 app.get('*', (req, res) => {
