@@ -6,19 +6,28 @@ export const ThemeHandler = () => {
 
     useEffect(() => {
         const hexToRgb = (hex: string) => {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
+            let r = 0, g = 0, b = 0;
+            if (hex.length === 4) {
+                r = parseInt(hex[1] + hex[1], 16);
+                g = parseInt(hex[2] + hex[2], 16);
+                b = parseInt(hex[3] + hex[3], 16);
+            } else if (hex.length === 7) {
+                r = parseInt(hex.slice(1, 3), 16);
+                g = parseInt(hex.slice(3, 5), 16);
+                b = parseInt(hex.slice(5, 7), 16);
+            }
             return `${r} ${g} ${b}`;
         };
 
-        if (user?.primary_color && /^#[0-9A-F]{6}$/i.test(user.primary_color)) {
+        const isValidHex = (color: string) => /^#([0-9A-F]{3}){1,2}$/i.test(color);
+
+        if (user?.primary_color && isValidHex(user.primary_color)) {
             document.documentElement.style.setProperty('--primary-color', user.primary_color);
             document.documentElement.style.setProperty('--primary-rgb', hexToRgb(user.primary_color));
         } else {
-            const defaultGreen = '#22c55e';
-            document.documentElement.style.setProperty('--primary-color', defaultGreen);
-            document.documentElement.style.setProperty('--primary-rgb', hexToRgb(defaultGreen));
+            const defaultOrange = '#f97316';
+            document.documentElement.style.setProperty('--primary-color', defaultOrange);
+            document.documentElement.style.setProperty('--primary-rgb', hexToRgb(defaultOrange));
         }
     }, [user?.primary_color]);
 

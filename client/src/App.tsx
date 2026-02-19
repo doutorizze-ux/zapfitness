@@ -18,7 +18,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
 
   React.useEffect(() => {
     if (user) {
-      api.get('/api/me')
+      api.get('/me')
         .then(res => {
           const { primary_color, logo_url, enable_scheduling } = res.data;
 
