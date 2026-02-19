@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Zap, Shield, ArrowRight, MessageSquare, Target,
-    UserCheck, Menu, X, Brain, Sparkles, TrendingUp,
-    Smartphone, Zap as ZapIcon, Layout, Database,
-    ChevronRight, CheckCircle2, Globe, Clock
+    Zap, Shield, ArrowRight, MessageSquare,
+    Menu, X, Brain, Sparkles, TrendingUp,
+    Smartphone, ChevronRight, CheckCircle2, Globe, Clock
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/format';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
