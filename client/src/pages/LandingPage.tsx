@@ -457,7 +457,7 @@ export const LandingPage = () => {
                             SUA ACADEMIA <br />
                             <span className="text-orange-600">REDEFINIDA.</span>
                         </motion.h2>
-                        <p className="text-2xl text-slate-500 max-w-2xl mx-auto mb-20 font-medium">Cadastre-se hoje e ganhe 14 dias de acesso total. <br className="hidden md:block" />Sem cartão, sem burocracia, apenas resultado.</p>
+
 
                         <button
                             onClick={() => navigate('/login')}
