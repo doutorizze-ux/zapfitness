@@ -1,12 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
 import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Send, Brain } from 'lucide-react';
 import clsx from 'clsx';
 
+interface MemberPlan {
+    id: string;
+    name: string;
+    price: number;
+    duration_days: number;
+}
+
+interface Member {
+    id: string;
+    name: string;
+    phone: string;
+    plan_id: string | null;
+    active: boolean;
+    plan_end_date: string;
+    diet_plan?: string;
+    workout_routine?: string;
+    cpf?: string;
+    address?: string;
+    plan?: MemberPlan;
+}
+
 export const Members = () => {
-    const [members, setMembers] = useState<any[]>([]);
-    const [plans, setPlans] = useState<any[]>([]);
+    const [members, setMembers] = useState<Member[]>([]);
+    const [plans, setPlans] = useState<MemberPlan[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', phone: '', plan_id: '', diet: '', workout: '', cpf: '', address: '' });
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -15,17 +36,17 @@ export const Members = () => {
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
-    const fetchData = () => {
-        api.get('/members').then(res => setMembers(res.data)).catch(console.error);
-        api.get('/plans').then(res => setPlans(res.data)).catch(console.error);
-    };
+    const fetchData = useCallback(() => {
+        api.get('/members').then(res => setMembers(res.data)).catch(err => console.error('Error fetching members:', err));
+        api.get('/plans').then(res => setPlans(res.data)).catch(err => console.error('Error fetching plans:', err));
+    }, []);
 
     useEffect(() => {
         fetchData();
         if (!hasSeenTutorial('members')) {
             startTutorial('members');
         }
-    }, []);
+    }, [fetchData, hasSeenTutorial, startTutorial]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,13 +65,16 @@ export const Members = () => {
             setEditingId(null);
             setFormData({ name: '', phone: '', plan_id: '', diet: '', workout: '', cpf: '', address: '' });
             fetchData();
-        } catch (e: any) {
-            console.error(e);
-            alert('Erro ao salvar membro: ' + (e.response?.data?.error || e.message));
+        } catch (err: unknown) {
+            console.error('Submit error:', err);
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data: { error: string } } }).response?.data?.error
+                : (err as { message?: string }).message || 'Erro desconhecido';
+            alert('Erro ao salvar membro: ' + errorMsg);
         }
     };
 
-    const handleEdit = (member: any) => {
+    const handleEdit = (member: Member) => {
         setEditingId(member.id);
         setFormData({
             name: member.name,
@@ -70,8 +94,8 @@ export const Members = () => {
         try {
             await api.delete(`/members/${id}`);
             fetchData();
-        } catch (e) {
-            console.error(e);
+        } catch (err) {
+            console.error('Delete error:', err);
             alert('Erro ao remover membro');
         }
     };
@@ -277,7 +301,7 @@ Domingo:
                             ].map(tab => (
                                 <button
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
+                                    onClick={() => setActiveTab(tab.id as 'info' | 'workout' | 'diet')}
                                     className={clsx(
                                         "flex-1 py-5 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all relative",
                                         activeTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'

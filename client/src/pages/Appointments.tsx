@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import {
     Plus,
@@ -19,11 +19,28 @@ const DAYS_OF_WEEK = [
     'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
 ];
 
+interface AppointmentMember {
+    id: string;
+    name: string;
+    phone: string;
+}
+
+interface Appointment {
+    id: string;
+    member_id: string;
+    member?: AppointmentMember;
+    dateTime?: string;
+    start_time?: string;
+    day_of_week?: number;
+    type: string;
+    isFixed: boolean;
+}
+
 export const Appointments = () => {
     const [viewMode, setViewMode] = useState<'daily' | 'fixed'>('daily');
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [schedules, setSchedules] = useState<any[]>([]);
-    const [members, setMembers] = useState<any[]>([]);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [schedules, setSchedules] = useState<Appointment[]>([]);
+    const [members, setMembers] = useState<AppointmentMember[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showModal, setShowModal] = useState(false);
@@ -38,33 +55,22 @@ export const Appointments = () => {
         isRecurring: true
     });
 
-    useEffect(() => {
-        if (viewMode === 'daily') {
-            fetchDailyData();
-        } else {
-            fetchFixedSchedules();
-        }
-        fetchMembers();
-    }, [selectedDate, viewMode]);
-
-    const fetchDailyData = async () => {
+    const fetchDailyData = useCallback(async () => {
         setLoading(true);
         try {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
             const dayOfWeek = selectedDate.getDay();
 
-            // Fetch both one-off and fixed schedules for this day
             const [appRes, schRes] = await Promise.all([
                 api.get(`/appointments?date=${dateStr}`),
                 api.get(`/schedules?day=${dayOfWeek}`)
             ]);
 
-            // Merge them
-            const merged = [
-                ...appRes.data.map((a: any) => ({ ...a, isFixed: false })),
-                ...schRes.data.map((s: any) => ({ ...s, isFixed: true }))
+            const merged: Appointment[] = [
+                ...appRes.data.map((a: Record<string, unknown>) => ({ ...a, isFixed: false })),
+                ...schRes.data.map((s: Record<string, unknown>) => ({ ...s, isFixed: true, dateTime: format(selectedDate, 'yyyy-MM-dd') + 'T' + (s as { start_time: string }).start_time }))
             ].sort((a, b) => {
-                const getSortTime = (item: any) => {
+                const getSortTime = (item: Appointment) => {
                     if (item.isFixed) return item.start_time || '00:00';
                     if (!item.dateTime) return '00:00';
                     try {
@@ -78,32 +84,41 @@ export const Appointments = () => {
 
             setAppointments(merged);
         } catch (err) {
-            console.error('Erro ao buscar dados:', err);
+            console.error('Error fetching daily data:', err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedDate]);
 
-    const fetchFixedSchedules = async () => {
+    const fetchFixedSchedules = useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get('/schedules');
-            setSchedules(res.data.map((s: any) => ({ ...s, isFixed: true })));
+            setSchedules(res.data.map((s: Record<string, unknown>) => ({ ...s, isFixed: true } as Appointment)));
         } catch (err) {
-            console.error('Erro ao buscar horários fixos:', err);
+            console.error('Error fetching fixed schedules:', err);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchMembers = async () => {
+    const fetchMembers = useCallback(async () => {
         try {
             const res = await api.get('/members');
             setMembers(res.data);
         } catch (err) {
-            console.error('Erro ao buscar membros:', err);
+            console.error('Error fetching members:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (viewMode === 'daily') {
+            fetchDailyData();
+        } else {
+            fetchFixedSchedules();
+        }
+        fetchMembers();
+    }, [selectedDate, viewMode, fetchDailyData, fetchFixedSchedules, fetchMembers]);
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -131,6 +146,7 @@ export const Appointments = () => {
             setFormData({ ...formData, member_id: '' });
             if (viewMode === 'daily') fetchDailyData(); else fetchFixedSchedules();
         } catch (err) {
+            console.error('Error creating appointment:', err);
             alert('Erro ao criar agendamento');
         }
     };
@@ -145,6 +161,7 @@ export const Appointments = () => {
             }
             if (viewMode === 'daily') fetchDailyData(); else fetchFixedSchedules();
         } catch (err) {
+            console.error('Error deleting appointment:', err);
             alert('Erro ao excluir');
         }
     };
@@ -264,7 +281,7 @@ export const Appointments = () => {
                                         {item.isFixed ? (
                                             <span className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
                                                 <Repeat size={12} />
-                                                Recorrente ({DAYS_OF_WEEK[item.day_of_week]})
+                                                Recorrente ({item.day_of_week !== undefined ? DAYS_OF_WEEK[item.day_of_week] : '-'})
                                             </span>
                                         ) : (
                                             <span className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-amber-50 text-amber-500 text-[10px] font-black uppercase tracking-widest">

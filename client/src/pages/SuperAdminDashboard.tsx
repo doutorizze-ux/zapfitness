@@ -1,16 +1,70 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Activity, Users, Store, ShieldAlert, Power, Pencil, Trash2, WifiOff, DollarSign, Key } from 'lucide-react';
 import clsx from 'clsx';
 import { formatImageUrl } from '../utils/format';
 
+interface AdminMember {
+    email: string;
+}
+
+interface Tenant {
+    id: string;
+    name: string;
+    owner_phone?: string;
+    is_free: boolean;
+    saas_plan_expires_at?: string;
+    status: string;
+    whatsapp_status: string;
+    slug: string;
+    admins: AdminMember[];
+    saas_plan?: {
+        name: string;
+    };
+}
+
+interface StatDetails {
+    totalGyms: number;
+    activeGyms: number;
+    blockedGyms: number;
+    totalMembers: number;
+}
+
+interface SaaSPlan {
+    id: string;
+    name: string;
+    price: string;
+    duration_months: number;
+    max_members: number;
+}
+
+interface FinanceSummary {
+    total_revenue: number;
+    pending_revenue: number;
+}
+
+interface FinancePayment {
+    id: string;
+    tenant?: {
+        name: string;
+    };
+    amount: string;
+    status: string;
+    created_at: string;
+}
+
+interface FinanceData {
+    summary: FinanceSummary;
+    payments: FinancePayment[];
+}
+
 export const SuperAdminDashboard = () => {
     const navigate = useNavigate();
-    const [stats, setStats] = useState<any>(null);
-    const [tenants, setTenants] = useState<any[]>([]);
-    const [plans, setPlans] = useState<any[]>([]);
-    const [financeData, setFinanceData] = useState<any>(null);
+    const [stats, setStats] = useState<StatDetails | null>(null);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [plans, setPlans] = useState<SaaSPlan[]>([]);
+    const [financeData, setFinanceData] = useState<FinanceData | null>(null);
     const [showPlanModal, setShowPlanModal] = useState(false);
     const [newPlan, setNewPlan] = useState({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
@@ -18,14 +72,14 @@ export const SuperAdminDashboard = () => {
     const [uploading, setUploading] = useState(false);
 
     // Edit Tenant State
-    const [editingTenant, setEditingTenant] = useState<any>(null);
+    const [editingTenant, setEditingTenant] = useState<Partial<Tenant> | null>(null);
     const [showTenantModal, setShowTenantModal] = useState(false);
 
     // Admin Management State (for the modal)
     const [adminEmail, setAdminEmail] = useState('');
     const [adminPassword, setAdminPassword] = useState('');
 
-    const fetchData = () => {
+    const fetchData = useCallback(() => {
         api.get('/saas/dashboard').then(res => setStats(res.data)).catch(err => {
             if (err.response?.status === 403) navigate('/admin/login');
         });
@@ -39,7 +93,7 @@ export const SuperAdminDashboard = () => {
 
         // Fetch finance data
         api.get('/saas/finance').then(res => setFinanceData(res.data)).catch(console.error);
-    };
+    }, [navigate]);
 
     const handleCreatePlan = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -57,9 +111,11 @@ export const SuperAdminDashboard = () => {
             setShowPlanModal(false);
             setNewPlan({ name: '', price: '', max_members: '', duration_months: '1', description: '' });
             fetchData();
-        } catch (e: any) {
-            console.error('Erro detalhado:', e.response?.data || e.message);
-            const errorMsg = e.response?.data?.error || 'Erro ao criar plano';
+        } catch (err: unknown) {
+            console.error('Error creating plan:', err);
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as any).response?.data?.error
+                : 'Erro ao criar plano';
             alert(errorMsg);
         }
     };
@@ -69,8 +125,8 @@ export const SuperAdminDashboard = () => {
         try {
             await api.delete(`/saas/plans/${id}`);
             fetchData();
-        } catch (e) {
-            console.error(e);
+        } catch (err) {
+            console.error('Error deleting plan:', err);
             alert('Erro ao excluir plano');
         }
     };
@@ -83,7 +139,7 @@ export const SuperAdminDashboard = () => {
             return;
         }
         fetchData();
-    }, []);
+    }, [fetchData, navigate]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -95,14 +151,14 @@ export const SuperAdminDashboard = () => {
         try {
             await api.post(`/saas/tenants/${id}/toggle`);
             fetchData();
-        } catch (e) {
-            console.error(e);
+        } catch (err) {
+            console.error('Error toggling tenant:', err);
             alert('Erro ao alterar status');
         }
     };
 
     // New Actions
-    const handleEditTenant = (tenant: any) => {
+    const handleEditTenant = (tenant: Tenant) => {
         setEditingTenant({
             id: tenant.id,
             name: tenant.name,
@@ -118,6 +174,7 @@ export const SuperAdminDashboard = () => {
 
     const handleSaveTenant = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!editingTenant) return;
         try {
             // 1. Update Tenant Info
             await api.put(`/saas/tenants/${editingTenant.id}`, editingTenant);
@@ -136,8 +193,10 @@ export const SuperAdminDashboard = () => {
             setAdminPassword('');
             fetchData();
             alert('Academia atualizada com sucesso!');
-        } catch (e: any) {
-            alert('Erro ao salvar: ' + e.message);
+        } catch (err: unknown) {
+            console.error('Save tenant error:', err);
+            const errorMsg = err && typeof err === 'object' && 'message' in err ? (err as { message: string }).message : 'Erro desconhecido';
+            alert('Erro ao salvar: ' + errorMsg);
         }
     };
 
@@ -146,7 +205,8 @@ export const SuperAdminDashboard = () => {
         try {
             await api.delete(`/saas/tenants/${id}`);
             fetchData();
-        } catch (e) {
+        } catch (err) {
+            console.error('Delete error:', err);
             alert('Erro ao excluir');
         }
     };
@@ -157,7 +217,8 @@ export const SuperAdminDashboard = () => {
             await api.post(`/saas/tenants/${id}/disconnect`);
             fetchData();
             alert('WhatsApp desconectado com sucesso.');
-        } catch (e) {
+        } catch (err) {
+            console.error('Disconnect error:', err);
             alert('Erro ao desconectar');
         }
     };
@@ -168,7 +229,8 @@ export const SuperAdminDashboard = () => {
             await api.put('/system/settings', systemSettings);
             alert('Configurações salvas com sucesso!');
             fetchData();
-        } catch (e: any) {
+        } catch (err) {
+            console.error('Settings save error:', err);
             alert('Erro ao salvar as configurações.');
         }
     };
@@ -187,6 +249,7 @@ export const SuperAdminDashboard = () => {
             });
             setSystemSettings({ ...systemSettings, logo_url: res.data.url });
         } catch (err) {
+            console.error('Upload error:', err);
             alert('Erro ao fazer upload da imagem.');
         } finally {
             setUploading(false);
@@ -410,7 +473,7 @@ export const SuperAdminDashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {financeData?.payments?.map((payment: any) => (
+                                            {financeData?.payments?.map((payment: FinancePayment) => (
                                                 <tr key={payment.id} className="hover:bg-slate-50 transition">
                                                     <td className="p-4 font-bold text-slate-800">{payment.tenant?.name || 'Academia Removida'}</td>
                                                     <td className="p-4 font-mono text-slate-600">R$ {parseFloat(payment.amount).toFixed(2)}</td>
@@ -523,18 +586,18 @@ export const SuperAdminDashboard = () => {
                                         <h3 className="text-sm font-bold text-slate-500 uppercase mb-2">Dados da Academia</h3>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700">Nome da Academia</label>
-                                            <input required type="text" value={editingTenant?.name} onChange={e => setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                            <input required type="text" value={editingTenant?.name || ''} onChange={e => editingTenant && setEditingTenant({ ...editingTenant, name: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
                                         </div>
                                         <div className="mt-2">
                                             <label className="block text-sm font-medium text-slate-700">Telefone do Dono</label>
-                                            <input type="text" value={editingTenant?.owner_phone} onChange={e => setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
+                                            <input type="text" value={editingTenant?.owner_phone || ''} onChange={e => editingTenant && setEditingTenant({ ...editingTenant, owner_phone: e.target.value })} className="mt-1 block w-full border border-gray-300 rounded p-2" />
                                         </div>
                                         <div className="flex items-center gap-2 py-2 mt-2">
                                             <input
                                                 type="checkbox"
                                                 id="is_free"
-                                                checked={editingTenant?.is_free}
-                                                onChange={e => setEditingTenant({ ...editingTenant, is_free: e.target.checked })}
+                                                checked={editingTenant?.is_free || false}
+                                                onChange={e => editingTenant && setEditingTenant({ ...editingTenant, is_free: e.target.checked })}
                                                 className="w-4 h-4 text-primary rounded"
                                             />
                                             <label htmlFor="is_free" className="text-sm font-bold text-slate-700 cursor-pointer">
@@ -545,8 +608,8 @@ export const SuperAdminDashboard = () => {
                                             <label className="block text-sm font-medium text-slate-700">Data de Expiração (Plano)</label>
                                             <input
                                                 type="date"
-                                                value={editingTenant?.saas_plan_expires_at}
-                                                onChange={e => setEditingTenant({ ...editingTenant, saas_plan_expires_at: e.target.value })}
+                                                value={editingTenant?.saas_plan_expires_at || ''}
+                                                onChange={e => editingTenant && setEditingTenant({ ...editingTenant, saas_plan_expires_at: e.target.value })}
                                                 className="mt-1 block w-full border border-gray-300 rounded p-2"
                                             />
                                             <p className="text-xs text-slate-500 mt-1">Define quando o acesso será bloqueado automaticamente.</p>

@@ -217,7 +217,7 @@ model Lead {
   last_message_at DateTime @default(now())
   created_at      DateTime @default(now())
   
-  status          String   @default("new") // new, negotiating, financing, won, lost
+  status          String   @default("new") // new, contacted, trial, won, lost
   value           Float    @default(0)
   
   messages        ChatMessage[]

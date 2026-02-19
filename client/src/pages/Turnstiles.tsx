@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import { Cpu, Wifi, CheckCircle, Download, ExternalLink, ShieldCheck, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
@@ -8,17 +8,67 @@ import io from 'socket.io-client';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
 
+interface GateEvent {
+    id: string;
+    name: string;
+    status: 'GRANTED' | 'DENIED';
+    time: string;
+    reason?: string;
+}
+
+interface Log {
+    id: string;
+    member?: {
+        name: string;
+    };
+    status: 'GRANTED' | 'DENIED';
+    scanned_at: string;
+}
+
+interface SocketGateData {
+    memberName: string;
+    timestamp: string;
+    reason?: string;
+}
+
 export const Turnstiles = () => {
     const { user } = useAuth();
     const [selectedBrand, setSelectedBrand] = useState('generic');
     const [token, setToken] = useState('Carregando...');
-    const [recentEvents, setRecentEvents] = useState<any[]>([]);
+    const [recentEvents, setRecentEvents] = useState<GateEvent[]>([]);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
+    const fetchConfig = useCallback(async () => {
+        try {
+            const res = await api.get('/gate/config');
+            setToken(res.data.gate_token);
+            setSelectedBrand(res.data.turnstile_brand || 'generic');
+        } catch (err) {
+            console.error('Error fetching config:', err);
+        }
+    }, []);
+
+    const fetchRecentLogs = useCallback(async () => {
+        try {
+            const res = await api.get('/logs');
+            const formatted = res.data.slice(0, 5).map((log: Log) => ({
+                id: log.id,
+                name: log.member?.name || 'Desconhecido',
+                status: log.status,
+                time: new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            }));
+            setRecentEvents(formatted);
+        } catch (err) {
+            console.error('Erro ao buscar logs recentes:', err);
+        }
+    }, []);
+
     useEffect(() => {
-        fetchConfig();
-        fetchRecentLogs();
+        requestAnimationFrame(() => {
+            fetchConfig();
+            fetchRecentLogs();
+        });
 
         if (!hasSeenTutorial('turnstiles')) {
             startTutorial('turnstiles');
@@ -27,20 +77,20 @@ export const Turnstiles = () => {
         if (user?.tenant_id) {
             socket.emit('join_room', { room: user.tenant_id });
 
-            socket.on('gate:open', (data) => {
+            socket.on('gate:open', (data: SocketGateData) => {
                 setRecentEvents(prev => [{
                     id: Math.random().toString(),
                     name: data.memberName,
-                    status: 'GRANTED',
+                    status: 'GRANTED' as const,
                     time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                 }, ...prev].slice(0, 5));
             });
 
-            socket.on('gate:denied', (data) => {
+            socket.on('gate:denied', (data: SocketGateData) => {
                 setRecentEvents(prev => [{
                     id: Math.random().toString(),
                     name: data.memberName || 'Visitante/Inativo',
-                    status: 'DENIED',
+                    status: 'DENIED' as const,
                     reason: data.reason,
                     time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                 }, ...prev].slice(0, 5));
@@ -51,32 +101,9 @@ export const Turnstiles = () => {
             socket.off('gate:open');
             socket.off('gate:denied');
         };
-    }, [user?.tenant_id]);
+    }, [user?.tenant_id, startTutorial, hasSeenTutorial, fetchConfig, fetchRecentLogs]);
 
-    const fetchConfig = async () => {
-        try {
-            const res = await api.get('/gate/config');
-            setToken(res.data.gate_token);
-            setSelectedBrand(res.data.turnstile_brand || 'generic');
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
-    const fetchRecentLogs = async () => {
-        try {
-            const res = await api.get('/logs');
-            const formatted = res.data.slice(0, 5).map((log: any) => ({
-                id: log.id,
-                name: log.member?.name || 'Desconhecido',
-                status: log.status,
-                time: new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-            }));
-            setRecentEvents(formatted);
-        } catch (err) {
-            console.error('Erro ao buscar logs recentes:', err);
-        }
-    };
 
     const handleRegenerateToken = async () => {
         if (!confirm('Tem certeza? O ZappBridge atual irá parar de funcionar até ser atualizado com o novo token.')) return;
@@ -84,6 +111,7 @@ export const Turnstiles = () => {
             const res = await api.post('/gate/regenerate-token');
             setToken(res.data.gate_token);
         } catch (err) {
+            console.error('Error regenerating token:', err);
             alert('Erro ao regenerar token');
         }
     };
@@ -93,7 +121,7 @@ export const Turnstiles = () => {
         try {
             await api.put('/gate/brand', { brand });
         } catch (err) {
-            console.error('Erro ao salvar marca');
+            console.error('Error saving brand:', err);
         }
     };
 
@@ -108,6 +136,7 @@ export const Turnstiles = () => {
             link.click();
             link.remove();
         } catch (err) {
+            console.error('Download error:', err);
             alert('Erro ao baixar arquivo. Verifique se o token foi gerado.');
         }
     };
@@ -117,6 +146,7 @@ export const Turnstiles = () => {
             const res = await api.get('/gate/guide');
             alert(res.data.guide);
         } catch (err) {
+            console.error('Error showing guide:', err);
             alert('Erro ao carregar guia.');
         }
     };

@@ -1,24 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import { TrendingUp, AlertCircle, Clock, CheckCircle, Search } from 'lucide-react';
 import api from '../api';
 import clsx from 'clsx';
 
+interface Invoice {
+    id: string;
+    member: {
+        name: string;
+    };
+    description: string;
+    amount: number;
+    due_date: string;
+    status: string;
+    paid_at?: string;
+}
+
 export const Finance = () => {
     const [stats, setStats] = useState({ monthly_income: 0, pending_amount: 0, overdue_amount: 0 });
-    const [invoices, setInvoices] = useState<any[]>([]);
+    const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-
-    useEffect(() => {
-        fetchData();
-        if (!hasSeenTutorial('finance')) {
-            startTutorial('finance');
-        }
-    }, []);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const [statsRes, invoicesRes] = await Promise.all([
                 api.get('/finance/stats'),
@@ -27,9 +32,18 @@ export const Finance = () => {
             setStats(statsRes.data);
             setInvoices(invoicesRes.data);
         } catch (err) {
-            console.error(err);
+            console.error('Error fetching finance data:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            fetchData();
+            if (!hasSeenTutorial('finance')) {
+                startTutorial('finance');
+            }
+        });
+    }, [fetchData, hasSeenTutorial, startTutorial]);
 
     const handleMarkAsPaid = async (id: string) => {
         if (!confirm('Confirmar recebimento deste pagamento?')) return;
@@ -37,6 +51,7 @@ export const Finance = () => {
             await api.post(`/finance/invoices/${id}/pay`, { method: 'CASH' });
             fetchData();
         } catch (err) {
+            console.error('Error marking invoice as paid:', err);
             alert('Erro ao processar pagamento');
         }
     };
@@ -143,8 +158,8 @@ export const Finance = () => {
                                                 Confirmar Pago
                                             </button>
                                         )}
-                                        {inv.status === 'PAID' && (
-                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter">Liquidado em {new Date(inv.paid_at).toLocaleDateString()}</span>
+                                        {inv.status === 'PAID' && inv.paid_at && (
+                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-tighter text-center block">Liquidado em {new Date(inv.paid_at).toLocaleDateString()}</span>
                                         )}
                                     </td>
                                 </tr>

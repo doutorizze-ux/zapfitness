@@ -52,7 +52,7 @@ export const WhatsAppConnect = () => {
             socket.off('whatsapp_status');
             socket.off('joined_room');
         }
-    }, [user?.tenant_id]);
+    }, [user?.tenant_id, startTutorial, hasSeenTutorial]);
 
     const handleConnect = async () => {
         setLoading(true);

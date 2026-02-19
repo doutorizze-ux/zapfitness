@@ -1,12 +1,28 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { CreditCard, QrCode, Lock, CheckCircle } from 'lucide-react';
 
+interface Plan {
+    id: string;
+    name: string;
+    price: number;
+    duration_months: number;
+}
+
+interface Subscription {
+    id: string;
+    status: string;
+    pix?: {
+        encodedImage?: string;
+        payload: string;
+    };
+}
+
 export const PaymentPage = () => {
     const navigate = useNavigate();
-    const [plan, setPlan] = useState<any>(null);
+    const [plan, setPlan] = useState<Plan | null>(null);
     const [loading, setLoading] = useState(false);
     const [verifying, setVerifying] = useState(false);
     const [billingType, setBillingType] = useState<'CREDIT_CARD' | 'PIX'>('CREDIT_CARD');
@@ -19,7 +35,7 @@ export const PaymentPage = () => {
     const [expiry, setExpiry] = useState('');
     const [cvv, setCvv] = useState('');
 
-    const [subscription, setSubscription] = useState<any>(null);
+    const [subscription, setSubscription] = useState<Subscription | null>(null);
 
     useEffect(() => {
         // Fetch current tenant plan info
@@ -31,7 +47,6 @@ export const PaymentPage = () => {
                     console.warn("PaymentPage: User has no saas_plan data.");
                     alert("Por favor, escolha um plano para ativar sua conta.");
                     navigate('/');
-                    return;
                 }
 
                 console.log("PaymentPage: Status is", res.data.payment_status);
@@ -52,18 +67,7 @@ export const PaymentPage = () => {
             });
     }, [navigate]);
 
-    useEffect(() => {
-        let interval: any;
-        if (subscription && billingType === 'PIX') {
-            // Poll for payment status every 5 seconds
-            interval = setInterval(() => {
-                checkPaymentStatus();
-            }, 5000);
-        }
-        return () => clearInterval(interval);
-    }, [subscription, billingType]);
-
-    const checkPaymentStatus = async (manual = false) => {
+    const checkPaymentStatus = useCallback(async (manual = false) => {
         if (manual) setVerifying(true);
         try {
             const res = await api.get('/saas/payment-status');
@@ -78,13 +82,26 @@ export const PaymentPage = () => {
         } finally {
             if (manual) setVerifying(false);
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        let interval: ReturnType<typeof setInterval>;
+        if (subscription && billingType === 'PIX') {
+            // Poll for payment status every 5 seconds
+            interval = setInterval(() => {
+                checkPaymentStatus();
+            }, 5000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [subscription, billingType, checkPaymentStatus]);
 
     const handleSubscribe = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 billingType,
                 cpfCnpj: cpfCnpj.replace(/\D/g, ''),
                 phone: phone.replace(/\D/g, '')
@@ -115,9 +132,12 @@ export const PaymentPage = () => {
                 navigate('/dashboard');
             }
 
-        } catch (err: any) {
-            console.error(err);
-            alert('Erro no pagamento: ' + (err.response?.data?.error || 'Tente novamente'));
+        } catch (err: unknown) {
+            console.error('Subscription error:', err);
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data: { error: string } } }).response?.data?.error
+                : 'Tente novamente';
+            alert('Erro no pagamento: ' + errorMsg);
         } finally {
             setLoading(false);
         }
@@ -149,14 +169,18 @@ export const PaymentPage = () => {
                             <div className="mt-4">
                                 <p className="text-xs text-slate-500 mb-1">Ou copie e cole o código:</p>
                                 <div className="bg-slate-100 p-2 rounded text-xs break-all text-slate-700 select-all cursor-pointer" onClick={() => {
-                                    navigator.clipboard.writeText(subscription.pix.payload);
-                                    alert('Código copiado!');
+                                    if (subscription.pix) {
+                                        navigator.clipboard.writeText(subscription.pix.payload);
+                                        alert('Código copiado!');
+                                    }
                                 }}>
                                     {subscription.pix.payload}
                                 </div>
                                 <button onClick={() => {
-                                    navigator.clipboard.writeText(subscription.pix.payload);
-                                    alert('Código copiado!');
+                                    if (subscription.pix) {
+                                        navigator.clipboard.writeText(subscription.pix.payload);
+                                        alert('Código copiado!');
+                                    }
                                 }} className="text-primary text-sm font-bold mt-2 hover:underline">
                                     Copiar Código
                                 </button>

@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Plus, Filter, MessageSquare, Phone,
-    DollarSign, Clock, LayoutGrid, List,
-    MoreVertical, Send, X, Users, Target
+    LayoutGrid, List,
+    MoreVertical, Send, X, Users, Target, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
@@ -16,7 +16,7 @@ interface Lead {
     id: string;
     name: string | null;
     phone: string;
-    status: 'new' | 'negotiating' | 'financing' | 'won' | 'lost';
+    status: 'new' | 'contacted' | 'trial' | 'won' | 'lost';
     value: number;
     last_message: string | null;
     last_message_at: string;
@@ -32,11 +32,11 @@ interface Message {
 }
 
 const COLUMNS = [
-    { id: 'new', label: 'NOVOS LEADS', color: 'bg-blue-500', lightColor: 'bg-blue-50', textColor: 'text-blue-600' },
-    { id: 'negotiating', label: 'EM NEGOCIAÇÃO', color: 'bg-orange-500', lightColor: 'bg-orange-50', textColor: 'text-orange-600' },
-    { id: 'financing', label: 'FINANCIAMENTO', color: 'bg-purple-500', lightColor: 'bg-purple-50', textColor: 'text-purple-600' },
-    { id: 'won', label: 'VENDA FEITA', color: 'bg-green-500', lightColor: 'bg-green-50', textColor: 'text-green-600' },
-    { id: 'lost', label: 'PERDIDOS', color: 'bg-slate-500', lightColor: 'bg-slate-50', textColor: 'text-slate-600' },
+    { id: 'new', label: 'INTERESSADOS', color: 'bg-blue-500', lightColor: 'bg-blue-50', textColor: 'text-blue-600' },
+    { id: 'contacted', label: 'CONTATO FEITO', color: 'bg-orange-500', lightColor: 'bg-orange-50', textColor: 'text-orange-600' },
+    { id: 'trial', label: 'AULA EXPERIMENTAL', color: 'bg-purple-500', lightColor: 'bg-purple-50', textColor: 'text-purple-600' },
+    { id: 'won', label: 'MATRICULADO', color: 'bg-green-500', lightColor: 'bg-green-50', textColor: 'text-green-600' },
+    { id: 'lost', label: 'PERDIDO', color: 'bg-slate-500', lightColor: 'bg-slate-50', textColor: 'text-slate-600' },
 ];
 
 export const Leads = () => {
@@ -50,7 +50,7 @@ export const Leads = () => {
     const [sending, setSending] = useState(false);
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         try {
             const res = await api.get('/leads');
             setLeads(res.data);
@@ -59,7 +59,7 @@ export const Leads = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchLeads();
@@ -72,7 +72,7 @@ export const Leads = () => {
             socket.emit('join', user.tenant_id);
         }
 
-        socket.on('new_message', (msg: any) => {
+        socket.on('new_message', (msg: Message & { lead_id: string }) => {
             // Refresh leads list to update last message
             fetchLeads();
 
@@ -85,26 +85,26 @@ export const Leads = () => {
         return () => {
             socket.disconnect();
         };
-    }, [user, selectedLead]);
-
-    useEffect(() => {
-        if (selectedLead) {
-            fetchMessages(selectedLead.id);
-        }
-    }, [selectedLead]);
+    }, [user?.tenant_id, selectedLead, fetchLeads]);
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const fetchMessages = async (leadId: string) => {
+    const fetchMessages = useCallback(async (leadId: string) => {
         try {
             const res = await api.get(`/leads/${leadId}/messages`);
             setMessages(res.data);
         } catch (err) {
             console.error('Error fetching messages:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        if (selectedLead) {
+            fetchMessages(selectedLead.id);
+        }
+    }, [selectedLead, fetchMessages]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -135,7 +135,7 @@ export const Leads = () => {
     const updateLeadStatus = async (leadId: string, status: string) => {
         try {
             await api.put(`/leads/${leadId}`, { status });
-            setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: status as any } : l));
+            setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: status as Lead['status'] } : l));
         } catch (err) {
             console.error('Error updating status:', err);
         }
@@ -143,10 +143,10 @@ export const Leads = () => {
 
     const stats = {
         total: leads.length,
-        hot: leads.filter(l => l.status === 'new').length,
+        new: leads.filter(l => l.status === 'new').length,
         conversion: leads.length > 0 ? ((leads.filter(l => l.status === 'won').length / leads.length) * 100).toFixed(1) : 0,
-        potential: leads.reduce((acc, l) => acc + (l.status !== 'lost' && l.status !== 'won' ? l.value : 0), 0),
-        won: leads.filter(l => l.status === 'won').reduce((acc, l) => acc + l.value, 0)
+        trial: leads.filter(l => l.status === 'trial').length,
+        matriculated: leads.filter(l => l.status === 'won').length
     };
 
     if (loading) {
@@ -162,8 +162,8 @@ export const Leads = () => {
             {/* Header & Stats */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
-                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">CRM de <span className="text-primary">Vendas</span></h1>
-                    <p className="text-slate-500 font-medium">Acompanhe seus leads e converta mais interessados em alunos.</p>
+                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">Gestão de <span className="text-primary">Leads</span></h1>
+                    <p className="text-slate-500 font-medium">Acompanhe seus interessados e converta-os em alunos matriculados.</p>
                 </div>
                 <div className="flex gap-3">
                     <button className="flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm">
@@ -188,7 +188,7 @@ export const Leads = () => {
                     </div>
                     <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-black text-slate-900">{stats.total}</span>
-                        <span className="text-xs font-bold text-green-500">+{stats.hot} Hot</span>
+                        <span className="text-xs font-bold text-[#22c55e]">+{stats.new} Novos</span>
                     </div>
                 </div>
 
@@ -208,26 +208,26 @@ export const Leads = () => {
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <div className="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-purple-500">
-                            <Clock size={24} />
+                            <Calendar size={24} />
                         </div>
-                        <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Em Aberto</span>
+                        <span className="text-[10px] font-black text-purple-500 uppercase tracking-widest">Experimento</span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">R$ {stats.potential.toLocaleString('pt-BR')}</span>
-                        <span className="text-xs font-bold text-slate-400">Valor potencial</span>
+                        <span className="text-3xl font-black text-slate-900">{stats.trial}</span>
+                        <span className="text-xs font-bold text-slate-400">Aulas marcadas</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <div className="w-12 h-12 rounded-2xl bg-green-50 flex items-center justify-center text-green-500">
-                            <DollarSign size={24} />
+                            <Users size={24} />
                         </div>
-                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Faturado</span>
+                        <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Matrículas</span>
                     </div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">R$ {stats.won.toLocaleString('pt-BR')}</span>
-                        <span className="text-xs font-bold text-slate-400">Vendas concluídas</span>
+                        <span className="text-3xl font-black text-slate-900">{stats.matriculated}</span>
+                        <span className="text-xs font-bold text-slate-400">Alunos convertidos</span>
                     </div>
                 </div>
             </div>
@@ -347,7 +347,6 @@ export const Leads = () => {
                             <tr className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                                 <th className="px-8 py-5">Lead</th>
                                 <th className="px-8 py-5">Status</th>
-                                <th className="px-8 py-5">Valor</th>
                                 <th className="px-8 py-5">Último Contato</th>
                                 <th className="px-8 py-5">Ações</th>
                             </tr>
@@ -375,9 +374,7 @@ export const Leads = () => {
                                             {COLUMNS.find(c => c.id === lead.status)?.label}
                                         </span>
                                     </td>
-                                    <td className="px-8 py-5">
-                                        <div className="font-bold text-slate-900 text-sm">R$ {lead.value.toLocaleString('pt-BR')}</div>
-                                    </td>
+
                                     <td className="px-8 py-5">
                                         <div className="text-xs text-slate-500 font-medium">{format(new Date(lead.last_message_at), 'dd/MM HH:mm')}</div>
                                     </td>
@@ -498,7 +495,7 @@ export const Leads = () => {
                                 </button>
                             </form>
                             <div className="mt-3 text-center">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Canais de Venda: WhatsApp Ativado</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Canais de Atendimento: WhatsApp Ativado</p>
                             </div>
                         </div>
                     </motion.div>

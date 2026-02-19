@@ -26,6 +26,7 @@ export const AdminLogin = () => {
             localStorage.setItem('user', JSON.stringify({ ...admin, role: 'SAAS_OWNER' }));
             navigate('/admin/dashboard');
         } catch (err) {
+            console.error('Admin login error:', err);
             setError('Credenciais inválidas');
         }
     };

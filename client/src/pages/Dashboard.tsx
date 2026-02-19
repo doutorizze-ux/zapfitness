@@ -28,11 +28,13 @@ export const Dashboard = () => {
 
     React.useEffect(() => {
         // Start the general dashboard tutorial if not seen
-        if (!hasSeenTutorial('dashboard')) {
-            startTutorial('dashboard');
-        }
+        requestAnimationFrame(() => {
+            if (!hasSeenTutorial('dashboard')) {
+                startTutorial('dashboard');
+            }
+        });
         api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
-    }, []);
+    }, [hasSeenTutorial, startTutorial]);
 
     const handleLogout = () => {
         logout();
@@ -319,7 +321,7 @@ export const Dashboard = () => {
 
 const Welcome = () => {
     const navigate = useNavigate();
-    const [stats, setStats] = React.useState<any>(null);
+    const [stats, setStats] = React.useState<{ name?: string } | null>(null);
 
     React.useEffect(() => {
         api.get('/me').then(res => setStats(res.data)).catch(console.error);

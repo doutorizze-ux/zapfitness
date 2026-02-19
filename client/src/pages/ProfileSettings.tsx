@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -18,6 +18,30 @@ import {
 import clsx from 'clsx';
 import { formatImageUrl } from '../utils/format';
 
+interface Tenant {
+    id: string;
+    name: string;
+    logo_url?: string;
+    primary_color?: string;
+    opening_time?: string;
+    closing_time?: string;
+    access_cooldown: number;
+    max_daily_access: number;
+    enable_scheduling: boolean;
+    whatsapp_status: string;
+    notificationSettings?: {
+        checkin_success: string;
+        plan_warning: string;
+        plan_expired: string;
+    };
+    saas_plan?: {
+        name: string;
+        price: number;
+        max_members: number;
+    };
+    saas_plan_expires_at?: string;
+}
+
 export const ProfileSettings = () => {
     const { user, login } = useAuth();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'access' | 'notifications' | 'subscription'>('profile');
@@ -31,13 +55,9 @@ export const ProfileSettings = () => {
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [accessData, setAccessData] = useState({ opening_time: '', closing_time: '', access_cooldown: 5, max_daily_access: 1, enable_scheduling: false });
     const [notificationData, setNotificationData] = useState({ checkin_success: '', plan_warning: '', plan_expired: '' });
-    const [tenantData, setTenantData] = useState<any>(null);
+    const [tenantData, setTenantData] = useState<Tenant | null>(null);
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
-
-    const fetchSettings = async () => {
+    const fetchSettings = useCallback(async () => {
         try {
             const res = await api.get('/me');
             const tenant = res.data;
@@ -62,9 +82,13 @@ export const ProfileSettings = () => {
                 });
             }
         } catch (err) {
-            console.error(err);
+            console.error('Error fetching settings:', err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchSettings();
+    }, [fetchSettings]);
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,8 +108,11 @@ export const ProfileSettings = () => {
                 login(localStorage.getItem('token') || '', updatedUser);
             }
             setTimeout(() => setSuccess(null), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro ao atualizar perfil');
+        } catch (err: unknown) {
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as any).response?.data?.error
+                : 'Erro ao atualizar perfil';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -106,8 +133,11 @@ export const ProfileSettings = () => {
             setSuccess('Senha alterada com sucesso!');
             setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             setTimeout(() => setSuccess(null), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro ao atualizar senha');
+        } catch (err: unknown) {
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as any).response?.data?.error
+                : 'Erro ao atualizar senha';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -125,8 +155,11 @@ export const ProfileSettings = () => {
                 login(localStorage.getItem('token') || '', { ...user, enable_scheduling: accessData.enable_scheduling });
             }
             setTimeout(() => setSuccess(null), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro ao atualizar configurações');
+        } catch (err: unknown) {
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as any).response?.data?.error
+                : 'Erro ao atualizar configurações';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -140,8 +173,11 @@ export const ProfileSettings = () => {
             await api.put('/settings/notifications', notificationData);
             setSuccess('Mensagens do bot atualizadas!');
             setTimeout(() => setSuccess(null), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Erro ao atualizar mensagens');
+        } catch (err: unknown) {
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as any).response?.data?.error
+                : 'Erro ao atualizar mensagens';
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -161,6 +197,7 @@ export const ProfileSettings = () => {
             });
             setProfileData({ ...profileData, logo_url: res.data.url });
         } catch (err) {
+            console.error('Upload error:', err);
             alert('Erro ao fazer upload da imagem.');
         } finally {
             setUploading(false);
@@ -189,7 +226,7 @@ export const ProfileSettings = () => {
                         <button
                             key={tab.id}
                             onClick={() => {
-                                setActiveTab(tab.id as any);
+                                setActiveTab(tab.id as 'profile' | 'security' | 'access' | 'notifications' | 'subscription');
                                 setError(null);
                                 setSuccess(null);
                             }}

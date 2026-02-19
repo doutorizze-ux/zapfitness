@@ -1,28 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import clsx from 'clsx';
 import api from '../api';
 import { Plus, Trash2, Tag, Calendar, BadgeDollarSign, XCircle } from 'lucide-react';
 
+interface Plan {
+    id: string;
+    name: string;
+    price: number;
+    duration_days: number;
+}
+
 export const Plans = () => {
-    const [plans, setPlans] = useState<any[]>([]);
+    const [plans, setPlans] = useState<Plan[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', price: '', duration_days: '' });
 
-    const fetchPlans = () => {
+    const fetchPlans = useCallback(() => {
         api.get('/plans').then(res => setPlans(res.data)).catch(console.error);
-    };
+    }, []);
 
     useEffect(() => {
         fetchPlans();
-    }, []);
+    }, [fetchPlans]);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
     useEffect(() => {
         if (!hasSeenTutorial('plans')) {
             startTutorial('plans');
         }
-    }, []);
+    }, [hasSeenTutorial, startTutorial]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

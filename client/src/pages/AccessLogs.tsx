@@ -1,36 +1,49 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
 import { Clock, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 import clsx from 'clsx';
 
+interface Log {
+    id: string;
+    member?: {
+        name: string;
+    };
+    status: string;
+    reason?: string;
+    scanned_at: string;
+}
+
 export const AccessLogs = () => {
-    const [logs, setLogs] = useState<any[]>([]);
+    const [logs, setLogs] = useState<Log[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
-    useEffect(() => {
-        if (!hasSeenTutorial('access_logs')) {
-            startTutorial('access_logs');
+    const fetchLogs = useCallback(async () => {
+        try {
+            const res = await api.get('/logs');
+            setLogs(Array.isArray(res.data) ? res.data : []);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching logs:', err);
+            setError('Erro ao carregar acessos');
+        } finally {
+            setLoading(false);
         }
-        const fetchLogs = async () => {
-            try {
-                const res = await api.get('/logs');
-                setLogs(Array.isArray(res.data) ? res.data : []);
-                setError(null);
-            } catch (err: any) {
-                console.error('Error fetching logs:', err);
-                setError('Erro ao carregar acessos');
-            } finally {
-                setLoading(false);
+    }, []);
+
+    useEffect(() => {
+        requestAnimationFrame(() => {
+            if (!hasSeenTutorial('access_logs')) {
+                startTutorial('access_logs');
             }
-        };
-        fetchLogs();
+            fetchLogs();
+        });
         const interval = setInterval(fetchLogs, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchLogs, hasSeenTutorial, startTutorial]);
 
     return (
         <div className="animate-fade-in-up">

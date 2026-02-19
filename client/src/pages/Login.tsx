@@ -23,7 +23,10 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
 
     useEffect(() => {
-        setIsRegistering(initialMode === 'register');
+        // Use requestAnimationFrame to avoid synchronous state update in effect
+        requestAnimationFrame(() => {
+            setIsRegistering(initialMode === 'register');
+        });
         api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
     }, [initialMode]);
 
@@ -39,6 +42,7 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
                 navigate('/dashboard');
             }
         } catch (err) {
+            console.error('Login error:', err);
             setError('Credenciais inválidas');
         }
     };
@@ -50,8 +54,12 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
             // Don't auto-login if account is blocked/pending
             setSuccessMsg('Solicitação enviada! Aguarde a aprovação da nossa equipe para acessar.');
             setIsRegistering(false); // Switch to login view (or stay here showing success)
-        } catch (err: any) {
-            setError(err.response?.data?.details || 'Erro ao registrar.');
+        } catch (err: unknown) {
+            console.error('Registration error:', err);
+            const errorMsg = err && typeof err === 'object' && 'response' in err
+                ? (err as { response: { data: { details: string } } }).response?.data?.details
+                : 'Erro ao registrar.';
+            setError(errorMsg);
         }
     };
 
