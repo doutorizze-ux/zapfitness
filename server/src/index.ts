@@ -673,17 +673,19 @@ app.post('/api/members/:id/workouts', authMiddleware, async (req: any, res) => {
                 });
 
                 if (exercisesData.length > 0) {
-                    await tx.workoutExercise.createMany({
-                        data: exercisesData.map((ex: any, index: number) => ({
-                            workout_id: workout.id,
-                            exercise_id: ex.exercise_id,
-                            sets: ex.sets ? parseInt(ex.sets.toString()) : undefined,
-                            reps: ex.reps?.toString(),
-                            weight: ex.weight?.toString(),
-                            rest_time: ex.rest_time?.toString(),
-                            order: ex.order !== undefined ? parseInt(ex.order.toString()) : index
-                        }))
-                    });
+                    for (const [index, ex] of exercisesData.entries()) {
+                        await tx.workoutExercise.create({
+                            data: {
+                                workout_id: workout.id,
+                                exercise_id: ex.exercise_id,
+                                sets: ex.sets ? parseInt(ex.sets.toString()) : undefined,
+                                reps: ex.reps?.toString(),
+                                weight: ex.weight?.toString(),
+                                rest_time: ex.rest_time?.toString(),
+                                order: ex.order !== undefined ? parseInt(ex.order.toString()) : index
+                            }
+                        });
+                    }
                 }
             }
 
