@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -40,7 +40,7 @@ export const Dashboard = () => {
     };
 
     const navItems = [
-        { label: 'INÍCIO', path: '/dashboard', icon: LayoutDashboard },
+        { label: 'LEADS', path: '/dashboard/leads', icon: Users },
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
@@ -48,7 +48,6 @@ export const Dashboard = () => {
         { label: 'FINANCEIRO', path: '/dashboard/finance', icon: CreditCard },
         { label: 'CATRACAS', path: '/dashboard/turnstiles', icon: Cpu },
         { label: 'WHATSAPP', path: '/dashboard/whatsapp', icon: Zap },
-        { label: 'LEADS', path: '/dashboard/leads', icon: MessageSquare },
 
         { label: 'CONFIGURAÇÕES', path: '/dashboard/settings', icon: Settings },
     ];
@@ -133,6 +132,7 @@ export const Dashboard = () => {
                             else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
                             else if (path.includes('/logs')) tutorialId = 'access_logs';
                             else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
+                            else if (path.includes('/leads')) tutorialId = 'leads';
 
                             startTutorial(tutorialId);
                         }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
@@ -195,6 +195,7 @@ export const Dashboard = () => {
                     <div className="p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
+                            <Route path="/leads" element={<Leads />} />
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
@@ -202,7 +203,6 @@ export const Dashboard = () => {
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
                             <Route path="/whatsapp" element={<WhatsAppConnect />} />
-                            <Route path="/leads" element={<Leads />} />
 
                             <Route path="/settings" element={<ProfileSettings />} />
                         </Routes>
@@ -215,9 +215,9 @@ export const Dashboard = () => {
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Leads', path: '/dashboard/leads', icon: Users },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
-                            { label: 'Membros', path: '/dashboard/members', icon: Users },
 
                         ].map((item) => {
                             const isActive = location.pathname === item.path;

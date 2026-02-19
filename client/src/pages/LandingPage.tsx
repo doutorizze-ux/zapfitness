@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Zap, Shield, ArrowRight, MessageSquare, Target, UserCheck, Menu, X, Brain, Sparkles, TrendingUp } from 'lucide-react';
+import { Zap, Shield, ArrowRight, MessageSquare, Target, UserCheck, Menu, X, Brain, Sparkles, TrendingUp } from 'lucide-react';
 import { formatImageUrl } from '../utils/format';
 import clsx from 'clsx';
 
@@ -8,32 +8,11 @@ export const LandingPage = () => {
     const navigate = useNavigate();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [plansQuery, setPlansQuery] = useState<any[]>([]);
-    const [loadingPlans, setLoadingPlans] = useState(true);
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
         window.addEventListener('scroll', handleScroll);
-
-        const fetchPlans = async () => {
-            let apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
-            if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
-            if (!apiUrl.endsWith('/api')) apiUrl += '/api';
-
-            const url = `${apiUrl}/saas/plans`;
-
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`Status: ${res.status} ${res.statusText}`);
-                const data = await res.json();
-                if (Array.isArray(data)) setPlansQuery(data);
-            } catch (err: any) {
-                console.error(err);
-            } finally {
-                setLoadingPlans(false);
-            }
-        };
 
         const fetchSettings = async () => {
             let apiUrl = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
@@ -46,7 +25,6 @@ export const LandingPage = () => {
             } catch (err) { console.error(err); }
         };
 
-        fetchPlans();
         fetchSettings();
 
         return () => window.removeEventListener('scroll', handleScroll);
@@ -62,7 +40,6 @@ export const LandingPage = () => {
     const navLinks = [
         { label: 'Funcionalidades', href: '#features' },
         { label: 'Demonstração', href: '#demo' },
-        { label: 'Planos', href: '#pricing' },
     ];
 
     return (
@@ -104,7 +81,7 @@ export const LandingPage = () => {
 
                     <div className="flex gap-4 items-center z-50">
                         <button onClick={() => navigate('/login')} className="text-white hover:text-orange-400 transition-colors font-bold hidden sm:block">Entrar</button>
-                        <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="bg-orange-500 text-white px-5 md:px-8 py-2.5 rounded-full font-black text-sm md:text-base transition-all shadow-lg shadow-orange-500/25 active:scale-95">
+                        <button onClick={() => navigate('/login')} className="bg-orange-500 text-white px-5 md:px-8 py-2.5 rounded-full font-black text-sm md:text-base transition-all shadow-lg shadow-orange-500/25 active:scale-95">
                             Começar
                         </button>
                         <button
@@ -151,7 +128,7 @@ export const LandingPage = () => {
                             Entrar no Sistema
                         </button>
                         <button
-                            onClick={() => { setMobileMenuOpen(false); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }); }}
+                            onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
                             className="w-full py-5 bg-white/5 text-white border border-white/10 rounded-2xl font-black text-xl active:scale-95 transition-all"
                         >
                             Criar Conta
@@ -186,7 +163,7 @@ export const LandingPage = () => {
                         Automatize treinos, pagamentos e check-ins pelo chat que seus alunos já usam.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
-                        <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
+                        <button onClick={() => navigate('/login')} className="bg-orange-500 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-orange-500/30">
                             QUERO COMEÇAR AGORA
                             <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
                         </button>
@@ -362,72 +339,7 @@ export const LandingPage = () => {
                 </div>
             </section>
 
-            {/* Pricing */}
-            <section id="pricing" className="py-24 bg-white">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-20 px-4">
-                        <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Investimento Inteligente</h2>
-                        <p className="text-slate-500 text-lg font-medium">Planos diretos, sem letras miúdas. Escolha o melhor para o seu tamanho.</p>
-                    </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto px-4 md:px-0">
-                        {loadingPlans ? (
-                            <div className="col-span-full py-20 bg-slate-50 rounded-[3rem] text-center">
-                                <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                                <p className="font-bold text-slate-400">Sincronizando ofertas...</p>
-                            </div>
-                        ) : (
-                            plansQuery.map((plan: any, i) => (
-                                <div key={i} className={clsx(
-                                    "p-10 md:p-12 rounded-[3rem] border-2 transition-all duration-500 flex flex-col relative",
-                                    plan.popular ? "border-orange-500 bg-white shadow-2xl scale-105 z-10" : "border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xl"
-                                )}>
-                                    {plan.popular && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-orange-500 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                                            MAIS ESCOLHIDO
-                                        </div>
-                                    )}
-                                    <h3 className="text-2xl font-black text-slate-900 mb-6">{plan.name}</h3>
-                                    <div className="flex items-baseline gap-1 mb-10">
-                                        <span className="text-slate-400 font-bold text-sm">R$</span>
-                                        <span className="text-6xl font-black text-slate-900 tracking-tighter">{parseFloat(plan.price).toFixed(0)}</span>
-                                        <span className="text-slate-400 font-bold text-sm">
-                                            {plan.duration_months === 1 ? '/mês' :
-                                                plan.duration_months === 3 ? '/trimestre' :
-                                                    plan.duration_months === 6 ? '/semestre' :
-                                                        '/ano'}
-                                        </span>
-                                    </div>
-                                    <ul className="space-y-5 mb-12 flex-1">
-                                        {(() => {
-                                            let feats = plan.features;
-                                            if (typeof feats === 'string') {
-                                                try { feats = JSON.parse(feats); } catch (e) { feats = []; }
-                                            }
-                                            if (!Array.isArray(feats)) feats = [];
-                                            return feats.map((feat: any, k: number) => (
-                                                <li key={k} className="flex gap-3 text-sm font-bold text-slate-600">
-                                                    <CheckCircle size={18} className="text-green-500 shrink-0" />
-                                                    {feat}
-                                                </li>
-                                            ));
-                                        })()}
-                                    </ul>
-                                    <button
-                                        onClick={() => navigate(`/register?plan=${plan.id}`)}
-                                        className={clsx(
-                                            "w-full py-5 rounded-2xl font-black transition-all active:scale-95 shadow-lg",
-                                            plan.popular ? "bg-orange-500 text-white shadow-orange-500/20" : "bg-slate-900 text-white"
-                                        )}
-                                    >
-                                        ESCOLHER ESTE PLANO
-                                    </button>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-            </section>
 
             {/* Footer */}
             <footer className="bg-slate-950 text-slate-400 py-24 border-t border-white/5">
@@ -453,7 +365,6 @@ export const LandingPage = () => {
                         <ul className="space-y-4 text-sm font-bold">
                             <li><a href="#features" className="hover:text-orange-500 transition-colors">Funcionalidades</a></li>
                             <li><a href="#demo" className="hover:text-orange-500 transition-colors">Demonstração</a></li>
-                            <li><a href="#pricing" className="hover:text-orange-500 transition-colors">Planos</a></li>
                         </ul>
                     </div>
                     <div>

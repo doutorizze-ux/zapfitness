@@ -132,7 +132,6 @@ const saasAuthMiddleware = async (req: any, res: any, next: any) => {
     }
 };
 
-// --- 5. SOCKET.IO ---
 export const io = new Server(server, {
     cors: {
         origin: (origin: any, callback: any) => callback(null, true),
@@ -141,6 +140,26 @@ export const io = new Server(server, {
     },
     transports: ['polling', 'websocket'],
     allowEIO3: true
+});
+
+io.on('connection', (socket) => {
+    socket.on('join', (tenantId) => {
+        socket.join(tenantId);
+        console.log(`[Socket] Socket ${socket.id} joined room ${tenantId}`);
+    });
+});
+
+// Bridge EventBus to Socket.io
+eventBus.on(EVENTS.NEW_MESSAGE, (msg) => {
+    io.to(msg.tenant_id).emit('new_message', msg);
+});
+
+eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
+    io.to(data.tenantId).emit('checkin_granted', data);
+});
+
+eventBus.on(EVENTS.CHECKIN_DENIED, (data) => {
+    io.to(data.tenantId).emit('checkin_denied', data);
 });
 
 // Health check
@@ -461,7 +480,61 @@ app.post('/api/whatsapp/connect', authMiddleware, async (req: any, res) => {
     res.json({ status: 'INITIALIZING' });
 });
 
-// --- Leads & Chat Routes REMOVED ---
+// --- Leads & Chat Routes ---
+app.get('/api/leads', authMiddleware, async (req: any, res) => {
+    try {
+        const leads = await prisma.lead.findMany({
+            where: { tenant_id: req.user.tenant_id },
+            orderBy: { last_message_at: 'desc' }
+        });
+        res.json(leads);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.put('/api/leads/:id', authMiddleware, async (req: any, res) => {
+    try {
+        const { status, value, name } = req.body;
+        const updated = await prisma.lead.update({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id },
+            data: { status, value, name }
+        });
+        res.json(updated);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
+    try {
+        const messages = await prisma.chatMessage.findMany({
+            where: { lead_id: req.params.id, tenant_id: req.user.tenant_id },
+            orderBy: { created_at: 'asc' }
+        });
+        res.json(messages);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
+    try {
+        const { content } = req.body;
+        const lead = await prisma.lead.findUnique({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+
+        if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
+        const jid = `${lead.phone}@s.whatsapp.net`;
+        await sendMessageToJid(req.user.tenant_id, jid, content);
+
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 
 

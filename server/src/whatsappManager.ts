@@ -164,7 +164,6 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
         where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
     });
 
-    /*
     const lead = member ? null : await prisma.lead.upsert({
         where: { phone_tenant_id: { phone, tenant_id: tenantId } },
         update: { last_message: text, last_message_at: new Date() },
@@ -182,7 +181,6 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
             type: 'text'
         }
     });
-    */
 
     return result;
 };
@@ -212,7 +210,6 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         });
 
         // 2 & 3. Background Processing (Logging REMOVED as per user request to disable Leads feature)
-        /*
         (async () => {
             try {
                 let leadId = null;
@@ -250,7 +247,6 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 console.error('[WA] Background logging error:', err);
             }
         })();
-        */
 
         // --- AUTH & PLAN CHECKS (FAST) ---
         if ((tenant as any).status === 'BLOCKED') return;

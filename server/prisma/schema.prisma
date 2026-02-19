@@ -217,9 +217,12 @@ model Lead {
   last_message_at DateTime @default(now())
   created_at      DateTime @default(now())
   
+  status          String   @default("new") // new, negotiating, financing, won, lost
+  value           Float    @default(0)
+  
   messages        ChatMessage[]
 
-  @@unique([phone, tenant_id])
+  @@unique([phone, tenant_id], name: "phone_tenant_id")
 }
 
 model ChatMessage {
