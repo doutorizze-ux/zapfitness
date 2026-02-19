@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -21,7 +21,7 @@ import { formatImageUrl } from '../utils/format';
 
 export const Dashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const { startTutorial, hasSeenTutorial } = useTutorial();
@@ -37,10 +37,7 @@ export const Dashboard = () => {
         api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
     }, [hasSeenTutorial, startTutorial]);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
-    };
+
 
     const navItems = [
         { label: 'LEADS', path: '/dashboard/leads', icon: Users },
@@ -142,9 +139,7 @@ export const Dashboard = () => {
                         }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
                             <HelpCircle size={18} className="group-hover:scale-110 transition-transform" />
                         </button>
-                        <button onClick={handleLogout} className="flex items-center justify-center p-4 bg-red-500/10 hover:bg-red-500 rounded-2xl text-red-500 hover:text-white transition-all group border border-red-500/20">
-                            <LogOut size={18} className="group-hover:scale-110 transition-transform" />
-                        </button>
+
                     </div>
                 </div>
             </aside>
@@ -296,15 +291,7 @@ export const Dashboard = () => {
                                         <span className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center">{item.label}</span>
                                     </Link>
                                 ))}
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex flex-col items-center gap-2 group"
-                                >
-                                    <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500/60 group-hover:bg-red-500 group-hover:text-white transition-all border border-red-500/20">
-                                        <LogOut size={24} />
-                                    </div>
-                                    <span className="text-[10px] font-black text-red-500/40 uppercase tracking-widest">Sair</span>
-                                </button>
+
                             </div>
                         </div>
                     )}

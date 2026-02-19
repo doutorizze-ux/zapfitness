@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Zap, Shield, ArrowRight, MessageSquare,
     Menu, X, Brain, Sparkles, TrendingUp,
-    Smartphone, ChevronRight, CheckCircle2, Globe, Clock
+    ChevronRight, CheckCircle2, Globe, Clock
 } from 'lucide-react';
 import { formatImageUrl } from '../utils/format';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
@@ -126,9 +126,7 @@ export const LandingPage = () => {
 
                         <div className="flex gap-4 items-center">
                             <button onClick={() => navigate('/login')} className="text-slate-400 hover:text-white transition-colors font-black text-[10px] tracking-widest uppercase hidden sm:block px-4">Entrar</button>
-                            <button onClick={() => navigate('/login')} className="bg-white text-black px-6 md:px-8 py-3 rounded-full font-black text-xs md:text-sm transition-all shadow-xl hover:bg-orange-500 hover:text-white active:scale-95 uppercase tracking-widest">
-                                Começar Trial
-                            </button>
+
                             <button
                                 className="lg:hidden text-white p-2 bg-white/5 border border-white/10 rounded-xl"
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -247,13 +245,7 @@ export const LandingPage = () => {
                                 <div className="absolute inset-0 group-hover:bg-white mix-blend-difference"></div>
                             </button>
 
-                            <button
-                                onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="px-12 py-5 rounded-full font-black text-lg border border-white/20 hover:bg-white hover:text-black transition-all text-white flex items-center justify-center gap-3 backdrop-blur-md uppercase tracking-tighter"
-                            >
-                                <Smartphone size={20} />
-                                Ver Ecosystem
-                            </button>
+
                         </motion.div>
 
                         <motion.div
