@@ -1,16 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-// AuthContext not used in this component as per lint error
-
-// Actually, AuthContext expects { id, name, tenant_id }. SaaS owner doesn't have tenant_id.
-// It's better to handle SaaS login separately or make AuthContext flexible.
-// For simplicity and speed, I'll direct use localStorage and a simple state check in the dashboard or modify AuthContext.
-
-// Let's modify AuthContext slightly to support "role" or optional tenant_id.
-// But first, let's create the page.
-
+import { useAuth } from '../contexts/AuthContext';
 export const AdminLogin = () => {
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -21,9 +14,10 @@ export const AdminLogin = () => {
         try {
             const res = await api.post('/saas/login', { email, password });
             const { token, admin } = res.data;
-            // Store as standard token to reuse api interceptor
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify({ ...admin, role: 'SAAS_OWNER' }));
+
+            // Use AuthContext login to ensure global state is updated
+            login(token, { ...admin, role: 'SAAS_OWNER', name: 'Super Admin' });
+
             navigate('/admin/dashboard');
         } catch (err) {
             console.error('Admin login error:', err);

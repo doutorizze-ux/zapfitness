@@ -162,8 +162,7 @@ eventBus.on(EVENTS.CHECKIN_DENIED, (data) => {
     io.to(data.tenantId).emit('checkin_denied', data);
 });
 
-// Health check
-app.get('/health', (req, res) => res.json({ status: 'ok', msg: 'Backend is alive' }));
+
 
 // --- SERVE FRONTEND (STATIC FILES) ---
 const publicDir = path.join(__dirname, '../public');
@@ -262,7 +261,7 @@ app.post('/api/register', async (req, res) => {
             return { tenant, admin };
         });
 
-        const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '365d' });
+        const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '730d' });
         res.json({ tenant, admin, token });
     } catch (e: any) {
         console.error(e);
@@ -281,7 +280,7 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '365d' });
+    const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '730d' });
 
     // Merge tenant customization into the user object for the frontend
     const userResponse = {
@@ -480,6 +479,18 @@ app.post('/api/whatsapp/connect', authMiddleware, async (req: any, res) => {
     res.json({ status: 'INITIALIZING' });
 });
 
+app.post('/api/chat/send', authMiddleware, async (req: any, res) => {
+    try {
+        const { jid, text } = req.body;
+        if (!jid || !text) return res.status(400).json({ error: 'JID e texto são obrigatórios' });
+        await sendMessageToJid(req.user.tenant_id, jid, text);
+        res.json({ success: true });
+    } catch (e: any) {
+        console.error('[Chat] Erro ao enviar mensagem:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- Leads & Chat Routes ---
 app.get('/api/leads', authMiddleware, async (req: any, res) => {
     try {
@@ -576,7 +587,8 @@ app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
 
         if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
 
-        const jid = `${lead.phone}@s.whatsapp.net`;
+        const cleanPhone = lead.phone.replace(/\D/g, '');
+        const jid = `${cleanPhone}@s.whatsapp.net`;
         await sendMessageToJid(req.user.tenant_id, jid, content);
 
         res.json({ success: true });
@@ -1077,6 +1089,7 @@ app.delete('/api/members/:id', authMiddleware, async (req: any, res) => {
         prisma.accessLog.deleteMany({ where: { member_id: member.id } }),
         prisma.appointment.deleteMany({ where: { member_id: member.id } }),
         prisma.memberSchedule.deleteMany({ where: { member_id: member.id } }),
+        prisma.workout.deleteMany({ where: { member_id: member.id } }),
         prisma.member.delete({ where: { id: member.id } })
     ]);
     res.json({ success: true });
@@ -1341,7 +1354,7 @@ app.post('/api/saas/login', async (req, res) => {
     if (!admin || !await bcrypt.compare(password, admin.password)) {
         return res.status(401).json({ error: 'Credenciais inválidas' });
     }
-    const token = jwt.sign({ id: admin.id, email: admin.email, role: 'SAAS_OWNER' }, JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign({ id: admin.id, email: admin.email, role: 'SAAS_OWNER' }, JWT_SECRET, { expiresIn: '365d' });
     res.json({ token, admin });
 });
 

@@ -17,17 +17,21 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const [checking, setChecking] = React.useState(!!user);
 
   React.useEffect(() => {
-    if (user) {
+    const token = localStorage.getItem('token');
+    if (user && token) {
       api.get('/me')
         .then(res => {
           const { primary_color, logo_url, enable_scheduling } = res.data;
 
-          if (user.primary_color !== primary_color || user.logo_url !== logo_url) {
-            login(localStorage.getItem('token') || '', { ...user, primary_color, logo_url, enable_scheduling });
+          // Only update if there's actually a change to avoid infinite loops or excessive renders
+          if (user.primary_color !== primary_color || user.logo_url !== logo_url || user.enable_scheduling !== enable_scheduling) {
+            login(token, { ...user, primary_color, logo_url, enable_scheduling });
           }
         })
         .catch((err) => {
           console.error("[PrivateRoute] Session sync failed:", err);
+          // If it's a 401, the api interceptor will handle it and redirect.
+          // For other errors (network), we stay logged in but mark checking as false.
         })
         .finally(() => setChecking(false));
     } else {

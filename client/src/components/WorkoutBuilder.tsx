@@ -123,6 +123,18 @@ export const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ memberId, onSave
         }
     };
 
+    const handleDeleteWorkout = async (workoutId: string) => {
+        if (!window.confirm('Deseja realmente excluir este treino?')) return;
+        try {
+            await api.delete(`/workouts/${workoutId}`);
+            toast.success('Treino excluído!');
+            fetchData();
+        } catch (err) {
+            console.error('Error deleting workout:', err);
+            toast.error('Erro ao excluir treino');
+        }
+    };
+
     const filteredExercises = availableExercises.filter(ex =>
         ex.name.toLowerCase().includes(search.toLowerCase()) ||
         ex.category.toLowerCase().includes(search.toLowerCase())
@@ -306,8 +318,23 @@ export const WorkoutBuilder: React.FC<WorkoutBuilderProps> = ({ memberId, onSave
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {!w.active && <span className="px-2 py-0.5 bg-slate-100 text-slate-400 text-[10px] font-black uppercase rounded-lg">Inativo</span>}
-                                        <button className="p-2 text-slate-300 hover:text-primary transition-colors">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingWorkout(w);
+                                            }}
+                                            className="p-2 text-slate-300 hover:text-primary transition-colors"
+                                        >
                                             <Pencil size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (w.id) handleDeleteWorkout(w.id);
+                                            }}
+                                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>

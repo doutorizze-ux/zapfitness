@@ -252,7 +252,10 @@ Domingo:
                                                         const workoutLink = `${window.location.origin}/w/${member.id}`;
                                                         const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
 
-                                                        api.post('/chat/send', { jid: `${member.phone}@s.whatsapp.net`, text: msg })
+                                                        // Clean phone number (leave only digits)
+                                                        const cleanPhone = member.phone.replace(/\D/g, '');
+
+                                                        api.post('/chat/send', { jid: `${cleanPhone}@s.whatsapp.net`, text: msg })
                                                             .then(() => toast.success('Treino enviado via WhatsApp!'))
                                                             .catch(err => toast.error('Erro ao enviar: ' + err.message));
                                                     }} className="p-4 bg-white shadow-sm border border-slate-50 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">

@@ -154,10 +154,12 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     const sock = sessions.get(tenantId);
     if (!sock) throw new Error('WhatsApp não conectado');
 
-    const result = await sock.sendMessage(jid, { text });
+    // Clean JID to ensure it's digits only before the @
+    const cleanJid = jid.replace(/\D/g, '') + '@s.whatsapp.net';
+    const result = await sock.sendMessage(cleanJid, { text });
 
     // Save outgoing message
-    const phone = jid.split('@')[0];
+    const phone = jid.split('@')[0].replace(/\D/g, '');
 
     // Try to find lead or member
     const member = await prisma.member.findFirst({
