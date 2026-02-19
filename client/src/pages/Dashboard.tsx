@@ -97,7 +97,7 @@ export const Dashboard = () => {
                             className={clsx(
                                 "flex items-center gap-3 p-4 rounded-2xl transition-all duration-300 group",
                                 location.pathname === item.path
-                                    ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-lg shadow-[#22c55e]/30"
+                                    ? "bg-primary text-white shadow-lg shadow-primary/30"
                                     : "text-slate-500 hover:bg-white/5 hover:text-white"
                             )}
                         >
@@ -113,13 +113,13 @@ export const Dashboard = () => {
                             {user?.logo_url ? (
                                 <img src={formatImageUrl(user.logo_url)} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <Zap className="text-[#22c55e]" size={28} />
+                                <Zap className="text-primary" size={28} />
                             )}
                         </div>
                         <div className="flex-1 overflow-hidden">
                             <p className="text-base font-black text-white truncate uppercase tracking-tighter">{user?.name || 'Academia'}</p>
                             <div className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
+                                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                                 <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest whitespace-nowrap">Conectado Live</span>
                             </div>
                         </div>
@@ -180,9 +180,9 @@ export const Dashboard = () => {
                 <header className="hidden md:flex bg-white border-b border-slate-100 px-12 py-6 items-center justify-between z-10">
                     <div className="flex items-center gap-6">
                         <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{currentItem.label}</h2>
-                        <div className="flex items-center gap-3 px-5 py-2 bg-[#22c55e]/5 rounded-full border border-[#22c55e]/10">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-                            <span className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] whitespace-nowrap">IA NIVEL: MÁXIMO ATIVADO</span>
+                        <div className="flex items-center gap-3 px-5 py-2 bg-primary/5 rounded-full border border-primary/10">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--primary-color)]"></div>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] whitespace-nowrap">IA NIVEL: MÁXIMO ATIVADO</span>
                         </div>
                     </div>
                     <div id="header-profile" className="flex items-center gap-4">
@@ -331,7 +331,7 @@ const Welcome = () => {
         <div className="animate-fade-in-up">
             <div className="mb-12 p-4 md:p-0">
                 <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">
-                    Olá, <span className="text-[#22c55e]">{stats?.name || 'Fitness'}!</span> 👋
+                    Olá, <span className="text-primary">{stats?.name || 'Fitness'}!</span> 👋
                 </h1>
                 <p className="text-slate-500 font-medium text-lg">Aqui está o que está acontecendo hoje.</p>
             </div>
@@ -339,11 +339,11 @@ const Welcome = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 {/* AI Insights Card */}
                 <div className="lg:col-span-2 bg-[#1e293b] rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-[#22c55e]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] group-hover:bg-[#22c55e]/20 transition-all duration-700"></div>
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] group-hover:bg-primary/20 transition-all duration-700"></div>
                     <div className="relative z-10">
                         <div className="flex items-center gap-4 mb-10">
-                            <div className="w-14 h-14 bg-[#22c55e]/20 rounded-2xl flex items-center justify-center shadow-lg shadow-[#22c55e]/10">
-                                <Brain className="text-[#22c55e]" size={28} />
+                            <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/10">
+                                <Brain className="text-primary" size={28} />
                             </div>
                             <div>
                                 <h3 className="text-2xl font-black tracking-tight">Insights da Inteligência Artificial</h3>
@@ -354,11 +354,11 @@ const Welcome = () => {
                         <div className="grid md:grid-cols-2 gap-6">
                             <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <TrendingUp className="text-[#22c55e]" size={20} />
-                                    <span className="text-sm font-black text-[#22c55e] uppercase tracking-widest">Oportunidade de Receita</span>
+                                    <TrendingUp className="text-primary" size={20} />
+                                    <span className="text-sm font-black text-primary uppercase tracking-widest">Oportunidade de Receita</span>
                                 </div>
                                 <p className="text-sm text-slate-300 font-medium leading-relaxed">Você tem <span className="text-white font-black">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
-                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-[#22c55e] text-white px-6 py-3 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-[#22c55e]/20">Executar Ação</button>
+                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-primary text-white px-6 py-3 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-primary/20">Executar Ação</button>
                             </div>
 
                             <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
@@ -378,25 +378,25 @@ const Welcome = () => {
                     <div>
                         <div className="flex items-center justify-between mb-10">
                             <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px]">Saúde da Academia</h4>
-                            <Sparkles className="text-[#22c55e] animate-pulse" size={18} />
+                            <Sparkles className="text-primary animate-pulse" size={18} />
                         </div>
                         <div className="space-y-10">
                             <div>
                                 <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                     <span>ENGAJAMENTO</span>
-                                    <span className="text-[#22c55e]">85%</span>
+                                    <span className="text-primary">85%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                    <div className="bg-[#22c55e] h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)]" style={{ width: '85%' }}></div>
+                                    <div className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)]" style={{ width: '85%' }}></div>
                                 </div>
                             </div>
                             <div>
                                 <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                     <span>RETENÇÃO</span>
-                                    <span className="text-[#22c55e]">92%</span>
+                                    <span className="text-primary">92%</span>
                                 </div>
                                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                    <div className="bg-[#22c55e] h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)]" style={{ width: '92%' }}></div>
+                                    <div className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)]" style={{ width: '92%' }}></div>
                                 </div>
                             </div>
                         </div>
@@ -411,20 +411,20 @@ const Welcome = () => {
 
             {/* Onboarding Tips */}
             <div className="bg-[#1e293b] rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-[#22c55e]/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px]"></div>
+                <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px]"></div>
                 <div className="relative z-10">
                     <h3 className="text-3xl font-black mb-10 tracking-tight flex items-center gap-3">
-                        <Zap className="text-[#22c55e] fill-[#22c55e]" size={32} />
+                        <Zap className="text-primary fill-primary" size={32} />
                         Próximos Passos
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                         {[
-                            { step: '1', title: 'WhatsApp', color: 'text-[#22c55e]', desc: 'Ative seu bot na aba WhatsApp para automatizar a recepção.' },
-                            { step: '2', title: 'Planos', color: 'text-[#22c55e]', desc: 'Cadastre suas mensalidades para vincular aos alunos.' },
-                            { step: '3', title: 'Membros', color: 'text-[#22c55e]', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
+                            { step: '1', title: 'WhatsApp', color: 'text-primary', desc: 'Ative seu bot na aba WhatsApp para automatizar a recepção.' },
+                            { step: '2', title: 'Planos', color: 'text-primary', desc: 'Cadastre suas mensalidades para vincular aos alunos.' },
+                            { step: '3', title: 'Membros', color: 'text-primary', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
                         ].map((item, i) => (
                             <div key={i} className="flex gap-6 group/item cursor-pointer">
-                                <div className="w-14 h-14 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-2xl text-slate-600 group-hover/item:border-[#22c55e] group-hover/item:text-white transition-all">
+                                <div className="w-14 h-14 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-2xl text-slate-600 group-hover/item:border-primary group-hover/item:text-white transition-all">
                                     {item.step}
                                 </div>
                                 <div className="flex-1">

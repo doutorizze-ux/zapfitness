@@ -233,7 +233,7 @@ export const ProfileSettings = () => {
                             className={clsx(
                                 "flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all whitespace-nowrap text-sm uppercase tracking-widest",
                                 activeTab === tab.id
-                                    ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30"
+                                    ? "bg-primary text-white shadow-xl shadow-primary/30"
                                     : "bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-slate-100 shadow-sm"
                             )}
                         >
@@ -270,14 +270,14 @@ export const ProfileSettings = () => {
                                                 type="text"
                                                 value={profileData.name}
                                                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-[#22c55e] transition-all"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all"
                                                 placeholder="Ex: Matrix Fitness"
                                                 required
                                             />
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 block flex items-center gap-2">
-                                                <Palette size={14} className="text-[#22c55e]" />
+                                                <Palette size={14} className="text-primary" />
                                                 Cor Primária do Tema
                                             </label>
                                             <div className="flex items-center gap-6">
@@ -298,7 +298,7 @@ export const ProfileSettings = () => {
                                                         type="text"
                                                         value={profileData.primary_color}
                                                         onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
-                                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-[#22c55e] transition-all uppercase"
+                                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-primary transition-all uppercase"
                                                         placeholder="#000000"
                                                     />
                                                 </div>
@@ -311,7 +311,7 @@ export const ProfileSettings = () => {
                                                         onClick={() => setProfileData({ ...profileData, primary_color: c })}
                                                         className={clsx(
                                                             "w-8 h-8 rounded-full border-4 shadow-sm flex-shrink-0 transition-transform hover:scale-110",
-                                                            profileData.primary_color === c ? "border-[#22c55e]" : "border-white"
+                                                            profileData.primary_color === c ? "border-primary" : "border-white"
                                                         )}
                                                         style={{ backgroundColor: c }}
                                                     />
@@ -334,7 +334,7 @@ export const ProfileSettings = () => {
                                                 htmlFor="logo-upload"
                                                 className={clsx(
                                                     "cursor-pointer px-8 py-5 rounded-2xl font-black transition-all flex items-center gap-3 border-2 border-dashed",
-                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e]/5"
+                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-primary/5"
                                                 )}
                                             >
                                                 {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
@@ -369,7 +369,7 @@ export const ProfileSettings = () => {
                                     <button
                                         disabled={loading}
                                         type="submit"
-                                        className="bg-[#22c55e] text-white px-12 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] shadow-2xl shadow-[#22c55e]/30 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-3 text-sm uppercase tracking-widest"
+                                        className="bg-primary text-white px-12 py-5 rounded-[2rem] font-black hover:opacity-90 shadow-2xl shadow-primary/30 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-3 text-sm uppercase tracking-widest"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
                                         SALVAR ALTERAÇÕES

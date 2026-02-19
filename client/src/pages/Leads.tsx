@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Plus, Filter, MessageSquare, Phone,
     LayoutGrid, List,
-    MoreVertical, Send, X, Users, Target, Calendar
+    MoreVertical, Send, X, Users, Target, Calendar, TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
@@ -188,14 +188,16 @@ export const Leads = () => {
                     </div>
                     <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-black text-slate-900">{stats.total}</span>
-                        <span className="text-xs font-bold text-[#22c55e]">+{stats.new} Novos</span>
+                        <span className="text-xs font-bold text-primary">+{stats.new} Novos</span>
                     </div>
                 </div>
 
                 <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
-                            <Target size={24} />
+                        <div className="flex items-center gap-4 p-5 rounded-[2.5rem] bg-primary/5 border border-primary/10 shadow-sm">
+                            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-primary shadow-lg flex-shrink-0 animate-float shadow-primary/10">
+                                <TrendingUp size={28} />
+                            </div>
                         </div>
                         <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Conversão</span>
                     </div>
@@ -458,7 +460,7 @@ export const Leads = () => {
                                             <div className={clsx(
                                                 "max-w-[85%] p-4 rounded-2xl shadow-sm text-sm font-medium leading-relaxed mb-1",
                                                 msg.from_me
-                                                    ? "bg-primary text-white rounded-br-none"
+                                                    ? "bg-primary text-white shadow-lg shadow-primary/20"
                                                     : "bg-white text-slate-800 rounded-bl-none border border-slate-100"
                                             )}>
                                                 {msg.content}

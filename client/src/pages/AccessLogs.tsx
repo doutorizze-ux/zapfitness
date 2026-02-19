@@ -54,10 +54,10 @@ export const AccessLogs = () => {
                 </div>
                 <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-[2rem] border border-slate-100 shadow-sm w-fit group">
                     <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-[#22c55e]"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
                     </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#22c55e]">Sincronizado Live</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Sincronizado Live</span>
                 </div>
             </div>
 
@@ -83,7 +83,7 @@ export const AccessLogs = () => {
                         <div key={log.id} className="grid grid-cols-1 md:grid-cols-4 items-center px-12 py-6 hover:bg-slate-50/30 transition-colors group relative overflow-hidden">
                             {/* Time Section */}
                             <div className="flex items-center gap-4 mb-2 md:mb-0">
-                                <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-[#22c55e] shadow-xl group-hover:scale-110 transition-transform">
+                                <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center text-primary shadow-xl group-hover:scale-110 transition-transform">
                                     <Clock size={20} />
                                 </div>
                                 <div>
@@ -107,7 +107,7 @@ export const AccessLogs = () => {
                             <div className="mb-3 md:mb-0 flex items-center">
                                 <span className={clsx(
                                     "flex items-center gap-2 px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border",
-                                    log.status === 'GRANTED' ? 'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                    log.status === 'GRANTED' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
                                 )}>
                                     {log.status === 'GRANTED' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                                     {log.status === 'GRANTED' ? 'Liberado' : 'Negado'}

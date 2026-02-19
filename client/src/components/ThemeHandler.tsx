@@ -5,14 +5,20 @@ export const ThemeHandler = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        if (user?.primary_color) {
-            document.documentElement.style.setProperty('--primary-color', user.primary_color);
+        const hexToRgb = (hex: string) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `${r} ${g} ${b}`;
+        };
 
-            // Generate a slightly darker/lighter version for hover if needed
-            // For now, let's just set the main one.
-            // In a more advanced version, we could use a library to darken/lighten.
+        if (user?.primary_color && /^#[0-9A-F]{6}$/i.test(user.primary_color)) {
+            document.documentElement.style.setProperty('--primary-color', user.primary_color);
+            document.documentElement.style.setProperty('--primary-rgb', hexToRgb(user.primary_color));
         } else {
-            document.documentElement.style.setProperty('--primary-color', '#22c55e');
+            const defaultGreen = '#22c55e';
+            document.documentElement.style.setProperty('--primary-color', defaultGreen);
+            document.documentElement.style.setProperty('--primary-rgb', hexToRgb(defaultGreen));
         }
     }, [user?.primary_color]);
 

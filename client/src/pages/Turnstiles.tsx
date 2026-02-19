@@ -206,9 +206,9 @@ export const Turnstiles = () => {
                         <div className="relative z-10">
                             <div className="flex items-center justify-between mb-12">
                                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                    <Wifi className="text-[#22c55e]" size={32} />
+                                    <Wifi className="text-primary" size={32} />
                                 </div>
-                                <span className="bg-[#22c55e]/10 text-[#22c55e] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#22c55e]/20">
+                                <span className="bg-primary/10 text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
                                     Servidor Pronto
                                 </span>
                             </div>
@@ -219,7 +219,7 @@ export const Turnstiles = () => {
                                     <div className="space-y-6">
                                         <p className="text-slate-400 font-medium text-sm leading-relaxed max-w-lg">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
                                         <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem]">
-                                            <div className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] mb-6">Configuração na Catraca</div>
+                                            <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6">Configuração na Catraca</div>
                                             <div className="space-y-4 font-mono text-sm">
                                                 <div className="flex flex-col sm:flex-row justify-between border-b border-white/5 pb-4 gap-2">
                                                     <span className="text-slate-500 uppercase tracking-widest text-[10px] font-black">URL do Servidor</span>
@@ -228,7 +228,7 @@ export const Turnstiles = () => {
                                                 <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
                                                     <span className="text-slate-500 uppercase tracking-widest text-[10px] font-black">Seu Token de Acesso</span>
                                                     <div className="flex items-center justify-between sm:justify-end gap-3 overflow-hidden">
-                                                        <span className="text-[#22c55e] font-black truncate select-all">{token}</span>
+                                                        <span className="text-primary font-black truncate select-all">{token}</span>
                                                         <button onClick={handleRegenerateToken} className="text-[10px] bg-white/10 px-3 py-1.5 rounded-xl font-black uppercase tracking-widest hover:bg-white/20 transition-all">Novo</button>
                                                     </div>
                                                 </div>
@@ -239,16 +239,16 @@ export const Turnstiles = () => {
                                     <div className="space-y-6">
                                         <p className="text-slate-400 font-medium text-sm leading-relaxed max-w-lg">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
                                         <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem] mb-10">
-                                            <div className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] mb-4">Seu Token de Acesso</div>
+                                            <div className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Seu Token de Acesso</div>
                                             <div className="flex items-center justify-between gap-6">
-                                                <span className="text-xl md:text-2xl font-mono font-black text-[#22c55e] truncate tracking-wider">{token}</span>
+                                                <span className="text-xl md:text-2xl font-mono font-black text-primary truncate tracking-wider">{token}</span>
                                                 <button onClick={handleRegenerateToken} className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-xl hover:bg-white/20 transition-all flex-shrink-0">Novo Token</button>
                                             </div>
                                         </div>
                                         <div className="flex flex-col sm:flex-row gap-4">
                                             <button
                                                 onClick={handleDownload}
-                                                className="bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:bg-[#16a34a] transition-all shadow-2xl shadow-[#22c55e]/20 text-sm md:text-base uppercase tracking-widest"
+                                                className="bg-primary text-white px-10 py-5 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:opacity-90 transition-all shadow-2xl shadow-primary/20 text-sm md:text-base uppercase tracking-widest"
                                             >
                                                 <Download size={20} />
                                                 Baixar ZappBridge (.js)
@@ -283,7 +283,7 @@ export const Turnstiles = () => {
                                 <div key={event.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-default animate-fade-in">
                                     <div className={clsx(
                                         "w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0",
-                                        event.status === 'GRANTED' ? "text-[#22c55e]" : "text-red-500"
+                                        event.status === 'GRANTED' ? "text-primary" : "text-red-500"
                                     )}>
                                         {event.status === 'GRANTED' ? <CheckCircle size={24} /> : <XCircle size={24} />}
                                     </div>

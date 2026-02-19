@@ -163,7 +163,7 @@ Domingo:
                     <button
                         id="btn-new-member"
                         onClick={openForCreate}
-                        className="flex items-center justify-center gap-3 bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest"
+                        className="flex items-center justify-center gap-3 bg-primary text-white px-10 py-5 rounded-[2rem] font-black transition shadow-2xl shadow-primary/30 active:scale-95 text-sm uppercase tracking-widest"
                     >
                         <Plus size={24} />
                         NOVO MEMBRO
@@ -178,7 +178,7 @@ Domingo:
                             <input
                                 type="text"
                                 placeholder="Buscar membro..."
-                                className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-[#22c55e] transition-all font-medium text-slate-600"
+                                className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-primary transition-all font-medium text-slate-600"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
@@ -194,7 +194,7 @@ Domingo:
                                     <div className="flex-1 min-w-0" onClick={() => handleEdit(member)}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <h4 className="font-bold text-slate-900 truncate">{member.name}</h4>
-                                            {isActive ? <CheckCircle2 size={14} className="text-green-500" /> : <XCircle size={14} className="text-slate-300" />}
+                                            {isActive ? <CheckCircle2 size={14} className="text-primary" /> : <XCircle size={14} className="text-slate-300" />}
                                         </div>
                                         <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">
                                             <span className="flex items-center gap-1"><Phone size={12} /> {member.phone}</span>
@@ -239,7 +239,7 @@ Domingo:
                                             <td className="px-12 py-6">
                                                 <span className={clsx(
                                                     "px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border",
-                                                    isActive ? 'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                    isActive ? 'bg-primary/10 text-primary border-primary/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
                                                 )}>
                                                     {isActive ? 'Ativo' : 'Pendente'}
                                                 </span>
@@ -251,7 +251,7 @@ Domingo:
                                                         api.post('/chat/send', { jid: `${member.phone}@s.whatsapp.net`, text: msg })
                                                             .then(() => alert('Treino enviado via WhatsApp!'))
                                                             .catch(err => alert('Erro ao enviar: ' + err.message));
-                                                    }} className="p-4 bg-white shadow-sm border border-slate-50 text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
+                                                    }} className="p-4 bg-white shadow-sm border border-slate-50 text-primary hover:bg-primary hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
                                                         <Send size={20} />
                                                     </button>
                                                     <button onClick={() => handleEdit(member)} className="p-4 bg-white shadow-sm border border-slate-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl transition-all" title="Editar">
@@ -283,7 +283,7 @@ Domingo:
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{editingId ? formData.name : 'Cadastro Inteligente'}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button type="button" onClick={handleSubmit} className="bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest">
+                                <button type="button" onClick={handleSubmit} className="bg-primary text-white px-10 py-5 rounded-[2rem] font-black transition shadow-2xl shadow-primary/30 active:scale-95 text-sm uppercase tracking-widest">
                                     SALVAR ALTERAÇÕES
                                 </button>
                                 <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition flex items-center justify-center">
@@ -309,7 +309,7 @@ Domingo:
                                 >
                                     <tab.icon size={20} />
                                     <span className="hidden sm:inline">{tab.label}</span>
-                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1.5 bg-[#22c55e] rounded-t-full"></span>}
+                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary rounded-t-full"></span>}
                                 </button>
                             ))}
                         </div>

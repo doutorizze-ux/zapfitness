@@ -69,7 +69,7 @@ export const Finance = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
                 <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-8 group hover:shadow-xl transition-all duration-500">
-                    <div className="w-16 h-16 bg-[#22c55e]/10 rounded-[1.5rem] flex items-center justify-center text-[#22c55e] group-hover:scale-110 transition-transform">
+                    <div className="w-16 h-16 bg-primary/10 rounded-[1.5rem] flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <TrendingUp size={32} />
                     </div>
                     <div>
@@ -109,7 +109,7 @@ export const Finance = () => {
                             placeholder="Buscar aluno..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-[#22c55e] transition-all font-medium text-slate-600"
+                            className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-primary transition-all font-medium text-slate-600"
                         />
                     </div>
                 </div>

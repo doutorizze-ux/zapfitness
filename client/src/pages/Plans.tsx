@@ -66,7 +66,7 @@ export const Plans = () => {
                 <button
                     id="btn-new-plan"
                     onClick={() => setShowModal(true)}
-                    className="flex items-center justify-center gap-3 bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest"
+                    className="flex items-center justify-center gap-3 bg-primary text-white px-10 py-5 rounded-[2rem] font-black hover:opacity-90 transition shadow-2xl shadow-primary/30 active:scale-95 text-sm uppercase tracking-widest"
                 >
                     <Plus size={24} />
                     NOVO PLANO
@@ -77,10 +77,10 @@ export const Plans = () => {
                 {plans.map(plan => (
                     <div key={plan.id} className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 relative group overflow-hidden">
                         {/* Background Decoration */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-[#22c55e]/5"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-primary/5"></div>
 
                         <div className="flex items-center justify-between mb-8">
-                            <div className="p-4 bg-slate-50 text-[#22c55e] rounded-2xl group-hover:bg-[#22c55e] group-hover:text-white transition-all duration-500 shadow-sm">
+                            <div className="p-4 bg-slate-50 text-primary rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
                                 <Tag size={28} />
                             </div>
                             <button onClick={() => handleDelete(plan.id)} className="p-3 text-slate-200 hover:text-red-500 transition-colors">
@@ -165,8 +165,8 @@ export const Plans = () => {
                                             className={clsx(
                                                 "py-2 rounded-xl text-[10px] font-black border transition-all",
                                                 formData.duration_days === d.days.toString()
-                                                    ? "bg-[#22c55e] border-[#22c55e] text-white shadow-lg shadow-[#22c55e]/20"
-                                                    : "bg-white border-slate-100 text-slate-500 hover:border-[#22c55e]/30"
+                                                    ? "bg-primary border-primary text-white shadow-lg shadow-primary/20"
+                                                    : "bg-white border-slate-100 text-slate-500 hover:border-primary/30"
                                             )}
                                         >
                                             {d.label}
@@ -176,7 +176,7 @@ export const Plans = () => {
                             </div>
 
                             <div className="flex flex-col gap-3 pt-4">
-                                <button type="submit" className="w-full bg-[#22c55e] text-white py-5 rounded-[2rem] font-black hover:bg-[#16a34a] shadow-2xl shadow-[#22c55e]/20 transition-all active:scale-95 text-sm uppercase tracking-widest">
+                                <button type="submit" className="w-full bg-primary text-white py-5 rounded-[2rem] font-black hover:opacity-90 shadow-2xl shadow-primary/20 transition-all active:scale-95 text-sm uppercase tracking-widest">
                                     CRIAR PLANO AGORA
                                 </button>
                                 <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors">

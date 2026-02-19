@@ -184,7 +184,7 @@ export const Appointments = () => {
                         onClick={() => setViewMode('daily')}
                         className={clsx(
                             "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
-                            viewMode === 'daily' ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30" : "text-slate-400 hover:text-slate-600"
+                            viewMode === 'daily' ? "bg-primary text-white shadow-xl shadow-primary/30" : "text-slate-400 hover:text-slate-600"
                         )}
                     >
                         <CalendarDays size={18} />
@@ -194,7 +194,7 @@ export const Appointments = () => {
                         onClick={() => setViewMode('fixed')}
                         className={clsx(
                             "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
-                            viewMode === 'fixed' ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30" : "text-slate-400 hover:text-slate-600"
+                            viewMode === 'fixed' ? "bg-primary text-white shadow-xl shadow-primary/30" : "text-slate-400 hover:text-slate-600"
                         )}
                     >
                         <Repeat size={18} />
@@ -205,18 +205,18 @@ export const Appointments = () => {
 
             {viewMode === 'daily' && (
                 <div className="bg-white rounded-[3rem] p-6 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-[#22c55e] transition-all">
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
                         <ChevronLeft size={32} />
                     </button>
                     <div className="text-center">
-                        <p className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.3em] mb-2 leading-none">
+                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-2 leading-none">
                             {format(selectedDate, 'eeee', { locale: ptBR })}
                         </p>
                         <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
                             {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
                         </h2>
                     </div>
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-[#22c55e] transition-all">
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
                         <ChevronRight size={32} />
                     </button>
                 </div>
@@ -224,7 +224,7 @@ export const Appointments = () => {
 
             <button
                 onClick={() => setShowModal(true)}
-                className="w-full mb-12 bg-[#22c55e] text-white p-7 rounded-[2.5rem] font-black hover:bg-[#16a34a] transition-all shadow-2xl shadow-[#22c55e]/20 flex items-center justify-center gap-4 active:scale-[0.98] text-sm uppercase tracking-widest"
+                className="w-full mb-12 bg-primary text-white p-7 rounded-[2.5rem] font-black hover:opacity-90 transition-all shadow-2xl shadow-primary/20 flex items-center justify-center gap-4 active:scale-[0.98] text-sm uppercase tracking-widest"
             >
                 <Plus size={24} />
                 {viewMode === 'daily' ? 'ADICIONAR NOVO COMPROMISSO' : 'CADASTRAR NOVO HORÁRIO RECORRENTE'}
@@ -248,12 +248,12 @@ export const Appointments = () => {
                 ) : (
                     (viewMode === 'daily' ? appointments : schedules).map((item) => (
                         <div key={item.id} className="group bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all flex flex-col md:flex-row md:items-center gap-10 overflow-hidden relative">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-[#22c55e]/5"></div>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-primary/5"></div>
 
                             <div className="flex items-center gap-6">
                                 <div className="w-20 h-20 rounded-[2rem] bg-slate-950 flex flex-col items-center justify-center text-white shadow-2xl relative">
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#22c55e] animate-pulse"></div>
-                                    <Clock size={16} className="text-[#22c55e] mb-1" />
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary animate-pulse"></div>
+                                    <Clock size={16} className="text-primary mb-1" />
                                     <span className="font-black text-base tracking-tighter">
                                         {item.isFixed ? item.start_time : (item.dateTime && !isNaN(new Date(item.dateTime).getTime()) ? format(new Date(item.dateTime), 'HH:mm') : '--:--')}
                                     </span>
