@@ -632,11 +632,21 @@ app.post('/api/exercises', authMiddleware, async (req: any, res) => {
 // Delete an exercise
 app.delete('/api/exercises/:id', authMiddleware, async (req: any, res) => {
     try {
-        await prisma.exercise.delete({
-            where: { id: req.params.id, tenant_id: req.user.tenant_id }
-        });
+        const exerciseId = req.params.id;
+        const tenant_id = req.user.tenant_id;
+
+        await prisma.$transaction([
+            prisma.workoutExercise.deleteMany({
+                where: { exercise_id: exerciseId }
+            }),
+            prisma.exercise.delete({
+                where: { id: exerciseId, tenant_id }
+            })
+        ]);
+
         res.json({ success: true });
     } catch (e: any) {
+        console.error('[Exercise] Delete error:', e);
         res.status(500).json({ error: e.message });
     }
 });
