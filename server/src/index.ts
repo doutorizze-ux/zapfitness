@@ -493,14 +493,63 @@ app.get('/api/leads', authMiddleware, async (req: any, res) => {
     }
 });
 
+app.post('/api/leads', authMiddleware, async (req: any, res) => {
+    try {
+        const { name, phone, status, value } = req.body;
+        if (!phone) return res.status(400).json({ error: 'Telefone é obrigatório' });
+
+        const lead = await prisma.lead.upsert({
+            where: {
+                phone_tenant_id: {
+                    phone,
+                    tenant_id: req.user.tenant_id
+                }
+            },
+            update: {
+                name: name || undefined,
+                status: status || undefined,
+                value: value !== undefined ? parseFloat(value) : undefined
+            },
+            create: {
+                name,
+                phone,
+                status: status || 'new',
+                value: value ? parseFloat(value) : 0,
+                tenant_id: req.user.tenant_id
+            }
+        });
+        res.json(lead);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.put('/api/leads/:id', authMiddleware, async (req: any, res) => {
     try {
         const { status, value, name } = req.body;
         const updated = await prisma.lead.update({
             where: { id: req.params.id, tenant_id: req.user.tenant_id },
-            data: { status, value, name }
+            data: {
+                status,
+                value: value !== undefined ? parseFloat(value) : undefined,
+                name
+            }
         });
         res.json(updated);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/leads/:id', authMiddleware, async (req: any, res) => {
+    try {
+        await prisma.$transaction([
+            prisma.chatMessage.deleteMany({ where: { lead_id: req.params.id } }),
+            prisma.lead.delete({
+                where: { id: req.params.id, tenant_id: req.user.tenant_id }
+            })
+        ]);
+        res.json({ success: true });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }

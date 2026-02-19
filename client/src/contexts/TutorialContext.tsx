@@ -162,7 +162,20 @@ const TUTORIAL_STEPS: Record<string, Step[]> = {
             disableBeacon: true,
         }
     ],
-    // Add other pages here later
+    'leads': [
+        {
+            target: 'body',
+            content: '🎯 Funil de Vendas: Organize seus interessados por estágios. Acompanhe a evolução de cada venda.',
+            placement: 'center',
+            disableBeacon: true,
+        },
+        {
+            target: '#btn-new-lead',
+            content: '🚀 Novo Lead: Recebeu uma mensagem ou alguém ligou? Cadastre aqui para não perder o contato.',
+            placement: 'bottom',
+            disableBeacon: true,
+        }
+    ],
 };
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) => {

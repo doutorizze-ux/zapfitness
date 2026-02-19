@@ -58,6 +58,9 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
   return <>{children}</>;
 };
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function App() {
   return (
     <Router>
@@ -79,6 +82,7 @@ function App() {
             } />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
+          <ToastContainer />
         </TutorialProvider>
       </AuthProvider>
     </Router>
