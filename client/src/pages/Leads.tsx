@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Search, Plus, Filter, MessageSquare, Phone, ArrowRight, User,
-    DollarSign, CheckCircle, XCircle, Clock, LayoutGrid, List,
-    MoreVertical, Send, X, ChevronRight, TrendingUp, Users, Target
+    Plus, Filter, MessageSquare, Phone,
+    DollarSign, Clock, LayoutGrid, List,
+    MoreVertical, Send, X, Users, Target
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
