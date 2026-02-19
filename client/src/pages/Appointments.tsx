@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import {
-    Calendar as CalendarIcon,
     Plus,
     Clock,
     XCircle,
@@ -159,19 +158,16 @@ export const Appointments = () => {
         <div className="animate-fade-in-up">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight flex items-center gap-3">
-                        <CalendarIcon className="text-primary" size={32} />
-                        Gestão de Agenda
-                    </h1>
-                    <p className="text-slate-500 font-medium text-lg italic">Organize os horários fixos e pontuais dos seus alunos.</p>
+                    <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter">Agenda de Horários</h1>
+                    <p className="text-slate-500 font-medium pb-2">Gerencie os compromissos e treinos da sua academia.</p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                <div className="flex items-center gap-2 bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100">
                     <button
                         onClick={() => setViewMode('daily')}
                         className={clsx(
-                            "px-6 py-3 rounded-xl font-black transition-all flex items-center gap-2",
-                            viewMode === 'daily' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-600"
+                            "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
+                            viewMode === 'daily' ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30" : "text-slate-400 hover:text-slate-600"
                         )}
                     >
                         <CalendarDays size={18} />
@@ -180,8 +176,8 @@ export const Appointments = () => {
                     <button
                         onClick={() => setViewMode('fixed')}
                         className={clsx(
-                            "px-6 py-3 rounded-xl font-black transition-all flex items-center gap-2",
-                            viewMode === 'fixed' ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-600"
+                            "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
+                            viewMode === 'fixed' ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30" : "text-slate-400 hover:text-slate-600"
                         )}
                     >
                         <Repeat size={18} />
@@ -191,30 +187,30 @@ export const Appointments = () => {
             </div>
 
             {viewMode === 'daily' && (
-                <div className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
-                        <ChevronLeft size={24} />
+                <div className="bg-white rounded-[3rem] p-6 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-[#22c55e] transition-all">
+                        <ChevronLeft size={32} />
                     </button>
                     <div className="text-center">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
+                        <p className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.3em] mb-2 leading-none">
                             {format(selectedDate, 'eeee', { locale: ptBR })}
                         </p>
-                        <h2 className="text-xl font-black text-slate-900">
+                        <h2 className="text-2xl font-black text-slate-900 tracking-tighter">
                             {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
                         </h2>
                     </div>
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-3 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
-                        <ChevronRight size={24} />
+                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-[#22c55e] transition-all">
+                        <ChevronRight size={32} />
                     </button>
                 </div>
             )}
 
             <button
                 onClick={() => setShowModal(true)}
-                className="w-full mb-8 bg-primary text-white p-6 rounded-[2rem] font-black hover:opacity-90 transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 active:scale-[0.98]"
+                className="w-full mb-12 bg-[#22c55e] text-white p-7 rounded-[2.5rem] font-black hover:bg-[#16a34a] transition-all shadow-2xl shadow-[#22c55e]/20 flex items-center justify-center gap-4 active:scale-[0.98] text-sm uppercase tracking-widest"
             >
                 <Plus size={24} />
-                {viewMode === 'daily' ? 'ADICIONAR AGENDAMENTO PARA HOJE' : 'CADASTRAR NOVO HORÁRIO RECORRENTE'}
+                {viewMode === 'daily' ? 'ADICIONAR NOVO COMPROMISSO' : 'CADASTRAR NOVO HORÁRIO RECORRENTE'}
             </button>
 
             {/* List */}
@@ -234,12 +230,15 @@ export const Appointments = () => {
                     </div>
                 ) : (
                     (viewMode === 'daily' ? appointments : schedules).map((item) => (
-                        <div key={item.id} className="group bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-primary/5 transition-all flex flex-col md:flex-row md:items-center gap-6">
-                            <div className="flex items-center gap-6 min-w-[200px]">
-                                <div className="w-16 h-16 rounded-2xl bg-slate-900 flex flex-col items-center justify-center text-white shadow-lg">
-                                    <Clock size={16} className="text-primary mb-1" />
-                                    <span className="font-black text-sm">
-                                        {item.isFixed ? item.start_time : (item.dateTime ? format(new Date(item.dateTime), 'HH:mm') : '--:--')}
+                        <div key={item.id} className="group bg-white rounded-[3rem] p-8 border border-slate-100 shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all flex flex-col md:flex-row md:items-center gap-10 overflow-hidden relative">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-[#22c55e]/5"></div>
+
+                            <div className="flex items-center gap-6">
+                                <div className="w-20 h-20 rounded-[2rem] bg-slate-950 flex flex-col items-center justify-center text-white shadow-2xl relative">
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#22c55e] animate-pulse"></div>
+                                    <Clock size={16} className="text-[#22c55e] mb-1" />
+                                    <span className="font-black text-base tracking-tighter">
+                                        {item.isFixed ? item.start_time : (item.dateTime && !isNaN(new Date(item.dateTime).getTime()) ? format(new Date(item.dateTime), 'HH:mm') : '--:--')}
                                     </span>
                                 </div>
                                 <div className="md:hidden flex-1">

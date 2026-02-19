@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, LogOut, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -12,6 +12,7 @@ import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
+import { Leads } from './Leads';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -39,16 +40,17 @@ export const Dashboard = () => {
     };
 
     const navItems = [
-        { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
-        { label: 'Planos', path: '/dashboard/plans', icon: Activity },
-        { label: 'Agenda', path: '/dashboard/appointments', icon: Calendar },
-        { label: 'Membros', path: '/dashboard/members', icon: Users },
-        { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
-        { label: 'Financeiro', path: '/dashboard/finance', icon: CreditCard },
-        { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
-        { label: 'WhatsApp', path: '/dashboard/whatsapp', icon: Zap },
+        { label: 'INÍCIO', path: '/dashboard', icon: LayoutDashboard },
+        { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
+        { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
+        { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
+        { label: 'ACESSOS', path: '/dashboard/logs', icon: Activity },
+        { label: 'FINANCEIRO', path: '/dashboard/finance', icon: CreditCard },
+        { label: 'CATRACAS', path: '/dashboard/turnstiles', icon: Cpu },
+        { label: 'WHATSAPP', path: '/dashboard/whatsapp', icon: Zap },
+        { label: 'LEADS', path: '/dashboard/leads', icon: MessageSquare },
 
-        { label: 'Configurações', path: '/dashboard/settings', icon: Settings },
+        { label: 'CONFIGURAÇÕES', path: '/dashboard/settings', icon: Settings },
     ];
 
     const filteredNavItems = navItems.filter(item => {
@@ -61,7 +63,7 @@ export const Dashboard = () => {
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">
             {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-72 bg-slate-900 text-white flex-col shadow-2xl z-20">
+            <aside className="hidden md:flex w-72 bg-slate-950 text-white flex-col shadow-2xl z-20">
                 <div className="p-8 border-b border-slate-800">
                     <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 bg-white">
@@ -85,16 +87,17 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
-                <nav id="sidebar-nav" className="flex-1 p-6 space-y-1 overflow-y-auto">
+                <nav id="sidebar-nav" className="flex-1 p-6 space-y-2 overflow-y-auto">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 px-4">Menu Principal</p>
                     {filteredNavItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
                             className={clsx(
-                                "flex items-center gap-3 p-3.5 rounded-xl transition-all duration-300 group",
+                                "flex items-center gap-3 p-4 rounded-2xl transition-all duration-300 group",
                                 location.pathname === item.path
-                                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                    ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-lg shadow-[#22c55e]/30"
+                                    : "text-slate-500 hover:bg-white/5 hover:text-white"
                             )}
                         >
                             <item.icon size={20} className={clsx(location.pathname === item.path ? "scale-110" : "group-hover:scale-110 transition-transform")} />
@@ -103,42 +106,42 @@ export const Dashboard = () => {
                     ))}
                 </nav>
 
-                <div className="p-6 border-t border-slate-800 bg-slate-950/50">
-                    <div className="flex items-center gap-3 mb-6 p-3 rounded-2xl bg-slate-800/50">
-                        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white shadow-inner overflow-hidden">
+                <div className="p-6 border-t border-white/5 bg-slate-950/50">
+                    <div className="flex items-center gap-4 p-5 rounded-[2.5rem] bg-white/5 border border-white/5 mb-6">
+                        <div className="w-14 h-14 rounded-[1.5rem] bg-white shadow-lg flex items-center justify-center font-bold text-slate-900 shadow-inner overflow-hidden flex-shrink-0 border-2 border-white/10">
                             {user?.logo_url ? (
                                 <img src={formatImageUrl(user.logo_url)} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                user?.name?.charAt(0) || 'A'
+                                <Zap className="text-[#22c55e]" size={28} />
                             )}
                         </div>
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-sm font-bold text-white truncate">{user?.name || 'Academia'}</p>
-                            <div className="flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">Online</span>
+                            <p className="text-base font-black text-white truncate uppercase tracking-tighter">{user?.name || 'Academia'}</p>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse"></span>
+                                <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest whitespace-nowrap">Conectado Live</span>
                             </div>
                         </div>
                     </div>
-                    <button onClick={() => {
-                        const path = location.pathname;
-                        let tutorialId = 'dashboard';
-                        if (path.includes('/members')) tutorialId = 'members';
-                        else if (path.includes('/plans')) tutorialId = 'plans';
-                        else if (path.includes('/finance')) tutorialId = 'finance';
-                        else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
-                        else if (path.includes('/logs')) tutorialId = 'access_logs';
-                        else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
+                    <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => {
+                            const path = location.pathname;
+                            let tutorialId = 'dashboard';
+                            if (path.includes('/members')) tutorialId = 'members';
+                            else if (path.includes('/plans')) tutorialId = 'plans';
+                            else if (path.includes('/finance')) tutorialId = 'finance';
+                            else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
+                            else if (path.includes('/logs')) tutorialId = 'access_logs';
+                            else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
 
-                        startTutorial(tutorialId);
-                    }} className="flex items-center gap-3 w-full p-4 mb-2 text-slate-400 hover:text-orange-400 hover:bg-orange-400/10 rounded-xl transition-all font-bold text-sm group">
-                        <HelpCircle size={20} className="group-hover:scale-110 transition-transform" />
-                        <span>Reiniciar Tutorial</span>
-                    </button>
-                    <button onClick={handleLogout} className="flex items-center gap-3 w-full p-4 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all font-bold text-sm">
-                        <LogOut size={20} />
-                        <span>Sair da Conta</span>
-                    </button>
+                            startTutorial(tutorialId);
+                        }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
+                            <HelpCircle size={18} className="group-hover:scale-110 transition-transform" />
+                        </button>
+                        <button onClick={handleLogout} className="flex items-center justify-center p-4 bg-red-500/10 hover:bg-red-500 rounded-2xl text-red-500 hover:text-white transition-all group border border-red-500/20">
+                            <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -172,12 +175,12 @@ export const Dashboard = () => {
                     </div>
                 </header>
 
-                <header className="hidden md:flex bg-white/50 backdrop-blur-sm border-b border-slate-100 px-10 py-4 items-center justify-between z-10">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">{currentItem.label}</h2>
-                        <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                            <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Nível de Inteligência: Máximo</span>
+                <header className="hidden md:flex bg-white border-b border-slate-100 px-12 py-6 items-center justify-between z-10">
+                    <div className="flex items-center gap-6">
+                        <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{currentItem.label}</h2>
+                        <div className="flex items-center gap-3 px-5 py-2 bg-[#22c55e]/5 rounded-full border border-[#22c55e]/10">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#22c55e] animate-pulse shadow-[0_0_8px_#22c55e]"></div>
+                            <span className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] whitespace-nowrap">IA NIVEL: MÁXIMO ATIVADO</span>
                         </div>
                     </div>
                     <div id="header-profile" className="flex items-center gap-4">
@@ -199,6 +202,7 @@ export const Dashboard = () => {
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
                             <Route path="/whatsapp" element={<WhatsAppConnect />} />
+                            <Route path="/leads" element={<Leads />} />
 
                             <Route path="/settings" element={<ProfileSettings />} />
                         </Routes>
@@ -323,80 +327,80 @@ const Welcome = () => {
 
     return (
         <div className="animate-fade-in-up">
-            <div className="mb-8 p-4 md:p-0">
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                    Olá, <span className="text-primary">{stats?.name || 'Academia'}</span>! 👋
+            <div className="mb-12 p-4 md:p-0">
+                <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">
+                    Olá, <span className="text-[#22c55e]">{stats?.name || 'Fitness'}!</span> 👋
                 </h1>
-                <p className="text-slate-500 font-medium">Aqui está o que está acontecendo hoje.</p>
+                <p className="text-slate-500 font-medium text-lg">Aqui está o que está acontecendo hoje.</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
                 {/* AI Insights Card */}
-                <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px] group-hover:bg-primary/30 transition-all duration-700"></div>
+                <div className="lg:col-span-2 bg-[#1e293b] rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-[#22c55e]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] group-hover:bg-[#22c55e]/20 transition-all duration-700"></div>
                     <div className="relative z-10">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-primary/20 rounded-xl">
-                                <Brain className="text-primary" size={24} />
+                        <div className="flex items-center gap-4 mb-10">
+                            <div className="w-14 h-14 bg-[#22c55e]/20 rounded-2xl flex items-center justify-center shadow-lg shadow-[#22c55e]/10">
+                                <Brain className="text-[#22c55e]" size={28} />
                             </div>
                             <div>
-                                <h3 className="text-xl font-black tracking-tight">Insights da Inteligência Artificial</h3>
-                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Análise preditiva em tempo real</p>
+                                <h3 className="text-2xl font-black tracking-tight">Insights da Inteligência Artificial</h3>
+                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Análise preditiva em tempo real</p>
                             </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-all cursor-pointer">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <TrendingUp className="text-green-400" size={18} />
-                                    <span className="text-sm font-black text-green-400">Oportunidade de Receita</span>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <TrendingUp className="text-[#22c55e]" size={20} />
+                                    <span className="text-sm font-black text-[#22c55e] uppercase tracking-widest">Oportunidade de Receita</span>
                                 </div>
-                                <p className="text-sm text-slate-300 font-medium">Você tem <span className="text-white font-bold">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
-                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-4 text-[10px] font-black uppercase tracking-widest bg-primary px-4 py-2 rounded-lg hover:scale-105 transition-transform">Executar Ação</button>
+                                <p className="text-sm text-slate-300 font-medium leading-relaxed">Você tem <span className="text-white font-black">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
+                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-[#22c55e] text-white px-6 py-3 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-[#22c55e]/20">Executar Ação</button>
                             </div>
 
-                            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-all cursor-pointer">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <AlertCircle className="text-orange-400" size={18} />
-                                    <span className="text-sm font-black text-orange-400">Risco de Churn</span>
+                            <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <AlertCircle className="text-orange-400" size={20} />
+                                    <span className="text-sm font-black text-orange-400 uppercase tracking-widest">Risco de Churn</span>
                                 </div>
-                                <p className="text-sm text-slate-300 font-medium"><span className="text-white font-bold">5 alunos</span> frequentes não aparecem há mais de 10 dias. Recomenda-se mensagem de incentivo.</p>
-                                <button onClick={() => navigate('/dashboard/members')} className="mt-4 text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">Ver Alunos</button>
+                                <p className="text-sm text-slate-300 font-medium leading-relaxed"><span className="text-white font-black">5 alunos</span> frequentes não aparecem há mais de 10 dias. Recomenda-se incentivo.</p>
+                                <button onClick={() => navigate('/dashboard/members')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 text-white px-6 py-3 rounded-2xl hover:bg-white/20 transition-all border border-white/10">Ver Alunos</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Quick Stats Sidebar */}
-                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between">
+                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm flex flex-col justify-between">
                     <div>
-                        <div className="flex items-center justify-between mb-6">
-                            <h4 className="font-black text-slate-900 uppercase tracking-widest text-xs">Saúde da Academia</h4>
-                            <Sparkles className="text-primary animate-pulse" size={16} />
+                        <div className="flex items-center justify-between mb-10">
+                            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px]">Saúde da Academia</h4>
+                            <Sparkles className="text-[#22c55e] animate-pulse" size={18} />
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-10">
                             <div>
-                                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                     <span>ENGAJAMENTO</span>
-                                    <span className="text-primary">85%</span>
+                                    <span className="text-[#22c55e]">85%</span>
                                 </div>
-                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-primary h-full rounded-full" style={{ width: '85%' }}></div>
+                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div className="bg-[#22c55e] h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)]" style={{ width: '85%' }}></div>
                                 </div>
                             </div>
                             <div>
-                                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
                                     <span>RETENÇÃO</span>
-                                    <span className="text-green-500">92%</span>
+                                    <span className="text-[#22c55e]">92%</span>
                                 </div>
-                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                                    <div className="bg-green-500 h-full rounded-full" style={{ width: '92%' }}></div>
+                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                    <div className="bg-[#22c55e] h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)]" style={{ width: '92%' }}></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="mt-8 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <p className="text-[10px] font-bold text-blue-700 leading-relaxed italic">
+                    <div className="mt-12 p-6 bg-blue-50/50 rounded-3xl border border-blue-100">
+                        <p className="text-[11px] font-bold text-blue-800 leading-relaxed italic text-center">
                             "A IA detectou que treinos de quarta-feira têm 20% mais faltas. Considere uma aula especial para este dia."
                         </p>
                     </div>
@@ -404,25 +408,25 @@ const Welcome = () => {
             </div>
 
             {/* Onboarding Tips */}
-            <div className="bg-slate-900 rounded-[2rem] p-8 md:p-10 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+            <div className="bg-[#1e293b] rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-[#22c55e]/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px]"></div>
                 <div className="relative z-10">
-                    <h3 className="text-2xl font-black mb-6 tracking-tight flex items-center gap-2">
-                        <Zap className="text-primary fill-primary" size={24} />
+                    <h3 className="text-3xl font-black mb-10 tracking-tight flex items-center gap-3">
+                        <Zap className="text-[#22c55e] fill-[#22c55e]" size={32} />
                         Próximos Passos
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                         {[
-                            { step: '1', title: 'WhatsApp', color: 'text-blue-400', desc: 'Ative seu bot na aba WhatsApp para automatizar a recepção.' },
-                            { step: '2', title: 'Planos', color: 'text-green-400', desc: 'Cadastre suas mensalidades para vincular aos alunos.' },
-                            { step: '3', title: 'Membros', color: 'text-purple-400', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
+                            { step: '1', title: 'WhatsApp', color: 'text-[#22c55e]', desc: 'Ative seu bot na aba WhatsApp para automatizar a recepção.' },
+                            { step: '2', title: 'Planos', color: 'text-[#22c55e]', desc: 'Cadastre suas mensalidades para vincular aos alunos.' },
+                            { step: '3', title: 'Membros', color: 'text-[#22c55e]', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
                         ].map((item, i) => (
-                            <div key={i} className="flex gap-4 group/item cursor-pointer">
-                                <div className="w-10 h-10 shrink-0 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-xl text-slate-400 group-hover/item:border-primary transition-colors">
+                            <div key={i} className="flex gap-6 group/item cursor-pointer">
+                                <div className="w-14 h-14 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-2xl text-slate-600 group-hover/item:border-[#22c55e] group-hover/item:text-white transition-all">
                                     {item.step}
                                 </div>
-                                <div>
-                                    <div className={clsx("font-black tracking-widest uppercase text-xs mb-1", item.color)}>{item.title}</div>
+                                <div className="flex-1">
+                                    <div className={clsx("font-black tracking-[0.2em] uppercase text-[10px] mb-2", item.color)}>{item.title}</div>
                                     <p className="text-sm text-slate-400 font-medium leading-relaxed">{item.desc}</p>
                                 </div>
                             </div>

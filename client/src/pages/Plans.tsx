@@ -52,32 +52,32 @@ export const Plans = () => {
     return (
         <div className="animate-fade-in-up">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Planos</h2>
-                    <p className="text-slate-500 font-medium">Configure as modalidades de assinatura.</p>
+                <div className="mb-10 lg:mb-0">
+                    <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter">Planos da Academia</h1>
+                    <p className="text-slate-500 font-medium">Configure as modalidades de assinatura e mensalidades.</p>
                 </div>
                 <button
                     id="btn-new-plan"
                     onClick={() => setShowModal(true)}
-                    className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95"
+                    className="flex items-center justify-center gap-3 bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest"
                 >
-                    <Plus size={20} />
+                    <Plus size={24} />
                     NOVO PLANO
                 </button>
             </div>
 
             <div id="plans-grid" className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24 md:mb-0">
                 {plans.map(plan => (
-                    <div key={plan.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative group overflow-hidden">
+                    <div key={plan.id} className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 relative group overflow-hidden">
                         {/* Background Decoration */}
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] -z-10 transition-colors group-hover:bg-orange-50"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[4rem] -z-10 transition-colors group-hover:bg-[#22c55e]/5"></div>
 
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="p-3 bg-slate-50 text-primary rounded-2xl group-hover:bg-primary group-hover:text-white transition-all duration-500">
-                                <Tag size={24} />
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="p-4 bg-slate-50 text-[#22c55e] rounded-2xl group-hover:bg-[#22c55e] group-hover:text-white transition-all duration-500 shadow-sm">
+                                <Tag size={28} />
                             </div>
                             <button onClick={() => handleDelete(plan.id)} className="p-3 text-slate-200 hover:text-red-500 transition-colors">
-                                <Trash2 size={20} />
+                                <Trash2 size={24} />
                             </button>
                         </div>
 
@@ -158,8 +158,8 @@ export const Plans = () => {
                                             className={clsx(
                                                 "py-2 rounded-xl text-[10px] font-black border transition-all",
                                                 formData.duration_days === d.days.toString()
-                                                    ? "bg-primary border-primary text-white shadow-md shadow-primary/20"
-                                                    : "bg-white border-slate-100 text-slate-500 hover:border-primary/30"
+                                                    ? "bg-[#22c55e] border-[#22c55e] text-white shadow-lg shadow-[#22c55e]/20"
+                                                    : "bg-white border-slate-100 text-slate-500 hover:border-[#22c55e]/30"
                                             )}
                                         >
                                             {d.label}
@@ -169,7 +169,7 @@ export const Plans = () => {
                             </div>
 
                             <div className="flex flex-col gap-3 pt-4">
-                                <button type="submit" className="w-full bg-primary text-white py-5 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all active:scale-95">
+                                <button type="submit" className="w-full bg-[#22c55e] text-white py-5 rounded-[2rem] font-black hover:bg-[#16a34a] shadow-2xl shadow-[#22c55e]/20 transition-all active:scale-95 text-sm uppercase tracking-widest">
                                     CRIAR PLANO AGORA
                                 </button>
                                 <button type="button" onClick={() => setShowModal(false)} className="w-full py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors">

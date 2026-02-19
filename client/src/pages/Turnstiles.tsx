@@ -137,87 +137,95 @@ export const Turnstiles = () => {
 
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Brand Selector */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div id="turnstiles-brands" className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100">
-                        <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                            <Cpu className="text-orange-500" />
+                <div className="lg:col-span-2 space-y-8">
+                    <div id="turnstiles-brands" className="bg-white p-10 md:p-12 rounded-[3rem] shadow-sm border border-slate-100">
+                        <h3 className="text-xl font-black text-slate-900 mb-8 flex items-center gap-3 uppercase tracking-widest text-xs">
+                            <div className="p-2 bg-orange-500/10 rounded-lg">
+                                <Cpu className="text-orange-500" size={18} />
+                            </div>
                             Selecione sua Marca
                         </h3>
-                        <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid sm:grid-cols-2 gap-6">
                             {brands.map((brand) => (
                                 <button
                                     key={brand.id}
                                     onClick={() => handleBrandChange(brand.id)}
                                     className={clsx(
-                                        "p-6 rounded-3xl border-2 text-left transition-all duration-300 group",
+                                        "p-8 rounded-[2.5rem] border-2 text-left transition-all duration-500 group relative overflow-hidden",
                                         selectedBrand === brand.id
-                                            ? "border-orange-500 bg-orange-50/50"
-                                            : "border-slate-50 bg-slate-50/30 hover:border-slate-200 hover:bg-white"
+                                            ? "border-orange-500 bg-white shadow-xl shadow-orange-500/10"
+                                            : "border-slate-50 bg-slate-50/50 hover:border-slate-200 hover:bg-white"
                                     )}
                                 >
-                                    <div className="text-3xl mb-4 group-hover:scale-110 transition-transform">{brand.logo}</div>
-                                    <div className="font-black text-slate-900 mb-1">{brand.name}</div>
-                                    <div className="text-xs text-slate-500 font-bold leading-tight uppercase tracking-tighter">{brand.desc}</div>
+                                    {selectedBrand === brand.id && (
+                                        <div className="absolute top-4 right-4 text-orange-500">
+                                            <CheckCircle size={20} fill="currentColor" className="text-white" />
+                                        </div>
+                                    )}
+                                    <div className="text-4xl mb-6 group-hover:scale-110 transition-transform duration-500">{brand.logo}</div>
+                                    <div className="font-black text-slate-900 text-lg mb-1">{brand.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-bold leading-tight uppercase tracking-widest">{brand.desc}</div>
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     {/* Configuration Panel */}
-                    <div id="turnstiles-config" className="bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 text-white relative overflow-hidden shadow-2xl">
+                    <div id="turnstiles-config" className="bg-[#1e293b] rounded-[3rem] p-10 md:p-12 text-white relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
                         <div className="relative z-10">
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="p-4 bg-white/10 rounded-2xl">
-                                    <Wifi className="text-primary" size={32} />
+                            <div className="flex items-center justify-between mb-12">
+                                <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <Wifi className="text-[#22c55e]" size={32} />
                                 </div>
-                                <span className="bg-green-500/20 text-green-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/30">
+                                <span className="bg-[#22c55e]/10 text-[#22c55e] px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#22c55e]/20">
                                     Servidor Pronto
                                 </span>
                             </div>
 
-                            <h4 className="text-2xl font-black mb-4">Como conectar?</h4>
-                            <div className="space-y-6">
+                            <h4 className="text-3xl font-black mb-6 tracking-tight">Como conectar?</h4>
+                            <div className="space-y-8">
                                 {selectedBrand === 'controlid' ? (
-                                    <div className="space-y-4">
-                                        <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
-                                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-                                            <div className="text-xs font-black text-primary uppercase tracking-widest mb-4">Configuração na Catraca</div>
-                                            <div className="space-y-3 font-mono text-sm">
-                                                <div className="flex flex-col sm:flex-row justify-between border-b border-white/5 pb-2 overflow-hidden gap-2">
-                                                    <span className="text-slate-500 shrink-0">URL do Servidor:</span>
-                                                    <span className="text-white truncate">api.zapp.fitness/gate</span>
+                                    <div className="space-y-6">
+                                        <p className="text-slate-400 font-medium text-sm leading-relaxed max-w-lg">As catracas Control iD podem se conectar diretamente ao nosso servidor sem precisar de um computador ligado na recepção.</p>
+                                        <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem]">
+                                            <div className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] mb-6">Configuração na Catraca</div>
+                                            <div className="space-y-4 font-mono text-sm">
+                                                <div className="flex flex-col sm:flex-row justify-between border-b border-white/5 pb-4 gap-2">
+                                                    <span className="text-slate-500 uppercase tracking-widest text-[10px] font-black">URL do Servidor</span>
+                                                    <span className="text-white font-bold truncate">api.zapp.fitness/gate</span>
                                                 </div>
-                                                <div className="flex flex-col sm:flex-row justify-between pt-1 gap-2">
-                                                    <span className="text-slate-500 shrink-0">Seu Token:</span>
-                                                    <div className="flex items-center justify-between sm:justify-end gap-2 overflow-hidden">
-                                                        <span className="text-primary font-bold truncate select-all">{token}</span>
-                                                        <button onClick={handleRegenerateToken} className="text-[10px] bg-white/10 px-2 py-1 rounded hover:bg-white/20 shrink-0">Regerar</button>
+                                                <div className="flex flex-col sm:flex-row justify-between pt-2 gap-2">
+                                                    <span className="text-slate-500 uppercase tracking-widest text-[10px] font-black">Seu Token de Acesso</span>
+                                                    <div className="flex items-center justify-between sm:justify-end gap-3 overflow-hidden">
+                                                        <span className="text-[#22c55e] font-black truncate select-all">{token}</span>
+                                                        <button onClick={handleRegenerateToken} className="text-[10px] bg-white/10 px-3 py-1.5 rounded-xl font-black uppercase tracking-widest hover:bg-white/20 transition-all">Novo</button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        <p className="text-slate-400 font-medium text-sm leading-relaxed whitespace-normal">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
-                                        <div className="bg-white/5 border border-white/10 p-6 rounded-2xl mb-6">
-                                            <div className="text-xs font-black text-primary uppercase tracking-widest mb-2">Seu Token de Acesso</div>
-                                            <div className="flex items-center justify-between gap-4">
-                                                <span className="text-lg md:text-xl font-mono font-bold text-primary truncate">{token}</span>
-                                                <button onClick={handleRegenerateToken} className="text-xs bg-white/10 px-3 py-1 rounded-lg hover:bg-white/20 transition-colors shrink-0">Novo Token</button>
+                                    <div className="space-y-6">
+                                        <p className="text-slate-400 font-medium text-sm leading-relaxed max-w-lg">Marcas como Topdata e Henry precisam do nosso agente local (ZappBridge) instalado no PC da recepção.</p>
+                                        <div className="bg-white/5 border border-white/5 p-8 rounded-[2rem] mb-10">
+                                            <div className="text-[10px] font-black text-[#22c55e] uppercase tracking-[0.2em] mb-4">Seu Token de Acesso</div>
+                                            <div className="flex items-center justify-between gap-6">
+                                                <span className="text-xl md:text-2xl font-mono font-black text-[#22c55e] truncate tracking-wider">{token}</span>
+                                                <button onClick={handleRegenerateToken} className="text-[10px] font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-xl hover:bg-white/20 transition-all flex-shrink-0">Novo Token</button>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:flex sm:flex-row gap-4">
+                                        <div className="flex flex-col sm:flex-row gap-4">
                                             <button
                                                 onClick={handleDownload}
-                                                className="bg-primary text-white px-6 md:px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm md:text-base"
+                                                className="bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:bg-[#16a34a] transition-all shadow-2xl shadow-[#22c55e]/20 text-sm md:text-base uppercase tracking-widest"
                                             >
                                                 <Download size={20} />
                                                 Baixar ZappBridge (.js)
                                             </button>
                                             <button
                                                 onClick={handleShowGuide}
-                                                className="bg-white/5 border border-white/10 text-white px-6 md:px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-white/10 transition-all text-sm md:text-base"
+                                                className="bg-white/5 border border-white/5 text-white px-10 py-5 rounded-[2rem] font-black flex items-center justify-center gap-3 hover:bg-white/10 transition-all text-sm md:text-base uppercase tracking-widest"
                                             >
                                                 <ExternalLink size={20} />
                                                 Guia de Instalação
@@ -232,9 +240,9 @@ export const Turnstiles = () => {
                 </div>
 
                 {/* Status & Preview */}
-                <div className="space-y-6">
-                    <div className="bg-white p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100">
-                        <h4 className="font-black text-slate-900 mb-6 uppercase tracking-widest text-xs">Monitoramento Live</h4>
+                <div className="space-y-8">
+                    <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                        <h4 className="font-black text-slate-900 mb-8 uppercase tracking-[0.2em] text-[10px]">Monitoramento Live</h4>
                         <div className="space-y-4">
                             {recentEvents.length === 0 ? (
                                 <div className="p-8 text-center text-slate-400">
@@ -244,13 +252,13 @@ export const Turnstiles = () => {
                             ) : recentEvents.map((event) => (
                                 <div key={event.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-default animate-fade-in">
                                     <div className={clsx(
-                                        "w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center",
-                                        event.status === 'GRANTED' ? "text-green-500" : "text-red-500"
+                                        "w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0",
+                                        event.status === 'GRANTED' ? "text-[#22c55e]" : "text-red-500"
                                     )}>
-                                        {event.status === 'GRANTED' ? <CheckCircle size={20} /> : <XCircle size={20} />}
+                                        {event.status === 'GRANTED' ? <CheckCircle size={24} /> : <XCircle size={24} />}
                                     </div>
                                     <div className="flex-1 overflow-hidden">
-                                        <p className="text-sm font-black text-slate-900 truncate">{event.name}</p>
+                                        <p className="text-base font-black text-slate-900 truncate">{event.name}</p>
                                         <p className={clsx(
                                             "text-[10px] font-black uppercase tracking-widest",
                                             event.status === 'GRANTED' ? "text-slate-400" : "text-red-400"
@@ -258,19 +266,21 @@ export const Turnstiles = () => {
                                             {event.status === 'GRANTED' ? 'ACESSO LIBERADO' : (event.reason || 'NEGADO')}
                                         </p>
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-300">{event.time}</span>
+                                    <span className="text-[10px] font-black text-slate-300 uppercase">{event.time}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="bg-orange-500 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-orange-500/20 text-white group cursor-pointer relative overflow-hidden">
+                    <div className="bg-orange-500 p-10 rounded-[3rem] shadow-2xl shadow-orange-500/20 text-white group cursor-pointer relative overflow-hidden">
                         <div className="relative z-10">
-                            <ShieldCheck className="mb-4 group-hover:scale-110 transition-transform" size={40} />
-                            <h4 className="text-xl font-black mb-2">Segurança Ativada</h4>
-                            <p className="text-sm font-bold opacity-80 leading-relaxed">O sistema bloqueia acessos duplicados e planos vencidos automaticamente no hardware.</p>
+                            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                                <ShieldCheck size={32} />
+                            </div>
+                            <h4 className="text-2xl font-black mb-2 tracking-tight">Segurança Ativada</h4>
+                            <p className="text-sm font-bold opacity-80 leading-relaxed uppercase tracking-tighter">O sistema bloqueia acessos duplicados e planos vencidos automaticamente no hardware.</p>
                         </div>
-                        <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-full"></div>
+                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
                     </div>
                 </div>
             </div>

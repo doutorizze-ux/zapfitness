@@ -12,7 +12,7 @@ export const ThemeHandler = () => {
             // For now, let's just set the main one.
             // In a more advanced version, we could use a library to darken/lighten.
         } else {
-            document.documentElement.style.setProperty('--primary-color', '#f97316');
+            document.documentElement.style.setProperty('--primary-color', '#22c55e');
         }
     }, [user?.primary_color]);
 

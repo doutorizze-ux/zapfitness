@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Sparkles, Send, Brain } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Send, Brain } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Members = () => {
@@ -131,34 +131,33 @@ Domingo:
     return (
         <>
             <div className="flex flex-col h-full animate-fade-in-up">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-                    <div>
-                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Membros</h2>
-                        <p className="text-slate-500 font-medium">Gestão de alunos e acessos.</p>
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-10">
+                    <div className="mb-8 lg:mb-0">
+                        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter">Gestão de Membros</h1>
+                        <p className="text-slate-500 font-medium">Controle total sobre seus alunos e planos ativos.</p>
                     </div>
                     <button
                         id="btn-new-member"
                         onClick={openForCreate}
-                        className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-4 rounded-2xl md:rounded-xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95"
+                        className="flex items-center justify-center gap-3 bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest"
                     >
-                        <Plus size={20} />
+                        <Plus size={24} />
                         NOVO MEMBRO
                     </button>
                 </div>
 
-                <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
-                    <div id="member-search" className="p-5 md:p-6 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
-                        <Search className="text-slate-400" size={20} />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nome ou WhatsApp..."
-                            className="bg-transparent outline-none w-full text-base font-medium placeholder:text-slate-400"
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                        <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                            <Sparkles size={12} className="text-primary animate-pulse" />
-                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest whitespace-nowrap">IA Ativa</span>
+                <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
+                    <div id="member-search" className="p-10 md:p-12 border-b border-slate-50 flex flex-col md:row items-center gap-6">
+                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-widest text-xs mr-auto">Lista de Alunos</h2>
+                        <div className="relative w-full md:max-w-md">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Buscar membro..."
+                                className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-[#22c55e] transition-all font-medium text-slate-600"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
                         </div>
                     </div>
 
@@ -191,48 +190,51 @@ Domingo:
 
                     {/* Desktop View: Table */}
                     <div id="members-list" className="hidden md:block overflow-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50/50 text-slate-400 font-bold uppercase tracking-widest text-[10px] border-b border-slate-100">
-                                <tr>
-                                    <th className="p-6">Nome / WhatsApp</th>
-                                    <th className="p-6">Plano / Vencimento</th>
-                                    <th className="p-6">Status</th>
-                                    <th className="p-6 text-right">Ações</th>
+                        <table className="w-full">
+                            <thead className="border-b border-slate-50">
+                                <tr className="text-left">
+                                    <th className="px-12 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Membro</th>
+                                    <th className="px-12 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Plano Atual</th>
+                                    <th className="px-12 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                                    <th className="px-12 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {filtered.map(member => {
                                     const isActive = member.active && new Date(member.plan_end_date) > new Date();
                                     return (
-                                        <tr key={member.id} className="hover:bg-slate-50/50 transition group">
-                                            <td className="p-6">
-                                                <div className="font-bold text-slate-800">{member.name}</div>
-                                                <div className="text-xs text-slate-400 font-medium">{member.phone}</div>
+                                        <tr key={member.id} className="hover:bg-slate-50/30 transition-colors group">
+                                            <td className="px-12 py-6">
+                                                <div className="font-black text-slate-900">{member.name}</div>
+                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{member.phone}</div>
                                             </td>
-                                            <td className="p-6">
-                                                <div className="font-bold text-slate-600">{member.plan?.name || 'Personalizado'}</div>
-                                                <div className="text-xs text-slate-400">Até {member.plan_end_date ? new Date(member.plan_end_date).toLocaleDateString('pt-BR') : '-'}</div>
+                                            <td className="px-12 py-6">
+                                                <div className="font-black text-slate-600">{member.plan?.name || 'Manual'}</div>
+                                                <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Expira em {member.plan_end_date ? new Date(member.plan_end_date).toLocaleDateString('pt-BR') : '-'}</div>
                                             </td>
-                                            <td className="p-6">
-                                                <span className={clsx("px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest", isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
-                                                    {isActive ? 'ATIVO' : 'VENCIDO'}
+                                            <td className="px-12 py-6">
+                                                <span className={clsx(
+                                                    "px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border",
+                                                    isActive ? 'bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                                                )}>
+                                                    {isActive ? 'Ativo' : 'Pendente'}
                                                 </span>
                                             </td>
-                                            <td className="p-6">
-                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <td className="px-12 py-6">
+                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-0 translate-x-4">
                                                     <button onClick={() => {
                                                         const msg = `Olá ${member.name}! Aqui está seu treino:\n\n${member.workout_routine || 'Ainda não cadastrado.'}`;
                                                         api.post('/chat/send', { jid: `${member.phone}@s.whatsapp.net`, text: msg })
                                                             .then(() => alert('Treino enviado via WhatsApp!'))
                                                             .catch(err => alert('Erro ao enviar: ' + err.message));
-                                                    }} className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition" title="Enviar no WhatsApp">
-                                                        <Send size={18} />
+                                                    }} className="p-4 bg-white shadow-sm border border-slate-50 text-[#22c55e] hover:bg-[#22c55e] hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
+                                                        <Send size={20} />
                                                     </button>
-                                                    <button onClick={() => handleEdit(member)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition" title="Editar">
-                                                        <Pencil size={18} />
+                                                    <button onClick={() => handleEdit(member)} className="p-4 bg-white shadow-sm border border-slate-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl transition-all" title="Editar">
+                                                        <Pencil size={20} />
                                                     </button>
-                                                    <button onClick={() => handleDelete(member.id, member.name)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition" title="Excluir">
-                                                        <Trash2 size={18} />
+                                                    <button onClick={() => handleDelete(member.id, member.name)} className="p-4 bg-white shadow-sm border border-slate-50 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all" title="Excluir">
+                                                        <Trash2 size={20} />
                                                     </button>
                                                 </div>
                                             </td>
@@ -257,8 +259,8 @@ Domingo:
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{editingId ? formData.name : 'Cadastro Inteligente'}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <button type="button" onClick={handleSubmit} className="bg-primary text-white px-6 py-3 rounded-2xl font-black hover:bg-primary/90 transition shadow-lg shadow-primary/20 active:scale-95">
-                                    SALVAR
+                                <button type="button" onClick={handleSubmit} className="bg-[#22c55e] text-white px-10 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] transition shadow-2xl shadow-[#22c55e]/30 active:scale-95 text-sm uppercase tracking-widest">
+                                    SALVAR ALTERAÇÕES
                                 </button>
                                 <button onClick={() => setShowModal(false)} className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-slate-200 transition flex items-center justify-center">
                                     <XCircle size={24} />
@@ -281,9 +283,9 @@ Domingo:
                                         activeTab === tab.id ? 'text-primary' : 'text-slate-400 hover:text-slate-600'
                                     )}
                                 >
-                                    <tab.icon size={18} />
+                                    <tab.icon size={20} />
                                     <span className="hidden sm:inline">{tab.label}</span>
-                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full"></span>}
+                                    {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-1.5 bg-[#22c55e] rounded-t-full"></span>}
                                 </button>
                             ))}
                         </div>

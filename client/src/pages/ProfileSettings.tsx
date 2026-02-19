@@ -194,10 +194,10 @@ export const ProfileSettings = () => {
                                 setSuccess(null);
                             }}
                             className={clsx(
-                                "flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all whitespace-nowrap",
+                                "flex items-center gap-3 px-8 py-4 rounded-2xl font-black transition-all whitespace-nowrap text-sm uppercase tracking-widest",
                                 activeTab === tab.id
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                                    : "bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-100 shadow-sm"
+                                    ? "bg-gradient-to-r from-[#22c55e] to-[#16a34a] text-white shadow-xl shadow-[#22c55e]/30"
+                                    : "bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-slate-100 shadow-sm"
                             )}
                         >
                             <tab.icon size={20} />
@@ -208,7 +208,7 @@ export const ProfileSettings = () => {
 
                 {/* Content Area */}
                 <div className="flex-1">
-                    <div className="bg-white rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 relative overflow-hidden">
+                    <div className="bg-white rounded-[3rem] p-10 md:p-16 shadow-sm border border-slate-100 relative overflow-hidden">
                         {/* Status Messages */}
                         {success && (
                             <div className="mb-8 flex items-center gap-3 p-4 bg-green-50 text-green-700 rounded-2xl animate-fade-in border border-green-100 font-bold text-sm">
@@ -226,56 +226,65 @@ export const ProfileSettings = () => {
                         {activeTab === 'profile' && (
                             <form onSubmit={handleUpdateProfile} className="space-y-8 animate-fade-in">
                                 <div className="grid md:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
+                                    <div className="space-y-10">
                                         <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Nome da Academia</label>
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 block">Nome da Academia</label>
                                             <input
                                                 type="text"
                                                 value={profileData.name}
                                                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                                                className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all"
+                                                className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-[#22c55e] transition-all"
                                                 placeholder="Ex: Matrix Fitness"
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block flex items-center gap-2">
-                                                <Palette size={14} className="text-primary" />
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 block flex items-center gap-2">
+                                                <Palette size={14} className="text-[#22c55e]" />
                                                 Cor Primária do Tema
                                             </label>
-                                            <div className="flex items-center gap-4">
-                                                <input
-                                                    type="color"
-                                                    value={profileData.primary_color}
-                                                    onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
-                                                    className="w-14 h-14 rounded-2xl border-none p-1 bg-slate-100 cursor-pointer transition-transform hover:scale-105"
-                                                />
+                                            <div className="flex items-center gap-6">
+                                                <div className="relative group cursor-pointer">
+                                                    <input
+                                                        type="color"
+                                                        value={profileData.primary_color}
+                                                        onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
+                                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    />
+                                                    <div
+                                                        className="w-16 h-16 rounded-2xl border-none shadow-lg transition-transform hover:scale-105"
+                                                        style={{ backgroundColor: profileData.primary_color }}
+                                                    />
+                                                </div>
                                                 <div className="flex-1">
                                                     <input
                                                         type="text"
                                                         value={profileData.primary_color}
                                                         onChange={(e) => setProfileData({ ...profileData, primary_color: e.target.value })}
-                                                        className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-slate-900 focus:ring-2 focus:ring-primary transition-all uppercase"
+                                                        className="w-full bg-slate-50 border-none rounded-2xl p-5 font-black text-slate-900 focus:ring-2 focus:ring-[#22c55e] transition-all uppercase"
                                                         placeholder="#000000"
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                                            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
                                                 {['#f97316', '#22c55e', '#06b6d4', '#8b5cf6', '#ef4444', '#facc15'].map(c => (
                                                     <button
                                                         key={c}
                                                         type="button"
                                                         onClick={() => setProfileData({ ...profileData, primary_color: c })}
-                                                        className="w-6 h-6 rounded-full border border-white shadow-sm flex-shrink-0"
+                                                        className={clsx(
+                                                            "w-8 h-8 rounded-full border-4 shadow-sm flex-shrink-0 transition-transform hover:scale-110",
+                                                            profileData.primary_color === c ? "border-[#22c55e]" : "border-white"
+                                                        )}
                                                         style={{ backgroundColor: c }}
                                                     />
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block">Logo da Academia (Upload)</label>
-                                        <div className="flex items-center gap-4">
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 block">Logo da Academia (Upload)</label>
+                                        <div className="flex items-center gap-6">
                                             <input
                                                 type="file"
                                                 accept="image/*"
@@ -287,8 +296,8 @@ export const ProfileSettings = () => {
                                             <label
                                                 htmlFor="logo-upload"
                                                 className={clsx(
-                                                    "cursor-pointer px-6 py-4 rounded-2xl font-black transition-all flex items-center gap-2 border-2 border-dashed",
-                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-primary text-primary hover:bg-primary/5"
+                                                    "cursor-pointer px-8 py-5 rounded-2xl font-black transition-all flex items-center gap-3 border-2 border-dashed",
+                                                    uploading ? "bg-slate-50 border-slate-200 text-slate-400" : "bg-white border-[#22c55e] text-[#22c55e] hover:bg-[#22c55e]/5"
                                                 )}
                                             >
                                                 {uploading ? <RefreshCw className="animate-spin" size={20} /> : <ImageIcon size={20} />}
@@ -300,28 +309,30 @@ export const ProfileSettings = () => {
                                                     onClick={() => setProfileData({ ...profileData, logo_url: '' })}
                                                     className="text-red-500 text-xs font-black hover:underline uppercase tracking-tighter"
                                                 >
-                                                    Remover
+                                                    REMOVER
                                                 </button>
                                             )}
                                         </div>
-                                        <p className="mt-3 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Formatos aceitos: PNG, JPG (Máx. 5MB).</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">Formatos aceitos: PNG, JPG (Máx. 5MB).</p>
                                     </div>
-                                    <div className="flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] p-8 border-2 border-dashed border-slate-200">
-                                        <div className="w-24 h-24 rounded-3xl bg-white shadow-inner flex items-center justify-center mb-4 overflow-hidden outline outline-4 outline-white">
+                                    <div className="flex flex-col items-center justify-center bg-slate-50 rounded-[3rem] p-12 border-2 border-dashed border-slate-200 group relative">
+                                        <div className="w-40 h-40 rounded-3xl bg-white shadow-2xl flex items-center justify-center mb-6 overflow-hidden outline outline-8 outline-white">
                                             {profileData.logo_url ? (
-                                                <img src={formatImageUrl(profileData.logo_url)} alt="Preview" className="w-full h-full object-cover" />
+                                                <img src={formatImageUrl(profileData.logo_url)} alt="Preview" className="w-full h-full object-cover p-4" />
                                             ) : (
-                                                <Building2 size={40} className="text-slate-200" />
+                                                <div className="flex flex-col items-center gap-2 opacity-20">
+                                                    <Building2 size={64} className="text-slate-400" />
+                                                </div>
                                             )}
                                         </div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-tighter text-center">Prévia da Logo</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Prévia da Logo</p>
                                     </div>
                                 </div>
                                 <div className="pt-4">
                                     <button
                                         disabled={loading}
                                         type="submit"
-                                        className="bg-primary text-white px-10 py-4 rounded-2xl font-black hover:bg-primary/90 shadow-xl shadow-primary/20 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-2"
+                                        className="bg-[#22c55e] text-white px-12 py-5 rounded-[2rem] font-black hover:bg-[#16a34a] shadow-2xl shadow-[#22c55e]/30 disabled:opacity-50 transition-all active:scale-95 flex items-center gap-3 text-sm uppercase tracking-widest"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={20} /> : <Save size={20} />}
                                         SALVAR ALTERAÇÕES
