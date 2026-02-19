@@ -3,6 +3,8 @@ import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
 import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Send, Brain } from 'lucide-react';
 import clsx from 'clsx';
+import { toast } from 'react-toastify';
+import { WorkoutBuilder } from '../components/WorkoutBuilder';
 
 interface MemberPlan {
     id: string;
@@ -247,11 +249,13 @@ Domingo:
                                             <td className="px-12 py-6">
                                                 <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-0 translate-x-4">
                                                     <button onClick={() => {
-                                                        const msg = `Olá ${member.name}! Aqui está seu treino:\n\n${member.workout_routine || 'Ainda não cadastrado.'}`;
+                                                        const workoutLink = `${window.location.origin}/w/${member.id}`;
+                                                        const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
+
                                                         api.post('/chat/send', { jid: `${member.phone}@s.whatsapp.net`, text: msg })
-                                                            .then(() => alert('Treino enviado via WhatsApp!'))
-                                                            .catch(err => alert('Erro ao enviar: ' + err.message));
-                                                    }} className="p-4 bg-white shadow-sm border border-slate-50 text-primary hover:bg-primary hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
+                                                            .then(() => toast.success('Treino enviado via WhatsApp!'))
+                                                            .catch(err => toast.error('Erro ao enviar: ' + err.message));
+                                                    }} className="p-4 bg-white shadow-sm border border-slate-50 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
                                                         <Send size={20} />
                                                     </button>
                                                     <button onClick={() => handleEdit(member)} className="p-4 bg-white shadow-sm border border-slate-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl transition-all" title="Editar">
@@ -365,27 +369,45 @@ Domingo:
                             )}
 
                             {activeTab === 'workout' && (
-                                <div className="h-full flex flex-col space-y-4">
-                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-slate-900">Configuração de Treino</span>
-                                            <span className="text-xs font-medium text-slate-400">Enviado automaticamente para o aluno.</span>
+                                <div className="h-full flex flex-col space-y-6">
+                                    {editingId ? (
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                                            {/* Digital Workout Builder */}
+                                            <div className="flex flex-col h-full">
+                                                <WorkoutBuilder memberId={editingId} />
+                                            </div>
+
+                                            {/* Manual Note Area (Keeping what user likes) */}
+                                            <div className="flex flex-col h-full space-y-4">
+                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-slate-900">Anotações Manuais</span>
+                                                        <span className="text-xs font-medium text-slate-400">Texto rápido enviado via WhatsApp.</span>
+                                                    </div>
+                                                    <div className="flex gap-2 w-full sm:w-auto">
+                                                        <button type="button" onClick={generateAIWorkout} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-400 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition shadow-lg shadow-primary/20">
+                                                            <Brain size={14} /> Sugestão IA
+                                                        </button>
+                                                        <button type="button" onClick={() => insertTemplate('workout')} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
+                                                            <Calendar size={14} /> Modelo
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <textarea
+                                                    className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
+                                                    placeholder="Digite observações manuais aqui..."
+                                                    value={formData.workout}
+                                                    onChange={e => setFormData({ ...formData, workout: e.target.value })}
+                                                ></textarea>
+                                            </div>
                                         </div>
-                                        <div className="flex gap-2 w-full sm:w-auto">
-                                            <button type="button" onClick={generateAIWorkout} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-400 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition shadow-lg shadow-primary/20">
-                                                <Brain size={14} /> Gerar com IA
-                                            </button>
-                                            <button type="button" onClick={() => insertTemplate('workout')} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
-                                                <Calendar size={14} /> Modelo
-                                            </button>
+                                    ) : (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-slate-50 rounded-[3rem] border border-slate-100">
+                                            <Activity size={48} className="text-slate-200 mb-4" />
+                                            <h3 className="text-lg font-black text-slate-900 mb-2">Salve o cadastro primeiro</h3>
+                                            <p className="text-slate-500 max-w-sm">Para montar o treino digital, você precisa primeiro salvar os dados básicos do aluno.</p>
                                         </div>
-                                    </div>
-                                    <textarea
-                                        className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
-                                        placeholder="Digite o treino aqui..."
-                                        value={formData.workout}
-                                        onChange={e => setFormData({ ...formData, workout: e.target.value })}
-                                    ></textarea>
+                                    )}
                                 </div>
                             )}
 

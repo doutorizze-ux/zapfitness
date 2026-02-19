@@ -15,36 +15,36 @@ import api from './api';
 const PrivateRoute = ({ children, requirePayment = true }: { children: React.ReactNode, requirePayment?: boolean }) => {
   const { user, login, loading: authLoading } = useAuth();
   const [isPaid, setIsPaid] = React.useState<boolean | null>(null);
-  const [checking, setChecking] = React.useState(false);
+  const [checking, setChecking] = React.useState(!!user); // Start checking if user is already there
 
   React.useEffect(() => {
-    if (user) { // Only check if user is authenticated
-      setChecking(true);
-      api.get('/me')
+    if (user) {
+      // Instead of setChecking(true) here which causes a flash, we initialized it above
+      api.get('/api/me')
         .then(res => {
           const { payment_status, is_free, primary_color, logo_url, enable_scheduling } = res.data;
 
-          // Sync user context if vital customization data changed on server
           if (user.primary_color !== primary_color || user.logo_url !== logo_url) {
-            const updatedUser = {
-              ...user,
-              primary_color: primary_color,
-              logo_url: logo_url,
-              enable_scheduling: enable_scheduling
-            };
-            // Update context and localStorage silently
-            login(localStorage.getItem('token') || '', updatedUser);
+            login(localStorage.getItem('token') || '', { ...user, primary_color, logo_url, enable_scheduling });
           }
 
-          // Allow if ACTIVE or is_free
           if (payment_status === 'ACTIVE' || is_free) {
             setIsPaid(true);
           } else {
             setIsPaid(false);
           }
         })
-        .catch(() => setIsPaid(false))
+        .catch((err) => {
+          console.error("[PrivateRoute] Session invalid:", err);
+          // If it's a 401, we might want to logout, but for persistence let's be careful
+          if (err.response?.status === 401) {
+            // logout(); // Optional: do we want to force logout on every 401?
+          }
+          setIsPaid(false);
+        })
         .finally(() => setChecking(false));
+    } else {
+      setChecking(false);
     }
   }, [user, login]);
 
@@ -61,6 +61,8 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { PublicWorkout } from './pages/PublicWorkout';
+
 function App() {
   return (
     <Router>
@@ -70,8 +72,8 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
-
             <Route path="/register" element={<Login initialMode="register" />} />
+            <Route path="/w/:id" element={<PublicWorkout />} />
             <Route path="/payment" element={<PrivateRoute requirePayment={false}><PaymentPage /></PrivateRoute>} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />

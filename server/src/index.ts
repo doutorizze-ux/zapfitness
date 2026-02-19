@@ -262,7 +262,7 @@ app.post('/api/register', async (req, res) => {
             return { tenant, admin };
         });
 
-        const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ id: admin.id, tenant_id: tenant.id }, JWT_SECRET, { expiresIn: '365d' });
         res.json({ tenant, admin, token });
     } catch (e: any) {
         console.error(e);
@@ -281,7 +281,7 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: admin.id, email: admin.email, tenant_id: admin.tenant_id }, JWT_SECRET, { expiresIn: '365d' });
 
     // Merge tenant customization into the user object for the frontend
     const userResponse = {
@@ -585,8 +585,160 @@ app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
     }
 });
 
+// --- Exercise & Workout Routes ---
+
+// List all exercises for a tenant
+app.get('/api/exercises', authMiddleware, async (req: any, res) => {
+    try {
+        const exercises = await prisma.exercise.findMany({
+            where: { tenant_id: req.user.tenant_id },
+            orderBy: { name: 'asc' }
+        });
+        res.json(exercises);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Create/Update an exercise
+app.post('/api/exercises', authMiddleware, async (req: any, res) => {
+    try {
+        const { id, name, description, category, video_url } = req.body;
+        if (!name) return res.status(400).json({ error: 'Nome é obrigatório' });
+
+        const exercise = await prisma.exercise.upsert({
+            where: { id: id || 'new-id' },
+            update: { name, description, category, video_url },
+            create: { name, description, category, video_url, tenant_id: req.user.tenant_id }
+        });
+        res.json(exercise);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Delete an exercise
+app.delete('/api/exercises/:id', authMiddleware, async (req: any, res) => {
+    try {
+        await prisma.exercise.delete({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// List workouts for a member
+app.get('/api/members/:id/workouts', authMiddleware, async (req: any, res) => {
+    try {
+        const workouts = await prisma.workout.findMany({
+            where: { member_id: req.params.id, tenant_id: req.user.tenant_id },
+            include: {
+                exercises: {
+                    include: { exercise: true },
+                    orderBy: { order: 'asc' }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+        res.json(workouts);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Create/Update a workout with its exercises
+app.post('/api/members/:id/workouts', authMiddleware, async (req: any, res) => {
+    try {
+        const { id, name, notes, active, exercises: exercisesData } = req.body;
+        const member_id = req.params.id;
+
+        const result = await prisma.$transaction(async (tx) => {
+            const workout = await tx.workout.upsert({
+                where: { id: id || 'new-workout-id-placeholder' },
+                update: { name, notes, active },
+                create: {
+                    name,
+                    notes,
+                    active: active ?? true,
+                    member_id,
+                    tenant_id: req.user.tenant_id
+                }
+            });
+
+            if (exercisesData) {
+                await tx.workoutExercise.deleteMany({
+                    where: { workout_id: workout.id }
+                });
+
+                if (exercisesData.length > 0) {
+                    await tx.workoutExercise.createMany({
+                        data: exercisesData.map((ex: any, index: number) => ({
+                            workout_id: workout.id,
+                            exercise_id: ex.exercise_id,
+                            sets: ex.sets ? parseInt(ex.sets.toString()) : undefined,
+                            reps: ex.reps?.toString(),
+                            weight: ex.weight?.toString(),
+                            rest_time: ex.rest_time?.toString(),
+                            order: ex.order !== undefined ? parseInt(ex.order.toString()) : index
+                        }))
+                    });
+                }
+            }
+
+            return tx.workout.findUnique({
+                where: { id: workout.id },
+                include: {
+                    exercises: {
+                        include: { exercise: true },
+                        orderBy: { order: 'asc' }
+                    }
+                }
+            });
+        });
+
+        res.json(result);
+    } catch (e: any) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Delete a workout
+app.delete('/api/workouts/:id', authMiddleware, async (req: any, res) => {
+    try {
+        await prisma.workout.delete({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 
+// Public route to fetch member workout (for the student)
+app.get('/api/public/workouts/:memberId', async (req: any, res) => {
+    try {
+        const workouts = await prisma.workout.findMany({
+            where: { member_id: req.params.memberId, active: true },
+            include: {
+                exercises: {
+                    include: { exercise: true },
+                    orderBy: { order: 'asc' }
+                },
+                member: {
+                    select: { name: true, tenant: { select: { name: true, primary_color: true, logo_url: true } } }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        });
+        res.json(workouts);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.post('/api/whatsapp/disconnect', authMiddleware, async (req: any, res) => {
     const tenantId = req.user.tenant_id;

@@ -13,6 +13,7 @@ import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
 import { Leads } from './Leads';
+import { Exercises } from './Exercises';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -46,6 +47,7 @@ export const Dashboard = () => {
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
+        { label: 'EXERCÍCIOS', path: '/dashboard/exercises', icon: Activity }, // Use Activity or Dumbbell
         { label: 'ACESSOS', path: '/dashboard/logs', icon: Activity },
         { label: 'FINANCEIRO', path: '/dashboard/finance', icon: CreditCard },
         { label: 'CATRACAS', path: '/dashboard/turnstiles', icon: Cpu },
@@ -201,6 +203,7 @@ export const Dashboard = () => {
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
+                            <Route path="/exercises" element={<Exercises />} />
                             <Route path="/logs" element={<AccessLogs />} />
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
