@@ -12,35 +12,22 @@ import { ThemeHandler } from './components/ThemeHandler';
 
 import api from './api';
 
-const PrivateRoute = ({ children, requirePayment = true }: { children: React.ReactNode, requirePayment?: boolean }) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, login, loading: authLoading } = useAuth();
-  const [isPaid, setIsPaid] = React.useState<boolean | null>(null);
-  const [checking, setChecking] = React.useState(!!user); // Start checking if user is already there
+  const [checking, setChecking] = React.useState(!!user);
 
   React.useEffect(() => {
     if (user) {
-      // Instead of setChecking(true) here which causes a flash, we initialized it above
       api.get('/api/me')
         .then(res => {
-          const { payment_status, is_free, primary_color, logo_url, enable_scheduling } = res.data;
+          const { primary_color, logo_url, enable_scheduling } = res.data;
 
           if (user.primary_color !== primary_color || user.logo_url !== logo_url) {
             login(localStorage.getItem('token') || '', { ...user, primary_color, logo_url, enable_scheduling });
           }
-
-          if (payment_status === 'ACTIVE' || is_free) {
-            setIsPaid(true);
-          } else {
-            setIsPaid(false);
-          }
         })
         .catch((err) => {
-          console.error("[PrivateRoute] Session invalid:", err);
-          // If it's a 401, we might want to logout, but for persistence let's be careful
-          if (err.response?.status === 401) {
-            // logout(); // Optional: do we want to force logout on every 401?
-          }
-          setIsPaid(false);
+          console.error("[PrivateRoute] Session sync failed:", err);
         })
         .finally(() => setChecking(false));
     } else {
@@ -71,7 +58,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Login initialMode="register" />} />
             <Route path="/w/:id" element={<PublicWorkout />} />
-            <Route path="/payment" element={<PrivateRoute requirePayment={false}><PaymentPage /></PrivateRoute>} />
+            <Route path="/payment" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
             <Route path="/dashboard/*" element={
