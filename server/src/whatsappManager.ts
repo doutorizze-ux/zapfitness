@@ -310,13 +310,33 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
 async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
     const name = member.name.split(' ')[0];
-    const menu = `👋 Olá, *${name}*! Bem-vindo(a) à sua academia virtual.\n\nComo posso te ajudar hoje? Digite o número da opção:\n\n` +
-        `1️⃣ *Ver Treino*\n` +
-        `2️⃣ *Ver Dieta*\n` +
-        `3️⃣ *Status do Plano*\n` +
-        `4️⃣ *Registrar Entrada (Check-in)*\n` +
-        `5️⃣ *Falar com a Academia*` +
-        (member.tenant?.enable_scheduling ? `\n6️⃣ *Meus Agendamentos*` : ``);
+
+    let hasSchedule = false;
+    if (member.tenant?.enable_scheduling) {
+        const fixed = await prisma.memberSchedule.count({ where: { member_id: member.id } });
+        const oneOffs = await prisma.appointment.count({
+            where: { member_id: member.id, dateTime: { gte: new Date() }, status: { not: 'CANCELLED' } }
+        });
+        hasSchedule = fixed > 0 || oneOffs > 0;
+    }
+
+    let menu = `👋 Olá, *${name}*! Bem-vindo(a) à sua academia virtual.\n\nComo posso te ajudar hoje? Digite o número da opção:\n\n`;
+
+    if (member.workout_routine && member.workout_routine.trim() !== '') {
+        menu += `1️⃣ *Ver Treino*\n`;
+    }
+
+    if (member.diet_plan && member.diet_plan.trim() !== '') {
+        menu += `2️⃣ *Ver Dieta*\n`;
+    }
+
+    menu += `3️⃣ *Status do Plano*\n`;
+    menu += `4️⃣ *Registrar Entrada (Check-in)*\n`;
+    menu += `5️⃣ *Falar com a Academia*`;
+
+    if (hasSchedule) {
+        menu += `\n6️⃣ *Meus Agendamentos*`;
+    }
 
     await sock.sendMessage(remoteJid, { text: menu });
 }
