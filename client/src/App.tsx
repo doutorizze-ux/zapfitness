@@ -52,9 +52,6 @@ const PrivateRoute = ({ children, requirePayment = true }: { children: React.Rea
 
   if (!user) return <Navigate to="/login" />;
 
-  // If we checked and they are not paid, AND this route requires payment, redirect to payment
-  if (requirePayment && isPaid === false) return <Navigate to="/payment" />;
-
   return <>{children}</>;
 };
 
