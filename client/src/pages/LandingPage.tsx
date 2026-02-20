@@ -466,11 +466,11 @@ export const LandingPage = () => {
 
 
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate(user ? '/dashboard' : '/login')}
                             className="group relative bg-black text-white px-16 py-8 rounded-full font-black text-2xl transition-all hover:scale-110 active:scale-95 shadow-2xl overflow-hidden"
                         >
                             <span className="relative z-10 flex items-center gap-4 uppercase tracking-tighter">
-                                COMEÇAR AGORA
+                                {user ? 'VOLTAR AO PAINEL' : 'COMEÇAR AGORA'}
                                 <ChevronRight size={32} className="group-hover:translate-x-2 transition-transform" />
                             </span>
                         </button>
@@ -512,7 +512,7 @@ export const LandingPage = () => {
                                 <li><a href="#features" className="hover:text-orange-500 transition-colors">Ecosystem</a></li>
                                 <li><a href="#demo" className="hover:text-orange-500 transition-colors">WhatsApp Bot</a></li>
                                 <li><a href="#stats" className="hover:text-orange-500 transition-colors">Big Data</a></li>
-                                <li><a href="/login" className="hover:text-orange-500 transition-colors">Admin Dash</a></li>
+                                <li><button onClick={() => navigate(user ? '/dashboard' : '/login')} className="hover:text-orange-500 transition-colors uppercase">Admin Dash</button></li>
                             </ul>
                         </div>
                         <div>
