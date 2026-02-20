@@ -758,10 +758,17 @@ app.delete('/api/workouts/:id', authMiddleware, async (req: any, res) => {
 
 
 // Public route to fetch member workout (for the student)
-app.get('/api/public/workouts/:memberId', async (req: any, res) => {
+app.get('/api/public/workouts/:id', async (req: any, res) => {
     try {
+        const { id } = req.params;
         const workouts = await prisma.workout.findMany({
-            where: { member_id: req.params.memberId, active: true },
+            where: {
+                OR: [
+                    { member_id: id },
+                    { id: id }
+                ],
+                active: true
+            },
             include: {
                 exercises: {
                     include: { exercise: true },
