@@ -518,7 +518,7 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
     if (hasDigital) {
         text += `📱 *Treinos Digitais (Interativos):*\n`;
         // Use default app domain
-        const baseUrl = process.env.FRONTEND_URL || 'https://app.zapp.fitness';
+        const baseUrl = process.env.FRONTEND_URL || 'https://zapp.fitness';
         digitalWorkouts.forEach((w: any) => {
             text += `• *${w.name}* (${w.exercises.length} exercícios)\n`;
             text += `🔗 Link: ${baseUrl}/w/${w.id}\n\n`;
