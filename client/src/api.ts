@@ -1,11 +1,21 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-    let url = import.meta.env.VITE_API_URL || 'https://api.zapp.fitness/api';
+    // Priority: env variable -> window location (for production/coolify) -> localhost fallback
+    let url = import.meta.env.VITE_API_URL;
+
+    if (!url && typeof window !== 'undefined') {
+        url = window.location.origin;
+    }
+
+    if (!url) url = 'http://localhost:3001';
+
     // Remove trailing slash if present
     if (url.endsWith('/')) url = url.slice(0, -1);
-    // Append /api if not present
+
+    // Append /api if not present at the end
     if (!url.endsWith('/api')) url += '/api';
+
     return url;
 };
 

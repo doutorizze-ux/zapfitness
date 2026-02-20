@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { Dumbbell, Video, User, CheckCircle2, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
-
-interface PublicWorkout {
+interface PublicWorkoutData {
     id: string;
     name: string;
     notes: string | null;
@@ -35,14 +33,14 @@ interface PublicWorkout {
 
 export const PublicWorkout = () => {
     const { id } = useParams();
-    const [workouts, setWorkouts] = useState<PublicWorkout[]>([]);
+    const [workouts, setWorkouts] = useState<PublicWorkoutData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchWorkout = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/public/workouts/${id}`);
+                const res = await api.get(`/public/workouts/${id}`);
                 setWorkouts(res.data);
             } catch (err) {
                 console.error('Error fetching workout:', err);
