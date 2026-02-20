@@ -161,15 +161,9 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     // Save outgoing message
     const phone = jid.split('@')[0].replace(/\D/g, '');
 
-    // Try to find lead or member
+    // Try to find member
     const member = await prisma.member.findFirst({
         where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
-    });
-
-    const lead = member ? null : await prisma.lead.upsert({
-        where: { phone_tenant_id: { phone, tenant_id: tenantId } },
-        update: { last_message: text, last_message_at: new Date() },
-        create: { phone, tenant_id: tenantId, last_message: text }
     });
 
     await prisma.chatMessage.create({
@@ -179,7 +173,6 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
             from_me: true,
             jid: jid,
             member_id: member?.id,
-            lead_id: lead?.id,
             type: 'text'
         }
     });
@@ -215,40 +208,23 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             include: { plan: true, tenant: true }
         });
 
-        // 2 & 3. Background Processing (Logging REMOVED as per user request to disable Leads feature)
+        // 2 & 3. Background Processing (Logging for members only)
         (async () => {
             try {
-                let leadId = null;
-                if (!member) {
-                    const lead = await prisma.lead.upsert({
-                        where: { phone_tenant_id: { phone, tenant_id: tenantId } },
-                        update: {
-                            last_message: text,
-                            last_message_at: new Date(),
-                        },
-                        create: {
-                            phone,
+                if (member) {
+                    const chatMsg = await prisma.chatMessage.create({
+                        data: {
                             tenant_id: tenantId,
-                            last_message: text,
-                            name: senderName
+                            content: text,
+                            jid: remoteJid,
+                            from_me: false,
+                            member_id: member.id,
+                            type: msg.message?.imageMessage ? 'image' : 'text'
                         }
                     });
-                    leadId = lead.id;
+
+                    eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
                 }
-
-                const chatMsg = await prisma.chatMessage.create({
-                    data: {
-                        tenant_id: tenantId,
-                        content: text,
-                        jid: remoteJid,
-                        from_me: false,
-                        member_id: member?.id,
-                        lead_id: leadId,
-                        type: msg.message?.imageMessage ? 'image' : 'text'
-                    }
-                });
-
-                eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
             } catch (err) {
                 console.error('[WA] Background logging error:', err);
             }

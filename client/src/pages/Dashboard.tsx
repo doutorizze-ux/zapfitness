@@ -12,7 +12,6 @@ import { Plans } from './Plans';
 import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
-import { Leads } from './Leads';
 import { Exercises } from './Exercises';
 
 import clsx from 'clsx';
@@ -40,7 +39,6 @@ export const Dashboard = () => {
 
 
     const navItems = [
-        { label: 'LEADS', path: '/dashboard/leads', icon: Users },
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
@@ -133,7 +131,6 @@ export const Dashboard = () => {
                             else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
                             else if (path.includes('/logs')) tutorialId = 'access_logs';
                             else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
-                            else if (path.includes('/leads')) tutorialId = 'leads';
 
                             startTutorial(tutorialId);
                         }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
@@ -194,7 +191,6 @@ export const Dashboard = () => {
                     <div className="p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
-                            <Route path="/leads" element={<Leads />} />
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
@@ -215,7 +211,6 @@ export const Dashboard = () => {
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
-                            { label: 'Leads', path: '/dashboard/leads', icon: Users },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
 
