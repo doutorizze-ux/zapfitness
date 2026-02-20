@@ -190,6 +190,10 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
 async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
     try {
         const remoteJid = msg.key.remoteJid;
+
+        // Ignore group messages
+        if (remoteJid && remoteJid.endsWith('@g.us')) return;
+
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.title || (msg.message.imageMessage ? "[Imagem]" : null);
         const senderName = msg.pushName || "Interessado";
 
@@ -320,9 +324,13 @@ async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
         hasSchedule = fixed > 0 || oneOffs > 0;
     }
 
+    const digitalWorkouts = await prisma.workout.count({ where: { member_id: member.id, active: true } });
+    const hasDigitalWorkout = digitalWorkouts > 0;
+    const hasManualWorkout = member.workout_routine && member.workout_routine.trim() !== '';
+
     let menu = `👋 Olá, *${name}*! Bem-vindo(a) à sua academia virtual.\n\nComo posso te ajudar hoje? Digite o número da opção:\n\n`;
 
-    if (member.workout_routine && member.workout_routine.trim() !== '') {
+    if (hasManualWorkout || hasDigitalWorkout) {
         menu += `1️⃣ *Ver Treino*\n`;
     }
 
@@ -498,11 +506,36 @@ async function logAccess(tenantId: string, memberId: string | null, status: stri
 }
 
 async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) {
-    if (member && member.workout_routine) {
-        await sock.sendMessage(remoteJid, { text: `💪 *Seu Treino:*\n\n${member.workout_routine}` });
-    } else {
+    const digitalWorkouts = await prisma.workout.findMany({
+        where: { member_id: member.id, active: true },
+        include: { exercises: true }
+    });
+
+    const hasDigital = digitalWorkouts.length > 0;
+    const hasManual = member.workout_routine && member.workout_routine.trim() !== '';
+
+    if (!hasDigital && !hasManual) {
         await sock.sendMessage(remoteJid, { text: 'ℹ️ Você ainda não possui um treino cadastrado.' });
+        return;
     }
+
+    let text = `💪 *Seu Treino*\n\n`;
+
+    if (hasDigital) {
+        text += `📱 *Treinos Digitais (Interativos):*\n`;
+        // Use default app domain
+        const baseUrl = process.env.FRONTEND_URL || 'https://app.zapp.fitness';
+        digitalWorkouts.forEach((w: any) => {
+            text += `• *${w.name}* (${w.exercises.length} exercícios)\n`;
+            text += `🔗 Link: ${baseUrl}/w/${w.id}\n\n`;
+        });
+    }
+
+    if (hasManual) {
+        text += `📝 *Anotações / Ficha Manual:*\n${member.workout_routine}\n`;
+    }
+
+    await sock.sendMessage(remoteJid, { text: text.trim() });
 }
 
 async function handleGetDiet(member: any, sock: WASocket, remoteJid: string) {
