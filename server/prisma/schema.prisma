@@ -190,6 +190,8 @@ model Member {
   appointments    Appointment[]
   memberSchedules MemberSchedule[]
 
+  bot_paused      Boolean  @default(false)
+  
   @@unique([phone, tenant_id])
 }
 

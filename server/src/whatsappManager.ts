@@ -260,6 +260,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // Normalize text
         const cleanText = text.trim().toLowerCase();
+        const isMenuRequest = ['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText);
 
         if (!member) {
             console.log(`Non-member ${phone} contacted tenant ${tenantId}`);
@@ -271,8 +272,20 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             return;
         }
 
+        // 1.5 Bot Pause Logic
+        if (member.bot_paused && !isMenuRequest) {
+            console.log(`[WA] Bot paused for member ${member.name}. Ignoring command: ${cleanText}`);
+            return;
+        }
+
         // Menu Navigation for Members
-        if (['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText)) {
+        if (isMenuRequest) {
+            if (member.bot_paused) {
+                await prisma.member.update({
+                    where: { id: member.id },
+                    data: { bot_paused: false }
+                });
+            }
             await sendMainMenu(member, sock, remoteJid);
             return;
         }
@@ -286,7 +299,11 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         } else if (cleanText === '4' || cleanText.includes('checkin') || cleanText.includes('entrada') || cleanText.includes('cheguei')) {
             await handleCheckin(tenantId, member, sock, remoteJid, tenant);
         } else if (cleanText === '5' || cleanText.includes('falar') || cleanText === 'recepção') {
-            await sock.sendMessage(remoteJid, { text: '📞 *Falar com a Academia*\n\nEntre em contato diretamente ou aguarde, alguém da recepção irá responder por aqui em breve.' });
+            await prisma.member.update({
+                where: { id: member.id },
+                data: { bot_paused: true }
+            });
+            await sock.sendMessage(remoteJid, { text: '📞 *Atendimento Humano*\n\nO robô foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
         } else if ((cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) && tenant.enable_scheduling) {
             await handleGetAppointments(member, sock, remoteJid);
         } else if (cleanText === 'planos') {
