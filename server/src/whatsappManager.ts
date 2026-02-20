@@ -154,9 +154,27 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     const sock = sessions.get(tenantId);
     if (!sock) throw new Error('WhatsApp não conectado');
 
-    // Clean JID to ensure it's digits only before the @
-    const cleanJid = jid.replace(/\D/g, '') + '@s.whatsapp.net';
-    const result = await sock.sendMessage(cleanJid, { text });
+    // 1. Normalize the JID/Phone
+    let cleanNumber = jid.split('@')[0].replace(/\D/g, '');
+
+    // Auto-prepend Brazil country code if it looks like a local number (10 or 11 digits)
+    if (cleanNumber.length >= 10 && cleanNumber.length <= 11 && !cleanNumber.startsWith('55')) {
+        cleanNumber = '55' + cleanNumber;
+    }
+
+    // 2. Resolve the correct JID using onWhatsApp (handles the 9th digit nightmare in Brazil)
+    let targetJid = cleanNumber + '@s.whatsapp.net';
+    try {
+        const results = await sock.onWhatsApp(cleanNumber);
+        if (results && results.length > 0 && results[0].exists) {
+            targetJid = results[0].jid;
+        }
+    } catch (e) {
+        console.warn(`[WA] Could not resolve JID for ${cleanNumber}, using fallback:`, e);
+    }
+
+    console.log(`[WA] Sending message to resolved JID: ${targetJid} (Original: ${jid})`);
+    const result = await sock.sendMessage(targetJid, { text });
 
     // Save outgoing message
     const phone = jid.split('@')[0].replace(/\D/g, '');
