@@ -219,12 +219,34 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         if (!tenant) return;
 
         const phone = remoteJid.split('@')[0];
+        const last8 = phone.slice(-8);
+        const ddd = phone.length >= 10 ? phone.slice(-11, -9) : null;
 
-        // 1. Identify if it's a member
-        const member = await prisma.member.findFirst({
-            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } },
+        // 1. Identify if it's a member (Precise matching to avoid pauses affecting multiple people)
+        let member = await prisma.member.findFirst({
+            where: {
+                tenant_id: tenantId,
+                OR: [
+                    { phone: phone },
+                    { phone: { endsWith: phone } }
+                ]
+            },
             include: { plan: true, tenant: true }
         });
+
+        // Fallback: If not found, try last 8 + DDD to handle numbers saved without DDI
+        if (!member) {
+            member = await prisma.member.findFirst({
+                where: {
+                    tenant_id: tenantId,
+                    AND: [
+                        { phone: { contains: last8 } },
+                        ddd ? { phone: { contains: ddd } } : {}
+                    ]
+                },
+                include: { plan: true, tenant: true }
+            });
+        }
 
         // 2 & 3. Background Processing (Logging for members only)
         (async () => {
@@ -259,13 +281,15 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         console.log(`Received message from ${remoteJid} for tenant ${tenantId}: ${text} `);
 
         // Normalize text
-        const cleanText = text.trim().toLowerCase();
-        const isMenuRequest = ['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start'].includes(cleanText);
+        const cleanText = text.trim().toLowerCase().replace(/[^\w\sà-ú]/g, ''); // Remove punctuation
+        const isMenuRequest =
+            ['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start', 'voltar', 'bot'].includes(cleanText) ||
+            cleanText.startsWith('menu') ||
+            cleanText.startsWith('ola') ||
+            cleanText.startsWith('oi');
 
         if (!member) {
-            console.log(`Non-member ${phone} contacted tenant ${tenantId}`);
-            // No longer sending auto-reply here to allow human to take over or just standard welcome
-            // Let's send a standard lead message
+            console.log(`[WA] Non-member ${phone} contacted tenant ${tenantId}`);
             await sock.sendMessage(remoteJid, {
                 text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenant.name}*.\n\nVerifiquei aqui e você ainda não é nosso aluno. Deseja conhecer nossos planos ou falar com a recepção?\n\nDigite *Planos* ou *Recepção*.`
             });
@@ -274,17 +298,20 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // 1.5 Bot Pause Logic
         if (member.bot_paused && !isMenuRequest) {
-            console.log(`[WA] Bot paused for member ${member.name}. Ignoring command: ${cleanText}`);
+            console.log(`[WA] Bot paused for member ${member.name} (${phone}). Ignoring: ${cleanText}`);
             return;
         }
 
-        // Menu Navigation for Members
+        // Menu Navigation for Members (and unpausing)
         if (isMenuRequest) {
+            console.log(`[WA] Menu request from ${member.name}. Unpausing if needed.`);
             if (member.bot_paused) {
                 await prisma.member.update({
                     where: { id: member.id },
                     data: { bot_paused: false }
                 });
+                // Update local object too so subsequent logic in this execution is correct
+                member.bot_paused = false;
             }
             await sendMainMenu(member, sock, remoteJid);
             return;
