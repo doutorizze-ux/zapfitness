@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import {
     Zap, Shield, ArrowRight, MessageSquare,
     Menu, X, Brain, Sparkles, TrendingUp,
@@ -11,6 +12,7 @@ import clsx from 'clsx';
 
 export const LandingPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
@@ -125,7 +127,11 @@ export const LandingPage = () => {
                         </div>
 
                         <div className="flex gap-4 items-center">
-                            <button onClick={() => navigate('/login')} className="text-slate-400 hover:text-white transition-colors font-black text-[10px] tracking-widest uppercase hidden sm:block px-4">Entrar</button>
+                            {user ? (
+                                <button onClick={() => navigate('/dashboard')} className="bg-orange-500 text-white transition-all font-black text-[10px] tracking-widest uppercase hidden sm:block px-6 py-2.5 rounded-full hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/20">Dashboard</button>
+                            ) : (
+                                <button onClick={() => navigate('/login')} className="text-slate-400 hover:text-white transition-colors font-black text-[10px] tracking-widest uppercase hidden sm:block px-4">Entrar</button>
+                            )}
 
                             <button
                                 className="lg:hidden text-white p-2 bg-white/5 border border-white/10 rounded-xl"
@@ -170,10 +176,10 @@ export const LandingPage = () => {
                             </div>
                             <div className="mt-auto pt-10 border-t border-white/10 flex flex-col gap-4">
                                 <button
-                                    onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+                                    onClick={() => { setMobileMenuOpen(false); navigate(user ? '/dashboard' : '/login'); }}
                                     className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-lg uppercase tracking-widest"
                                 >
-                                    Painel Administrativo
+                                    {user ? 'Acessar Dashboard' : 'Painel Administrativo'}
                                 </button>
                             </div>
                         </motion.div>
@@ -234,11 +240,11 @@ export const LandingPage = () => {
                             className="flex flex-col sm:flex-row justify-center gap-6 px-4"
                         >
                             <button
-                                onClick={() => navigate('/login')}
+                                onClick={() => navigate(user ? '/dashboard' : '/login')}
                                 className="group relative bg-white text-black px-12 py-5 rounded-full font-black text-lg transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/10 overflow-hidden"
                             >
                                 <span className="relative z-10 flex items-center justify-center gap-3 uppercase tracking-tighter">
-                                    INICIAR CRESCIMENTO
+                                    {user ? 'IR PARA O PAINEL' : 'INICIAR CRESCIMENTO'}
                                     <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
                                 </span>
                                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>

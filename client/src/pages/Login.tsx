@@ -13,7 +13,7 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login } = useAuth();
+    const { login, user, loading } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
@@ -23,24 +23,25 @@ export const Login = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regi
     const [systemSettings, setSystemSettings] = useState({ site_name: 'ZapFitness', logo_url: '' });
 
     useEffect(() => {
+        // Redireciona se já estiver logado (persistência de sessão)
+        if (!loading && user) {
+            navigate('/dashboard');
+            return;
+        }
+
         // Use requestAnimationFrame to avoid synchronous state update in effect
         requestAnimationFrame(() => {
             setIsRegistering(initialMode === 'register');
         });
         api.get('/system/settings').then(res => setSystemSettings(res.data)).catch(console.error);
-    }, [initialMode]);
+    }, [initialMode, user, loading, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             const res = await api.post('/login', { email, password });
             login(res.data.token, res.data.admin);
-            if (isRegistering) {
-                // If they just registered (rare case here since handleRegister logic changed), just go to dashboard
-                navigate('/dashboard');
-            } else {
-                navigate('/dashboard');
-            }
+            navigate('/dashboard');
         } catch (err) {
             console.error('Login error:', err);
             setError('Credenciais inválidas');
