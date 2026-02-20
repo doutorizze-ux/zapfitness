@@ -670,6 +670,21 @@ app.get('/api/members/:id/workouts', authMiddleware, async (req: any, res) => {
     }
 });
 
+app.get('/api/members/:id/messages', authMiddleware, async (req: any, res) => {
+    try {
+        const messages = await prisma.chatMessage.findMany({
+            where: {
+                tenant_id: req.user.tenant_id,
+                member_id: req.params.id
+            },
+            orderBy: { created_at: 'asc' }
+        });
+        res.json(messages);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Create/Update a workout with its exercises
 app.post('/api/members/:id/workouts', authMiddleware, async (req: any, res) => {
     try {

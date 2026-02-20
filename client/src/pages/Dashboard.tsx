@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -13,6 +13,7 @@ import { AccessLogs } from './AccessLogs';
 import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
 import { Exercises } from './Exercises';
+import { Chat } from './Chat';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -39,6 +40,7 @@ export const Dashboard = () => {
 
 
     const navItems = [
+        { label: 'ATENDIMENTO', path: '/dashboard/chat', icon: MessageSquare },
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
@@ -191,6 +193,7 @@ export const Dashboard = () => {
                     <div className="p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
+                            <Route path="/chat" element={<Chat />} />
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
@@ -211,6 +214,7 @@ export const Dashboard = () => {
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Chat', path: '/dashboard/chat', icon: MessageSquare },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
 
