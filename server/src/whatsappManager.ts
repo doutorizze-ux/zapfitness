@@ -15,18 +15,21 @@ const __dirname = path.dirname(__filename);
 export const sessions = new Map<string, WASocket>();
 
 export const getSession = (tenantId: string) => sessions.get(tenantId);
-
 export const reconnectSessions = async () => {
     console.log('[WA] Auto-reconnecting active sessions...');
     const connectedTenants = await prisma.tenant.findMany({
         where: { whatsapp_status: 'CONNECTED', status: 'ACTIVE' }
     });
 
-    console.log(`[WA] Found ${connectedTenants.length} tenants to reconnect.`);
+    console.log(`[WA] Found ${connectedTenants.length} tenants that SHOULD be connected.`);
 
     const { io } = await import('./index.js');
 
     for (const tenant of connectedTenants) {
+        if (sessions.has(tenant.id)) {
+            console.log(`[WA] Tenant ${tenant.name} (${tenant.id}) already has an active session. Skipping.`);
+            continue;
+        }
         try {
             console.log(`[WA] Reconnecting tenant: ${tenant.name} (${tenant.id})`);
             // Pass a callback to emit QR if it expires during restart and user is watching
@@ -45,6 +48,18 @@ export const reconnectSessions = async () => {
 };
 
 export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void) => {
+    // 0. Safety: Check if there's already an active session and end it
+    const existingSession = sessions.get(tenantId);
+    if (existingSession) {
+        console.log(`[WA] Ending existing session for ${tenantId} before re-init...`);
+        try {
+            existingSession.end(undefined);
+            existingSession.ev.removeAllListeners('messages.upsert');
+            existingSession.ev.removeAllListeners('connection.update');
+        } catch (e) { }
+        sessions.delete(tenantId);
+    }
+
     const logger = pino({ level: 'silent' });
 
     // Persistent session path logic
@@ -500,6 +515,8 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
             scanned_at: { gte: today }
         }
     });
+
+    console.log(`[Checkin] Daily limit check for ${member.name}: current=${dailyAccessCount}, max=${tenant.max_daily_access}`);
 
     if (dailyAccessCount >= tenant.max_daily_access) {
         await sock.sendMessage(remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });

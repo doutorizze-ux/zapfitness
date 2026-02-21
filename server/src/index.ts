@@ -149,18 +149,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Bridge EventBus to Socket.io
-eventBus.on(EVENTS.NEW_MESSAGE, (msg) => {
-    io.to(msg.tenant_id).emit('new_message', msg);
-});
-
-eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
-    io.to(data.tenantId).emit('checkin_granted', data);
-});
-
-eventBus.on(EVENTS.CHECKIN_DENIED, (data) => {
-    io.to(data.tenantId).emit('checkin_denied', data);
-});
+// (Redundant listeners removed, kept below near line 1360)
 
 
 

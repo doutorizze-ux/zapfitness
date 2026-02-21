@@ -47,6 +47,7 @@ socket.on("gate:open", (data) => {
 
 socket.on("gate:denied", (data) => {
     console.log(`⛔ ACESSO NEGADO: Motivo - ${data.reason}`);
+    console.log(`⏰ Horário: ${new Date(data.timestamp || Date.now()).toLocaleString()}`);
 });
 
 socket.on("disconnect", () => {
