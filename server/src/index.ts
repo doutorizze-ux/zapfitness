@@ -1313,6 +1313,13 @@ app.get('/api/gate/guide', authMiddleware, async (req: any, res) => {
     res.json({ guide });
 });
 
+// --- PUSH GATE ENDPOINT (For Control iD and other webhooks) ---
+app.all('/api/gate', async (req, res) => {
+    // Simple response to verify server is active for hardware
+    console.log(`[Gate] Activity on /api/gate from ${req.ip}`);
+    res.status(200).send("ZapFitness Gate API - Active");
+});
+
 io.on('connection', (socket: any) => {
     console.log(`[IO] socket connected id=${socket.id}, handshake.query=${JSON.stringify(socket.handshake.query)}`);
 

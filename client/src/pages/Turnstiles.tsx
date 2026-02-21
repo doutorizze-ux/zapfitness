@@ -255,7 +255,7 @@ export const Turnstiles = () => {
                                             <div className="bg-white/5 border border-white/10 p-5 lg:p-6 rounded-2xl space-y-4">
                                                 <div className="flex flex-col gap-1">
                                                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">URL do Servidor</span>
-                                                    <code className="text-sm font-mono text-primary/80 break-all bg-black/20 p-2 rounded">api.zapp.fitness/gate</code>
+                                                    <code className="text-sm font-mono text-primary/80 break-all bg-black/20 p-2 rounded">api.zapp.fitness/api/gate</code>
                                                 </div>
                                                 <p className="text-xs text-white/60 leading-relaxed italic">
                                                     Acesse o painel da sua catraca Control iD, vá em "Configurações {'>'} Software" e insira a URL acima e o seu Token (do Passo A).
