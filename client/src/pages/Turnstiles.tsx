@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
-import { Cpu, Wifi, CheckCircle, Download, ExternalLink, ShieldCheck, XCircle, Clock } from 'lucide-react';
+import { Cpu, Wifi, CheckCircle, Download, ShieldCheck, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -141,15 +141,22 @@ export const Turnstiles = () => {
         }
     };
 
-    const handleShowGuide = async () => {
+    const handleDownloadZip = async () => {
         try {
-            const res = await api.get('/gate/guide');
-            alert(res.data.guide);
+            const response = await api.get('/gate/download-installer', { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'ZappBridge_Installer.zip');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         } catch (err) {
-            console.error('Error showing guide:', err);
-            alert('Erro ao carregar guia.');
+            console.error('Download error:', err);
+            alert('Erro ao baixar instalador. Verifique sua conexão.');
         }
     };
+
 
     const brands = [
         { id: 'controlid', name: 'Control iD', logo: '🚀', desc: 'Integração direta via Nuvem (Sem PC ligado)' },
@@ -272,18 +279,17 @@ export const Turnstiles = () => {
                                                 <p className="font-bold text-white mb-4 text-sm lg:text-base">Instalação Local (ZappBridge)</p>
                                                 <div className="flex flex-col sm:flex-row gap-3">
                                                     <button
-                                                        onClick={handleDownload}
+                                                        onClick={handleDownloadZip}
                                                         className="flex-1 bg-primary text-white p-4 rounded-xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 text-[10px] uppercase tracking-widest"
                                                     >
                                                         <Download size={16} />
-                                                        Baixar Script
+                                                        Baixar Instalador Windows (ZIP)
                                                     </button>
                                                     <button
-                                                        onClick={handleShowGuide}
-                                                        className="flex-1 bg-white/5 border border-white/10 text-white p-4 rounded-xl font-black flex items-center justify-center gap-3 hover:bg-white/10 transition-all text-[10px] uppercase tracking-widest"
+                                                        onClick={handleDownload}
+                                                        className="flex-[0.5] bg-white/5 border border-white/10 text-white p-4 rounded-xl font-black flex items-center justify-center gap-3 hover:bg-white/10 transition-all text-[10px] uppercase tracking-widest"
                                                     >
-                                                        <ExternalLink size={16} />
-                                                        Guia PDF
+                                                        Apenas .JS
                                                     </button>
                                                 </div>
                                             </div>
@@ -293,9 +299,9 @@ export const Turnstiles = () => {
                                             <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-black text-xs shrink-0">C</div>
                                             <div className="flex-1">
                                                 <p className="font-bold text-white mb-2 text-sm lg:text-base">Inicie a Integração</p>
-                                                <p className="text-xs lg:text-sm text-white/60 leading-relaxed mb-4">No PC da recepção, abra o terminal na pasta do arquivo e rode:</p>
-                                                <div className="bg-black/40 p-4 rounded-xl font-mono text-[10px] lg:text-xs text-primary/80 border border-white/5 overflow-x-auto whitespace-nowrap">
-                                                    node ZappBridge.js
+                                                <p className="text-xs lg:text-sm text-white/60 leading-relaxed mb-4">Extraia o ZIP e dê dois cliques no arquivo:</p>
+                                                <div className="bg-primary/20 p-4 rounded-xl font-mono text-[10px] lg:text-xs text-primary font-black border border-primary/30 overflow-x-auto whitespace-nowrap">
+                                                    🚀 iniciar_ponte.bat
                                                 </div>
                                             </div>
                                         </div>

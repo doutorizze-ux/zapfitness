@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -1289,6 +1290,69 @@ app.get('/api/gate/download-bridge', authMiddleware, async (req: any, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Content-Disposition', `attachment; filename=ZappBridge_${tenant.slug}.js`);
     res.send(content);
+});
+
+app.get('/api/gate/download-installer', authMiddleware, async (req: any, res) => {
+    const tenantId = req.user.tenant_id;
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+
+    if (!tenant || !tenant.gate_token) return res.status(404).json({ error: 'Configuração não encontrada' });
+
+    const templatePath = path.resolve('templates/ZappBridge.js');
+    if (!fs.existsSync(templatePath)) {
+        return res.status(500).json({ error: 'Template não encontrado no servidor' });
+    }
+
+    let bridgeContent = fs.readFileSync(templatePath, 'utf8');
+    bridgeContent = bridgeContent.replace('SEU_TOKEN_AQUI', tenant.gate_token);
+    bridgeContent = bridgeContent.replace('SEU_ID_DA_ACADEMIA', tenantId);
+    bridgeContent = bridgeContent.replace('https://zapp.fitness', process.env.API_URL || 'https://zapp.fitness');
+
+    const packageJson = JSON.stringify({
+        name: "zapp-fitness-bridge",
+        version: "1.0.0",
+        description: "Integration bridge for ZapFitness Turnstiles",
+        main: "ZappBridge.js",
+        dependencies: {
+            "socket.io-client": "^4.7.2"
+        }
+    }, null, 2);
+
+    const batFile = `@echo off
+title ZapFitness Bridge - Iniciando...
+echo ==========================================
+echo    ZAPFITNESS - INTEGRACAO DE HARDWARE
+echo ==========================================
+echo.
+
+node -v >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERRO] Node.js nao encontrado! 
+    echo Por favor, instale o Node.js antes de continuar em: https://nodejs.org/
+    pause
+    exit
+)
+
+if not exist node_modules (
+    echo [1/2] Instalando dependencias pela primeira vez...
+    call npm install
+)
+
+echo [2/2] Iniciando Bridge...
+echo.
+node ZappBridge.js
+pause`;
+
+    const zip = new AdmZip();
+    zip.addFile("ZappBridge.js", Buffer.from(bridgeContent, "utf8"));
+    zip.addFile("package.json", Buffer.from(packageJson, "utf8"));
+    zip.addFile("iniciar_ponte.bat", Buffer.from(batFile, "utf8"));
+
+    const zipBuffer = zip.toBuffer();
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=ZappBridge_Installer_${tenant.slug}.zip`);
+    res.send(zipBuffer);
 });
 
 app.get('/api/gate/guide', authMiddleware, async (req: any, res) => {
