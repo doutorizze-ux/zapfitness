@@ -159,10 +159,12 @@ export const Turnstiles = () => {
 
 
     const brands = [
-        { id: 'controlid', name: 'Control iD', logo: '🚀', desc: 'Integração direta via Nuvem (Sem PC ligado)' },
-        { id: 'topdata', name: 'Topdata', logo: '⚡', desc: 'Integração via ZappBridge (PC Recepção)' },
-        { id: 'henry', name: 'Henry', logo: '💎', desc: 'Integração via ZappBridge (PC Recepção)' },
-        { id: 'generic', name: 'Módulo USB/Relé', logo: '🔌', desc: 'Solução de baixo custo para qualquer catraca' },
+        { id: 'controlid', name: 'Control iD', logo: '🚀', desc: 'Integração direta via Nuvem ou API Local' },
+        { id: 'topdata', name: 'Topdata', logo: '⚡', desc: 'Integração via Driver Topdata (PC Recepção)' },
+        { id: 'henry', name: 'Henry', logo: '💎', desc: 'Integração via Driver Henry (PC Recepção)' },
+        { id: 'madis', name: 'Madis', logo: '🏢', desc: 'Integração via Driver Madis (PC Recepção)' },
+        { id: 'usb_relay', name: 'Relé USB / Serial', logo: '🔌', desc: 'Solução Universal para qualquer catraca antiga' },
+        { id: 'generic', name: 'Outras Marcas', logo: '⚙️', desc: 'Apenas registro de logs no sistema' },
     ];
 
     return (

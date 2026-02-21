@@ -1286,6 +1286,7 @@ app.get('/api/gate/download-bridge', authMiddleware, async (req: any, res) => {
     content = content.replace('SEU_TOKEN_AQUI', tenant.gate_token);
     content = content.replace('SEU_ID_DA_ACADEMIA', tenantId);
     content = content.replace('https://zapp.fitness', process.env.API_URL || 'https://zapp.fitness');
+    content = content.replace('MARCA_DA_CATRACA', tenant.turnstile_brand || 'generic');
 
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Content-Disposition', `attachment; filename=ZappBridge_${tenant.slug}.js`);
@@ -1307,6 +1308,7 @@ app.get('/api/gate/download-installer', authMiddleware, async (req: any, res) =>
     bridgeContent = bridgeContent.replace('SEU_TOKEN_AQUI', tenant.gate_token);
     bridgeContent = bridgeContent.replace('SEU_ID_DA_ACADEMIA', tenantId);
     bridgeContent = bridgeContent.replace('https://zapp.fitness', process.env.API_URL || 'https://zapp.fitness');
+    bridgeContent = bridgeContent.replace('MARCA_DA_CATRACA', tenant.turnstile_brand || 'generic');
 
     const packageJson = JSON.stringify({
         name: "zapp-fitness-bridge",
@@ -1314,7 +1316,8 @@ app.get('/api/gate/download-installer', authMiddleware, async (req: any, res) =>
         description: "Integration bridge for ZapFitness Turnstiles",
         main: "ZappBridge.js",
         dependencies: {
-            "socket.io-client": "^4.7.2"
+            "socket.io-client": "^4.7.2",
+            "axios": "^1.6.0"
         }
     }, null, 2);
 
