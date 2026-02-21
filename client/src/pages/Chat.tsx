@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
-import { Search, Send, User, Phone, CheckCircle2, MessageSquare, Clock, Paperclip, MoreVertical, Hash, Brain } from 'lucide-react';
+import { Search, Send, User, Phone, CheckCircle2, MessageSquare, Clock, Paperclip, MoreVertical, Hash, Brain, ArrowLeft } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
@@ -151,12 +151,15 @@ export const Chat = () => {
     });
 
     return (
-        <div className="flex h-[calc(100vh-180px)] bg-white rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
+        <div className="flex flex-col md:flex-row h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] bg-white rounded-2xl md:rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
             {/* Sidebar: Member List */}
-            <div className="w-80 md:w-96 border-r border-slate-50 flex flex-col bg-slate-50/30">
-                <div className="p-8 border-b border-slate-50">
-                    <h2 className="text-xl font-black text-slate-900 mb-6 tracking-tight flex items-center gap-3">
-                        <MessageSquare className="text-primary" size={24} />
+            <div className={clsx(
+                "w-full md:w-80 lg:w-96 border-r border-slate-50 flex flex-col bg-slate-50/30",
+                selectedMember ? "hidden md:flex" : "flex"
+            )}>
+                <div className="p-4 md:p-8 border-b border-slate-50">
+                    <h2 className="text-lg md:text-xl font-black text-slate-900 mb-4 md:mb-6 tracking-tight flex items-center gap-3">
+                        <MessageSquare className="text-primary" size={20} />
                         Mensagens
                     </h2>
                     <div className="relative">
@@ -215,13 +218,22 @@ export const Chat = () => {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col bg-white">
+            <div className={clsx(
+                "flex-1 flex flex-col bg-white",
+                !selectedMember ? "hidden md:flex" : "flex"
+            )}>
                 {selectedMember ? (
                     <>
                         {/* Chat Header */}
-                        <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white z-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black">
+                        <div className="px-4 md:px-8 py-4 md:py-6 border-b border-slate-50 flex items-center justify-between bg-white z-10 shrink-0">
+                            <div className="flex items-center gap-2 md:gap-4">
+                                <button
+                                    onClick={() => setSelectedMember(null)}
+                                    className="md:hidden p-2 -ml-2 text-slate-400 hover:text-primary transition-all"
+                                >
+                                    <ArrowLeft size={24} />
+                                </button>
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black shrink-0">
                                     {selectedMember.name.charAt(0)}
                                 </div>
                                 <div>
@@ -248,7 +260,7 @@ export const Chat = () => {
                         {/* Messages Body */}
                         <div
                             ref={scrollRef}
-                            className="flex-1 overflow-y-auto p-10 space-y-6 bg-slate-50/30 no-scrollbar"
+                            className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 bg-slate-50/30 no-scrollbar"
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center h-full">
@@ -306,23 +318,23 @@ export const Chat = () => {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-8 bg-white border-t border-slate-50">
-                            <form onSubmit={handleSendMessage} className="flex items-center gap-4 bg-slate-50 p-2 rounded-[2rem] shadow-inner focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-                                <button type="button" className="p-4 text-slate-400 hover:text-primary transition-all rounded-full hover:bg-white shadow-sm">
+                        <div className="p-4 md:p-8 bg-white border-t border-slate-50">
+                            <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-4 bg-slate-50 p-1 md:p-2 rounded-2xl md:rounded-[2rem] shadow-inner focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                                <button type="button" className="p-2 md:p-4 text-slate-400 hover:text-primary transition-all rounded-full hover:bg-white shadow-sm">
                                     <Paperclip size={20} />
                                 </button>
                                 <input
                                     type="text"
-                                    placeholder="Digite sua mensagem aqui..."
-                                    className="flex-1 bg-transparent border-none outline-none py-4 px-2 text-sm font-medium text-slate-800"
+                                    placeholder="Digite sua mensagem..."
+                                    className="flex-1 bg-transparent border-none outline-none py-2 md:py-4 px-2 text-xs md:text-sm font-medium text-slate-800"
                                     value={newMessage}
                                     onChange={e => setNewMessage(e.target.value)}
                                 />
                                 <button
                                     type="submit"
-                                    className="bg-primary text-white p-4 rounded-full shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-14 h-14 flex items-center justify-center"
+                                    className="bg-primary text-white p-3 md:p-4 rounded-full shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all w-10 h-10 md:w-14 md:h-14 flex items-center justify-center shrink-0"
                                 >
-                                    <Send size={20} fill="white" />
+                                    <Send size={18} fill="white" className="md:w-5 md:h-5" />
                                 </button>
                             </form>
                         </div>
