@@ -333,6 +333,18 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             return;
         }
 
+        // --- OPENING HOURS CHECK (For Menu) ---
+        const now = new Date();
+        const currentTimeStr = now.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'America/Sao_Paulo'
+        });
+
+        const isClosed = tenant.opening_time && tenant.closing_time &&
+            (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time);
+
         // Menu Navigation for Members (and unpausing)
         if (isMenuRequest) {
             console.log(`[WA] Menu request from ${member.name}. Unpausing if needed.`);
@@ -341,9 +353,15 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                     where: { id: member.id },
                     data: { bot_paused: false }
                 });
-                // Update local object too so subsequent logic in this execution is correct
                 member.bot_paused = false;
             }
+
+            if (isClosed) {
+                await sock.sendMessage(remoteJid, {
+                    text: `👋 Olá, *${member.name.split(' ')[0]}*!\n\nNo momento a *${tenant.name}* está fechada. Nosso horário é das ${tenant.opening_time} às ${tenant.closing_time}.\n\nComo posso ajudar?`
+                });
+            }
+
             await sendMainMenu(member, sock, remoteJid);
             return;
         }
@@ -454,7 +472,14 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
     // 1. Time Window Check
     const now = new Date();
-    const currentTimeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const currentTimeStr = now.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'America/Sao_Paulo'
+    });
+
+    console.log(`[Checkin] Checking hours. Now: ${currentTimeStr}, Open: ${tenant.opening_time}, Close: ${tenant.closing_time}`);
 
     if (tenant.opening_time && tenant.closing_time) {
         if (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time) {
