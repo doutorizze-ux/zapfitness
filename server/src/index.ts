@@ -866,11 +866,14 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
     planEndDate.setDate(planEndDate.getDate() + duration);
     planEndDate.setHours(23, 59, 59, 999);
 
+    // Normalize phone (remove non-digits)
+    const normalizedPhone = phone.replace(/\D/g, '');
+
     // Check if phone already exists for this tenant
     const existingMember = await prisma.member.findFirst({
         where: {
             tenant_id: req.user.tenant_id,
-            phone: phone
+            phone: normalizedPhone
         }
     });
 
@@ -881,7 +884,7 @@ app.post('/api/members', authMiddleware, async (req: any, res) => {
     const member = await prisma.member.create({
         data: {
             name,
-            phone,
+            phone: normalizedPhone,
             tenant_id: req.user.tenant_id,
             plan_id: plan_id || undefined,
             plan_start_date: new Date(),
@@ -1074,12 +1077,15 @@ app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
             plan_end_date = newEndDate;
         }
 
+        // Normalize phone (remove non-digits)
+        const normalizedPhone = phone ? phone.replace(/\D/g, '') : member.phone;
+
         // Check if phone is being changed and if it already exists for another member
-        if (phone && phone !== member.phone) {
+        if (phone && normalizedPhone !== member.phone) {
             const existingMember = await prisma.member.findFirst({
                 where: {
                     tenant_id: req.user.tenant_id,
-                    phone: phone,
+                    phone: normalizedPhone,
                     NOT: { id: member.id }
                 }
             });
@@ -1093,7 +1099,7 @@ app.put('/api/members/:id', authMiddleware, async (req: any, res) => {
             where: { id: member.id },
             data: {
                 name,
-                phone,
+                phone: normalizedPhone,
                 plan_id: plan_id || null, // Handle empty string as null
                 plan_end_date,
                 cpf,

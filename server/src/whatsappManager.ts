@@ -218,34 +218,38 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         if (!tenant) return;
 
-        const phone = remoteJid.split('@')[0];
-        const last8 = phone.slice(-8);
-        const ddd = phone.length >= 10 ? phone.slice(-11, -9) : null;
+        const remotePhone = remoteJid.split('@')[0].replace(/\D/g, '');
+        const last8 = remotePhone.slice(-8);
+        const ddd = remotePhone.length >= 10 ? remotePhone.slice(-11, -9) : (remotePhone.length === 8 ? null : remotePhone.slice(0, 2));
 
-        // 1. Identify if it's a member (Precise matching to avoid pauses affecting multiple people)
+        console.log(`[WA] Searching for member. Remote: ${remotePhone}, Last8: ${last8}, DDD: ${ddd}`);
+
+        // 1. Identification Logic (High Resilience)
+        // We try several strategies to find the member
         let member = await prisma.member.findFirst({
             where: {
                 tenant_id: tenantId,
                 OR: [
-                    { phone: phone },
-                    { phone: { endsWith: phone } }
+                    { phone: remotePhone },          // Exact match
+                    { phone: { endsWith: last8 } },  // Matches even if 9th digit or DDI is different
+                    { phone: { contains: last8 } }   // Matches even if there are hyphens/spaces (fallback)
                 ]
             },
             include: { plan: true, tenant: true }
         });
 
-        // Fallback: If not found, try last 8 + DDD to handle numbers saved without DDI
+        // 2. Extra Resilient Check: If still not found, search all members and normalize in memory (Small scale)
+        // This is a safety net for members registered with strange characters
         if (!member) {
-            member = await prisma.member.findFirst({
-                where: {
-                    tenant_id: tenantId,
-                    AND: [
-                        { phone: { contains: last8 } },
-                        ddd ? { phone: { contains: ddd } } : {}
-                    ]
-                },
+            const allMembers = await prisma.member.findMany({
+                where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
             });
+
+            member = allMembers.find(m => {
+                const norm = m.phone.replace(/\D/g, '');
+                return norm.endsWith(last8) || last8.endsWith(norm.slice(-8));
+            }) || null;
         }
 
         // 2 & 3. Background Processing (Logging for members only)
@@ -289,7 +293,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             cleanText.startsWith('oi');
 
         if (!member) {
-            console.log(`[WA] Non-member ${phone} contacted tenant ${tenantId}`);
+            console.log(`[WA] Non-member ${remotePhone} contacted tenant ${tenantId}`);
             await sock.sendMessage(remoteJid, {
                 text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenant.name}*.\n\nVerifiquei aqui e você ainda não é nosso aluno. Deseja conhecer nossos planos ou falar com a recepção?\n\nDigite *Planos* ou *Recepção*.`
             });
@@ -298,7 +302,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // 1.5 Bot Pause Logic
         if (member.bot_paused && !isMenuRequest) {
-            console.log(`[WA] Bot paused for member ${member.name} (${phone}). Ignoring: ${cleanText}`);
+            console.log(`[WA] Bot paused for member ${member.name} (${remotePhone}). Ignoring: ${cleanText}`);
             return;
         }
 
