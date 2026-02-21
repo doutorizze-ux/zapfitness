@@ -10,7 +10,7 @@ const { io } = require("socket.io-client");
 const { exec } = require("child_process");
 
 // CONFIGURAÇÕES (Fornecidas pelo Painel ZapFitness)
-const SERVER_URL = "https://api.zapp.fitness"; // Altere para a URL do seu servidor
+const SERVER_URL = "https://zapp.fitness"; // Altere para a URL do seu servidor
 const GATE_TOKEN = "SEU_TOKEN_AQUI"; // Pegue no painel administrativo
 const TENANT_ID = "SEU_ID_DA_ACADEMIA"; // Pegue no painel administrativo
 

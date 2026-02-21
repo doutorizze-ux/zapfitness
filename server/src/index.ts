@@ -1289,7 +1289,7 @@ app.get('/api/gate/download-bridge', authMiddleware, async (req: any, res) => {
     // Injetar dados reais no arquivo para o cliente
     content = content.replace('SEU_TOKEN_AQUI', tenant.gate_token);
     content = content.replace('SEU_ID_DA_ACADEMIA', tenantId);
-    content = content.replace('https://api.zapp.fitness', process.env.API_URL || 'https://api.zapp.fitness');
+    content = content.replace('https://zapp.fitness', process.env.API_URL || 'https://zapp.fitness');
 
     res.setHeader('Content-Type', 'application/javascript');
     res.setHeader('Content-Disposition', `attachment; filename=ZappBridge_${tenant.slug}.js`);
