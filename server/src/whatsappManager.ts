@@ -224,8 +224,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         console.log(`[WA] Searching for member. Remote: ${remotePhone}, Last8: ${last8}, DDD: ${ddd}`);
 
-        // 1. Identification Logic (High Resilience)
-        // We try several strategies to find the member
+        // 1. Identify if it's a member (Precise matching + 8rd-digit resilience)
         let member = await prisma.member.findFirst({
             where: {
                 tenant_id: tenantId,
@@ -239,40 +238,68 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         });
 
         // 2. Extra Resilient Check: If still not found, search all members and normalize in memory (Small scale)
-        // This is a safety net for members registered with strange characters
         if (!member) {
             const allMembers = await prisma.member.findMany({
                 where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
             });
-
             member = allMembers.find(m => {
                 const norm = m.phone.replace(/\D/g, '');
                 return norm.endsWith(last8) || last8.endsWith(norm.slice(-8));
             }) || null;
         }
 
-        // 2 & 3. Background Processing (Logging for members only)
-        (async () => {
-            try {
-                if (member) {
-                    const chatMsg = await prisma.chatMessage.create({
-                        data: {
-                            tenant_id: tenantId,
-                            content: text,
-                            jid: remoteJid,
-                            from_me: false,
-                            member_id: member.id,
-                            type: msg.message?.imageMessage ? 'image' : 'text'
-                        }
-                    });
-
-                    eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
+        // 3. Lead Identification/Creation (For Non-Members)
+        let lead: any = null;
+        if (!member) {
+            lead = await prisma.lead.findFirst({
+                where: {
+                    tenant_id: tenantId,
+                    OR: [
+                        { phone: remotePhone },
+                        { phone: { endsWith: last8 } }
+                    ]
                 }
-            } catch (err) {
-                console.error('[WA] Background logging error:', err);
+            });
+
+            if (!lead) {
+                lead = await prisma.lead.create({
+                    data: {
+                        tenant_id: tenantId,
+                        phone: remotePhone,
+                        name: senderName !== "Interessado" ? senderName : null,
+                        status: 'new',
+                        last_message: text,
+                        last_message_at: new Date()
+                    }
+                });
+            } else {
+                await prisma.lead.update({
+                    where: { id: lead.id },
+                    data: {
+                        last_message: text,
+                        last_message_at: new Date(),
+                        name: !lead.name && senderName !== "Interessado" ? senderName : lead.name
+                    }
+                });
             }
-        })();
+        }
+
+        // 4. Message Logging (Common for both Member and Lead)
+        const chatMsg = await prisma.chatMessage.create({
+            data: {
+                tenant_id: tenantId,
+                content: text,
+                jid: remoteJid,
+                from_me: false,
+                member_id: member?.id,
+                lead_id: lead?.id,
+                type: msg.message?.imageMessage ? 'image' : 'text'
+            }
+        });
+
+        // Emit for real-time dashboard updates
+        eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
 
         // --- AUTH & PLAN CHECKS (FAST) ---
         if ((tenant as any).status === 'BLOCKED') return;
