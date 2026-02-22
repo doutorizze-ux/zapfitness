@@ -252,19 +252,23 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         if (!tenant) return;
 
         const remotePhone = remoteJid.split('@')[0].replace(/\D/g, '');
-        const last8 = remotePhone.slice(-8);
 
-        // Log the attempt for debugging
-        console.log(`[WA] Message from ${senderName} (${remotePhone}). Searching member in Tenant ${tenantId}...`);
+        const getRegionalId = (phone: string) => {
+            const clean = phone.replace(/^55/, '');
+            if (clean.length < 10) return clean;
+            return clean.slice(0, 2) + clean.slice(-8);
+        };
+        const remoteRegionalId = getRegionalId(remotePhone);
+
+        console.log(`[WA] Message from ${senderName} (${remotePhone}). Regional ID: ${remoteRegionalId}`);
 
         // 1. Precise matching (DB Level)
         let member = await prisma.member.findFirst({
             where: {
                 tenant_id: tenantId,
                 OR: [
-                    { phone: remotePhone },          // Exact match
-                    { phone: { endsWith: last8 } },  // Matches even if 9th digit or DDI is different
-                    { phone: { contains: last8 } }   // Matches even if there are hyphens/spaces
+                    { phone: remotePhone },
+                    { phone: { endsWith: remoteRegionalId.slice(-8) } }
                 ]
             },
             include: { plan: true, tenant: true }
@@ -272,22 +276,21 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // 2. Ultra-Resilient Check: Normalize everything to last 8 digits in memory
         if (!member) {
-            console.log(`[WA] Initial search failed for ${remotePhone}. Trying ultra-resilient search...`);
+            console.log(`[WA] Initial search failed. Trying regional matching (DDD + 8 digits)...`);
             const allMembers = await prisma.member.findMany({
                 where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
             });
 
             member = allMembers.find(m => {
-                const dbNorm = m.phone.replace(/\D/g, '');
-                const dbLast8 = dbNorm.slice(-8);
-                return dbLast8 === last8; // Pure match on the core number
+                const dbRegionalId = getRegionalId(m.phone.replace(/\D/g, ''));
+                return dbRegionalId === remoteRegionalId;
             }) || null;
 
             if (member) {
-                console.log(`[WA] Member ${member.name} found via resilient search (DB: ${member.phone} vs WA: ${remotePhone})`);
+                console.log(`[WA] Member ${member.name} found via regional search (DDD: ${remoteRegionalId.slice(0, 2)})`);
             } else {
-                console.log(`[WA] No member found for ${remotePhone} in Tenant ${tenantId} (Last8: ${last8})`);
+                console.log(`[WA] No member found for ${remotePhone} (Target ID: ${remoteRegionalId})`);
             }
         }
 
@@ -299,7 +302,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                     tenant_id: tenantId,
                     OR: [
                         { phone: remotePhone },
-                        { phone: { endsWith: last8 } }
+                        { phone: { endsWith: remoteRegionalId.slice(-8) } }
                     ]
                 }
             });
