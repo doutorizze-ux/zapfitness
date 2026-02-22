@@ -258,40 +258,34 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             if (clean.length < 10) return clean;
             return clean.slice(0, 2) + clean.slice(-8);
         };
+
         const remoteRegionalId = getRegionalId(remotePhone);
+        const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
 
-        console.log(`[WA] Message from ${senderName} (${remotePhone}). Regional ID: ${remoteRegionalId}`);
+        console.log(`[WA] Message from ${senderName}. Remote: ${remotePhone}, RegionalID: ${remoteRegionalId}`);
 
-        // 1. Precise matching (DB Level)
-        let member = await prisma.member.findFirst({
-            where: {
-                tenant_id: tenantId,
-                OR: [
-                    { phone: remotePhone },
-                    { phone: { endsWith: remoteRegionalId.slice(-8) } }
-                ]
-            },
+        // Triple-Check resilient search
+        const allMembers = await prisma.member.findMany({
+            where: { tenant_id: tenantId },
             include: { plan: true, tenant: true }
         });
 
-        // 2. Ultra-Resilient Check: Normalize everything to last 8 digits in memory
-        if (!member) {
-            console.log(`[WA] Initial search failed. Trying regional matching (DDD + 8 digits)...`);
-            const allMembers = await prisma.member.findMany({
-                where: { tenant_id: tenantId },
-                include: { plan: true, tenant: true }
-            });
+        let member = allMembers.find(m => {
+            const dbPhone = m.phone.replace(/\D/g, '');
+            const dbRegionalId = getRegionalId(dbPhone);
+            const dbPhoneNoDDI = dbPhone.replace(/^55/, '');
 
-            member = allMembers.find(m => {
-                const dbRegionalId = getRegionalId(m.phone.replace(/\D/g, ''));
-                return dbRegionalId === remoteRegionalId;
-            }) || null;
+            return (
+                dbPhone === remotePhone ||             // 1. Exact match (DDI+DDD+Num)
+                dbPhoneNoDDI === remotePhoneNoDDI ||   // 2. Match without DDI
+                dbRegionalId === remoteRegionalId      // 3. Regional match (DDD + Last 8)
+            );
+        }) || null;
 
-            if (member) {
-                console.log(`[WA] Member ${member.name} found via regional search (DDD: ${remoteRegionalId.slice(0, 2)})`);
-            } else {
-                console.log(`[WA] No member found for ${remotePhone} (Target ID: ${remoteRegionalId})`);
-            }
+        if (member) {
+            console.log(`[WA] Member Found: ${member.name} (Method: Triple-Check)`);
+        } else {
+            console.log(`[WA] No member found for ${remotePhone} in Tenant ${tenantId}`);
         }
 
         // 3. Lead Identification/Creation (For Non-Members)
