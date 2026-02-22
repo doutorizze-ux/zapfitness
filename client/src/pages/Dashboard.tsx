@@ -18,6 +18,7 @@ import { Chat } from './Chat';
 import clsx from 'clsx';
 import api from '../api';
 import { formatImageUrl } from '../utils/format';
+import { NotificationHandler } from '../components/NotificationHandler';
 
 export const Dashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -62,6 +63,7 @@ export const Dashboard = () => {
 
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">
+            <NotificationHandler />
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-72 bg-slate-950 text-white flex-col shadow-2xl z-20">
                 <div className="p-8 border-b border-slate-800">

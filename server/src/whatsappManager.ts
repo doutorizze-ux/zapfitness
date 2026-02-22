@@ -413,6 +413,13 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 data: { bot_paused: true }
             });
             await humanizedSendMessage(sock, remoteJid, { text: '📞 *Atendimento Humano*\n\nO robô foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
+
+            // Emit event for real-time sound notification
+            eventBus.emit(EVENTS.ATTENDANCE_REQUESTED, {
+                tenantId,
+                memberId: member.id,
+                memberName: member.name
+            });
         } else if ((cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) && tenant.enable_scheduling) {
             await handleGetAppointments(member, sock, remoteJid);
         } else if (cleanText === 'planos') {

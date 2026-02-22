@@ -1418,6 +1418,10 @@ eventBus.on(EVENTS.NEW_MESSAGE, (msg) => {
     io.to(msg.tenant_id).emit('new_message', msg);
 });
 
+eventBus.on(EVENTS.ATTENDANCE_REQUESTED, (data) => {
+    io.to(data.tenantId).emit('attendance:requested', data);
+});
+
 eventBus.on(EVENTS.CHECKIN_GRANTED, (data) => {
     console.log(`[Events] Check-in GRANTED for tenant ${data.tenantId}, member ${data.memberName}`);
     // Emit to the specific gym's room
