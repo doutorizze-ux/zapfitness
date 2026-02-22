@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, CheckCircle2, XCircle, Send, Brain } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, XCircle, Send, Brain } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'react-toastify';
 import { WorkoutBuilder } from '../components/WorkoutBuilder';
