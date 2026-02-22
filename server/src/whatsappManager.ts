@@ -512,171 +512,175 @@ async function getMemberStreak(memberId: string) {
     return streak;
 }
 
+const activeCheckins = new Set<string>();
+
 async function handleCheckin(tenantId: string, member: any, sock: WASocket, remoteJid: string, tenant: any) {
-    if (!member.active) {
-        await humanizedSendMessage(sock, remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
-        await logAccess(tenantId, member.id, 'DENIED_INACTIVE', remoteJid);
-        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'INACTIVE' });
+    if (activeCheckins.has(member.id)) {
+        console.log(`[Checkin] Blocking concurrent check-in for member ${member.name} (${member.id})`);
         return;
     }
 
-    // We accept 'tenant' as arg now to avoid re-fetch, but if it doesn't have notificationSettings, we might need them.
-    // The handleMessage fetched tenant with { saas_plan: true } only.
-    // Let's re-fetch tenant with full settings if needed, or update the handleMessage fetch.
-    // For simplicity/correctness, let's fetch settings here or rely on what passed.
-    // Efficient way: Fetch NotificationSettings separately or include in handleMessage. 
-    // Let's fetch settings here to keep handleMessage light? No, handleMessage is already fetching.
-    // Let's just do a quick fetch for settings here.
+    try {
+        activeCheckins.add(member.id);
 
-    const settings = await prisma.notificationSettings.findUnique({ where: { tenant_id: tenantId } });
-
-    // SaaS Plan Expiry Check
-    if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
-        await humanizedSendMessage(sock, remoteJid, { text: '🚫 Sistema suspenso. Planos expirados não permitem check-in. Contacte a admin da academia.' });
-        return;
-    }
-
-    if (member.plan_end_date && new Date(member.plan_end_date) < new Date()) {
-        const planMsg = settings?.plan_expired
-            || "🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.";
-
-        await humanizedSendMessage(sock, remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
-        await logAccess(tenantId, member.id, 'DENIED_PLAN_EXPIRED', remoteJid);
-        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'PLAN_EXPIRED' });
-        return;
-    }
-
-    // 1. Time Window Check
-    const now = new Date();
-    const currentTimeStr = now.toLocaleTimeString('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'America/Sao_Paulo'
-    });
-
-    console.log(`[Checkin] Checking hours. Now: ${currentTimeStr}, Open: ${tenant.opening_time}, Close: ${tenant.closing_time}`);
-
-    if (tenant.opening_time && tenant.closing_time) {
-        if (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time) {
-            await humanizedSendMessage(sock, remoteJid, { text: `⛔ A academia está fechada. Horário de funcionamento: ${tenant.opening_time} às ${tenant.closing_time}.` });
-            await logAccess(tenantId, member.id, 'DENIED_OUTSIDE_HOURS', remoteJid);
-            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'OUTSIDE_HOURS' });
+        if (!member.active) {
+            await logAccess(tenantId, member.id, 'DENIED_INACTIVE', remoteJid);
+            await humanizedSendMessage(sock, remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
+            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'INACTIVE' });
             return;
         }
-    }
 
-    // 2. Daily Limit Check
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dailyAccessCount = await prisma.accessLog.count({
-        where: {
-            member_id: member.id,
-            status: 'GRANTED',
-            scanned_at: { gte: today }
-        }
-    });
+        const settings = await prisma.notificationSettings.findUnique({ where: { tenant_id: tenantId } });
 
-    console.log(`[Checkin] Daily limit check for ${member.name}: current=${dailyAccessCount}, max=${tenant.max_daily_access}`);
-
-    if (dailyAccessCount >= tenant.max_daily_access) {
-        await humanizedSendMessage(sock, remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });
-        await logAccess(tenantId, member.id, 'DENIED_DAILY_LIMIT', remoteJid);
-        eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'DAILY_LIMIT' });
-        return;
-    }
-
-    // 3. Cooldown Check
-    const lastAccess = await prisma.accessLog.findFirst({
-        where: { member_id: member.id, status: 'GRANTED' },
-        orderBy: { scanned_at: 'desc' }
-    });
-
-    if (lastAccess) {
-        const diffMinutes = (now.getTime() - new Date(lastAccess.scanned_at).getTime()) / 1000 / 60;
-        if (diffMinutes < tenant.access_cooldown) {
-            const waitTime = Math.ceil(tenant.access_cooldown - diffMinutes);
-            await humanizedSendMessage(sock, remoteJid, { text: `⏳ Aguarde ${waitTime} minutos para realizar um novo check-in.` });
-            await logAccess(tenantId, member.id, 'DENIED_COOLDOWN', remoteJid);
-            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'COOLDOWN' });
+        // SaaS Plan Expiry Check
+        if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
+            await humanizedSendMessage(sock, remoteJid, { text: '🚫 Sistema suspenso. Planos expirados não permitem check-in. Contacte a admin da academia.' });
             return;
         }
-    }
 
-    // Access Granted
-    const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
-    let textResponse = msg.replace('{name}', member.name.split(' ')[0]);
+        if (member.plan_end_date && new Date(member.plan_end_date) < new Date()) {
+            const planMsg = settings?.plan_expired
+                || "🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.";
 
-    if (tenant.enable_scheduling) {
-        // Check for appointments today (Fixed OR One-off)
-        const dayOfWeek = now.getDay();
-        const startOfDay = new Date(now);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(now);
-        endOfDay.setHours(23, 59, 59, 999);
+            await logAccess(tenantId, member.id, 'DENIED_PLAN_EXPIRED', remoteJid);
+            await humanizedSendMessage(sock, remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
+            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'PLAN_EXPIRED' });
+            return;
+        }
 
-        // Check fixed schedule for today
-        const fixedSchedule = await prisma.memberSchedule.findFirst({
-            where: { member_id: member.id, day_of_week: dayOfWeek }
+        // 1. Time Window Check
+        const now = new Date();
+        const currentTimeStr = now.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'America/Sao_Paulo'
         });
 
-        // Check one-off appointment for today
-        const oneOffApp = await prisma.appointment.findFirst({
+        if (tenant.opening_time && tenant.closing_time) {
+            if (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time) {
+                await logAccess(tenantId, member.id, 'DENIED_OUTSIDE_HOURS', remoteJid);
+                await humanizedSendMessage(sock, remoteJid, { text: `⛔ A academia está fechada. Horário de funcionamento: ${tenant.opening_time} às ${tenant.closing_time}.` });
+                eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'OUTSIDE_HOURS' });
+                return;
+            }
+        }
+
+        // 2. Daily Limit Check
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dailyAccessCount = await prisma.accessLog.count({
             where: {
                 member_id: member.id,
-                dateTime: { gte: startOfDay, lte: endOfDay },
-                status: { not: 'CANCELLED' }
+                status: 'GRANTED',
+                scanned_at: { gte: today }
             }
         });
 
-        if (fixedSchedule || oneOffApp) {
-            const time = fixedSchedule ? fixedSchedule.start_time : format(new Date(oneOffApp!.dateTime), 'HH:mm');
-            const type = fixedSchedule ? fixedSchedule.type : oneOffApp!.type;
-            const typeLabel = type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
-                type === 'PERSONAL' ? 'um *Treino com Personal*' : 'seu *Treino Agendado*';
-
-            textResponse += `\n\n📌 *Check-in no Horário:* Você está no seu horário de ${typeLabel} das *${time}*. Bom treino!`;
+        if (dailyAccessCount >= tenant.max_daily_access) {
+            await logAccess(tenantId, member.id, 'DENIED_DAILY_LIMIT', remoteJid);
+            await humanizedSendMessage(sock, remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });
+            eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'DAILY_LIMIT' });
+            return;
         }
+
+        // 3. Cooldown Check
+        const lastAccess = await prisma.accessLog.findFirst({
+            where: { member_id: member.id, status: 'GRANTED' },
+            orderBy: { scanned_at: 'desc' }
+        });
+
+        if (lastAccess) {
+            const diffMinutes = (now.getTime() - new Date(lastAccess.scanned_at).getTime()) / 1000 / 60;
+            if (diffMinutes < tenant.access_cooldown) {
+                const waitTime = Math.ceil(tenant.access_cooldown - diffMinutes);
+                await logAccess(tenantId, member.id, 'DENIED_COOLDOWN', remoteJid);
+                await humanizedSendMessage(sock, remoteJid, { text: `⏳ Aguarde ${waitTime} minutos para realizar um novo check-in.` });
+                eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'COOLDOWN' });
+                return;
+            }
+        }
+
+        // Access Granted - LOG FIRST to prevent race conditions during message delay
+        await logAccess(tenantId, member.id, 'GRANTED', remoteJid);
+
+        const msg = settings?.checkin_success || "✅ Acesso Liberado! Bom treino, {name}.";
+        let textResponse = msg.replace('{name}', member.name.split(' ')[0]);
+
+        if (tenant.enable_scheduling) {
+            const dayOfWeek = now.getDay();
+            const startOfDay = new Date(now);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const fixedSchedule = await prisma.memberSchedule.findFirst({
+                where: { member_id: member.id, day_of_week: dayOfWeek }
+            });
+
+            const oneOffApp = await prisma.appointment.findFirst({
+                where: {
+                    member_id: member.id,
+                    dateTime: { gte: startOfDay, lte: endOfDay },
+                    status: { not: 'CANCELLED' }
+                }
+            });
+
+            if (fixedSchedule || oneOffApp) {
+                const time = fixedSchedule ? fixedSchedule.start_time : format(new Date(oneOffApp!.dateTime), 'HH:mm');
+                const type = fixedSchedule ? fixedSchedule.type : oneOffApp!.type;
+                const typeLabel = type === 'AVALIAÇÃO' ? 'uma *Avaliação Física*' :
+                    type === 'PERSONAL' ? 'um *Treino com Personal*' : 'seu *Treino Agendado*';
+
+                textResponse += `\n\n📌 *Check-in no Horário:* Você está no seu horário de ${typeLabel} das *${time}*. Bom treino!`;
+            }
+        }
+
+        await humanizedSendMessage(sock, remoteJid, { text: textResponse });
+
+        // 4. Gamification (Streaks) - Calculate AFTER logging
+        const streak = await getMemberStreak(member.id);
+        if (streak > 1) {
+            let streakMsg = `🔥 *OFENSIVA: ${streak} DIAS!* `;
+            if (streak === 2) streakMsg += `Isso aí! Segundo dia seguido! 💪`;
+            else if (streak === 3) streakMsg += `Você está pegando fogo! 3 dias sem errar! ⚡`;
+            else if (streak === 5) streakMsg += `IMBATÍVEL! Uma semana perfeita de treinos! 🏆`;
+            else if (streak === 7) streakMsg += `ELITE! Uma semana completa! Você é inspiração! ⭐`;
+            else if (streak > 7) streakMsg += `SIMPLLESMENTE MONSTRUOSO! ${streak} dias de consistência pura! 🦁`;
+            else streakMsg += `Mantenha o ritmo, não pare agora! 🚀`;
+
+            await humanizedSendMessage(sock, remoteJid, { text: streakMsg });
+        }
+
+        // Emit event for Turnstile integration
+        eventBus.emit(EVENTS.CHECKIN_GRANTED, {
+            tenantId,
+            memberId: member.id,
+            memberName: member.name,
+            phone: member.phone
+        });
+    } catch (err) {
+        console.error('[Checkin] Error in handleCheckin:', err);
+    } finally {
+        activeCheckins.delete(member.id);
     }
-
-    await humanizedSendMessage(sock, remoteJid, { text: textResponse });
-    await logAccess(tenantId, member.id, 'GRANTED', remoteJid);
-
-    // 4. Gamification (Streaks) - Calculate AFTER logging
-    const streak = await getMemberStreak(member.id);
-    if (streak > 1) {
-        let streakMsg = `🔥 *OFENSIVA: ${streak} DIAS!* `;
-        if (streak === 2) streakMsg += `Isso aí! Segundo dia seguido! 💪`;
-        else if (streak === 3) streakMsg += `Você está pegando fogo! 3 dias sem errar! ⚡`;
-        else if (streak === 5) streakMsg += `IMBATÍVEL! Uma semana perfeita de treinos! 🏆`;
-        else if (streak === 7) streakMsg += `ELITE! Uma semana completa! Você é inspiração! ⭐`;
-        else if (streak > 7) streakMsg += `SIMPLLESMENTE MONSTRUOSO! ${streak} dias de consistência pura! 🦁`;
-        else streakMsg += `Mantenha o ritmo, não pare agora! 🚀`;
-
-        await humanizedSendMessage(sock, remoteJid, { text: streakMsg });
-    }
-
-    // Emit event for Turnstile integration
-    eventBus.emit(EVENTS.CHECKIN_GRANTED, {
-        tenantId,
-        memberId: member.id,
-        memberName: member.name,
-        phone: member.phone
-    });
 }
 
-// Unused now but kept for reference or deleted? The handleMessage calls replacement logic.
-// Deleting the old functions to avoid duplicates.
-
 async function handleSuspiciousActivity(tenantId: string, phone: string, remoteJid: string) {
-    // Kept but might be unused if we return early. 
-    // Actually useful to keep if we want to re-enable logging for unknown users.
-    // For now, leaving it as helper.
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // ... logic ...
-    // To save lines, I will not include the full body here unless needed. 
-    // But since I am replacing a block, I must be careful with what I replace.
+
+    await prisma.securityLog.create({
+        data: {
+            tenant_id: tenantId,
+            event_type: 'SUSPICIOUS_ACTIVITY',
+            description: `Unknown user ${phone} attempted check-in or specific command.`,
+            severity: 'LOW',
+            source: phone
+        }
+    });
+
+    console.log(`[Security] Suspicious activity logged for ${phone} (Tenant: ${tenantId})`);
 }
 
 async function logAccess(tenantId: string, memberId: string | null, status: string, by: string) {
@@ -709,7 +713,6 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
 
     if (hasDigital) {
         text += `📱 *Treinos Digitais (Interativos):*\n`;
-        // Use default app domain
         const baseUrl = process.env.FRONTEND_URL || 'https://zapp.fitness';
         digitalWorkouts.forEach((w: any) => {
             text += `• *${w.name}* (${w.exercises.length} exercícios)\n`;
@@ -743,13 +746,11 @@ async function handleGetStatus(member: any, sock: WASocket, remoteJid: string) {
 }
 
 async function handleGetAppointments(member: any, sock: WASocket, remoteJid: string) {
-    // Get recurring schedules
     const fixedSchedules = await prisma.memberSchedule.findMany({
         where: { member_id: member.id },
         orderBy: [{ day_of_week: 'asc' }, { start_time: 'asc' }]
     });
 
-    // Get next 3 one-off appointments
     const oneOffs = await prisma.appointment.findMany({
         where: { member_id: member.id, dateTime: { gte: new Date() }, status: { not: 'CANCELLED' } },
         orderBy: { dateTime: 'asc' },
