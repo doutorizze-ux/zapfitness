@@ -11,6 +11,24 @@ import { eventBus, EVENTS } from './events.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export async function humanizedSendMessage(sock: WASocket, jid: string, content: any) {
+    try {
+        if (content.text) {
+            await sock.sendPresenceUpdate('composing', jid);
+            // Simulate typing speed: ~15ms per character, min 1.5s, max 5s
+            const typingTime = Math.min(Math.max(content.text.length * 15, 1500), 5000);
+            await delay(typingTime);
+            await sock.sendPresenceUpdate('paused', jid);
+        }
+        return await sock.sendMessage(jid, content);
+    } catch (err) {
+        console.error('[WA] Error in humanizedSendMessage:', err);
+        return await sock.sendMessage(jid, content); // Fallback
+    }
+}
+
 // Store multiple WhatsApp sessions: tenantId -> WASocket
 export const sessions = new Map<string, WASocket>();
 
@@ -189,7 +207,7 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     }
 
     console.log(`[WA] Sending message to resolved JID: ${targetJid} (Original: ${jid})`);
-    const result = await sock.sendMessage(targetJid, { text });
+    const result = await humanizedSendMessage(sock, targetJid, { text });
 
     // Save outgoing message
     const phone = jid.split('@')[0].replace(/\D/g, '');
@@ -320,7 +338,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         if ((tenant as any).status === 'BLOCKED') return;
 
         if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
-            await sock.sendMessage(remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
+            await humanizedSendMessage(sock, remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
             return;
         }
 
@@ -336,7 +354,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         if (!member) {
             console.log(`[WA] Non-member ${remotePhone} contacted tenant ${tenantId}`);
-            await sock.sendMessage(remoteJid, {
+            await humanizedSendMessage(sock, remoteJid, {
                 text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenant.name}*.\n\nVerifiquei aqui e você ainda não é nosso aluno. Deseja conhecer nossos planos ou falar com a recepção?\n\nDigite *Planos* ou *Recepção*.`
             });
             return;
@@ -372,7 +390,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             }
 
             if (isClosed) {
-                await sock.sendMessage(remoteJid, {
+                await humanizedSendMessage(sock, remoteJid, {
                     text: `👋 Olá, *${member.name.split(' ')[0]}*!\n\nNo momento a *${tenant.name}* está fechada. Nosso horário é das ${tenant.opening_time} às ${tenant.closing_time}.\n\nComo posso ajudar?`
                 });
             }
@@ -394,7 +412,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 where: { id: member.id },
                 data: { bot_paused: true }
             });
-            await sock.sendMessage(remoteJid, { text: '📞 *Atendimento Humano*\n\nO robô foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
+            await humanizedSendMessage(sock, remoteJid, { text: '📞 *Atendimento Humano*\n\nO robô foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
         } else if ((cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) && tenant.enable_scheduling) {
             await handleGetAppointments(member, sock, remoteJid);
         } else if (cleanText === 'planos') {
@@ -404,7 +422,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 plansText += `✅ *${p.name}*: R$ ${p.price}\n`;
             });
             plansText += `\nVenha nos visitar para se matricular!`;
-            await sock.sendMessage(remoteJid, { text: plansText });
+            await humanizedSendMessage(sock, remoteJid, { text: plansText });
         } else {
             // Se não entendeu, manda o menu para ajudar
             await sendMainMenu(member, sock, remoteJid);
@@ -448,12 +466,48 @@ async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
         menu += `\n6️⃣ *Meus Agendamentos*`;
     }
 
-    await sock.sendMessage(remoteJid, { text: menu });
+    await humanizedSendMessage(sock, remoteJid, { text: menu });
+}
+
+async function getMemberStreak(memberId: string) {
+    let streak = 0;
+    // Start from today
+    let checkDate = new Date();
+    checkDate.setHours(0, 0, 0, 0);
+
+    // Note: This is called AFTER the current check-in is logged to the DB, 
+    // or we can call it before and add 1. 
+    // Let's call it after the check-in is recorded in handleCheckin.
+
+    while (true) {
+        const dayStart = new Date(checkDate);
+        const dayEnd = new Date(checkDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const hasAccess = await prisma.accessLog.findFirst({
+            where: {
+                member_id: memberId,
+                status: 'GRANTED',
+                scanned_at: {
+                    gte: dayStart,
+                    lte: dayEnd
+                }
+            }
+        });
+
+        if (hasAccess) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            break;
+        }
+    }
+    return streak;
 }
 
 async function handleCheckin(tenantId: string, member: any, sock: WASocket, remoteJid: string, tenant: any) {
     if (!member.active) {
-        await sock.sendMessage(remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
+        await humanizedSendMessage(sock, remoteJid, { text: '❌ Acesso negado. Sua matrícula está inativa.' });
         await logAccess(tenantId, member.id, 'DENIED_INACTIVE', remoteJid);
         eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'INACTIVE' });
         return;
@@ -471,7 +525,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
     // SaaS Plan Expiry Check
     if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
-        await sock.sendMessage(remoteJid, { text: '🚫 Sistema suspenso. Planos expirados não permitem check-in. Contacte a admin da academia.' });
+        await humanizedSendMessage(sock, remoteJid, { text: '🚫 Sistema suspenso. Planos expirados não permitem check-in. Contacte a admin da academia.' });
         return;
     }
 
@@ -479,7 +533,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
         const planMsg = settings?.plan_expired
             || "🚫 {name}, seu plano venceu hoje. Passe na recepção para renovar.";
 
-        await sock.sendMessage(remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
+        await humanizedSendMessage(sock, remoteJid, { text: planMsg.replace('{name}', member.name.split(' ')[0]) });
         await logAccess(tenantId, member.id, 'DENIED_PLAN_EXPIRED', remoteJid);
         eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'PLAN_EXPIRED' });
         return;
@@ -498,7 +552,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
 
     if (tenant.opening_time && tenant.closing_time) {
         if (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time) {
-            await sock.sendMessage(remoteJid, { text: `⛔ A academia está fechada. Horário de funcionamento: ${tenant.opening_time} às ${tenant.closing_time}.` });
+            await humanizedSendMessage(sock, remoteJid, { text: `⛔ A academia está fechada. Horário de funcionamento: ${tenant.opening_time} às ${tenant.closing_time}.` });
             await logAccess(tenantId, member.id, 'DENIED_OUTSIDE_HOURS', remoteJid);
             eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'OUTSIDE_HOURS' });
             return;
@@ -519,7 +573,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
     console.log(`[Checkin] Daily limit check for ${member.name}: current=${dailyAccessCount}, max=${tenant.max_daily_access}`);
 
     if (dailyAccessCount >= tenant.max_daily_access) {
-        await sock.sendMessage(remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });
+        await humanizedSendMessage(sock, remoteJid, { text: `⚠️ Limite diário de acessos atingido (${tenant.max_daily_access} acesso(s) por dia).` });
         await logAccess(tenantId, member.id, 'DENIED_DAILY_LIMIT', remoteJid);
         eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'DAILY_LIMIT' });
         return;
@@ -535,7 +589,7 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
         const diffMinutes = (now.getTime() - new Date(lastAccess.scanned_at).getTime()) / 1000 / 60;
         if (diffMinutes < tenant.access_cooldown) {
             const waitTime = Math.ceil(tenant.access_cooldown - diffMinutes);
-            await sock.sendMessage(remoteJid, { text: `⏳ Aguarde ${waitTime} minutos para realizar um novo check-in.` });
+            await humanizedSendMessage(sock, remoteJid, { text: `⏳ Aguarde ${waitTime} minutos para realizar um novo check-in.` });
             await logAccess(tenantId, member.id, 'DENIED_COOLDOWN', remoteJid);
             eventBus.emit(EVENTS.CHECKIN_DENIED, { tenantId, memberId: member.id, memberName: member.name, reason: 'COOLDOWN' });
             return;
@@ -578,8 +632,22 @@ async function handleCheckin(tenantId: string, member: any, sock: WASocket, remo
         }
     }
 
-    await sock.sendMessage(remoteJid, { text: textResponse });
+    await humanizedSendMessage(sock, remoteJid, { text: textResponse });
     await logAccess(tenantId, member.id, 'GRANTED', remoteJid);
+
+    // 4. Gamification (Streaks) - Calculate AFTER logging
+    const streak = await getMemberStreak(member.id);
+    if (streak > 1) {
+        let streakMsg = `🔥 *OFENSIVA: ${streak} DIAS!* `;
+        if (streak === 2) streakMsg += `Isso aí! Segundo dia seguido! 💪`;
+        else if (streak === 3) streakMsg += `Você está pegando fogo! 3 dias sem errar! ⚡`;
+        else if (streak === 5) streakMsg += `IMBATÍVEL! Uma semana perfeita de treinos! 🏆`;
+        else if (streak === 7) streakMsg += `ELITE! Uma semana completa! Você é inspiração! ⭐`;
+        else if (streak > 7) streakMsg += `SIMPLLESMENTE MONSTRUOSO! ${streak} dias de consistência pura! 🦁`;
+        else streakMsg += `Mantenha o ritmo, não pare agora! 🚀`;
+
+        await humanizedSendMessage(sock, remoteJid, { text: streakMsg });
+    }
 
     // Emit event for Turnstile integration
     eventBus.emit(EVENTS.CHECKIN_GRANTED, {
@@ -626,7 +694,7 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
     const hasManual = member.workout_routine && member.workout_routine.trim() !== '';
 
     if (!hasDigital && !hasManual) {
-        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você ainda não possui um treino cadastrado.' });
+        await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Você ainda não possui um treino cadastrado.' });
         return;
     }
 
@@ -646,14 +714,14 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
         text += `📝 *Anotações / Ficha Manual:*\n${member.workout_routine}\n`;
     }
 
-    await sock.sendMessage(remoteJid, { text: text.trim() });
+    await humanizedSendMessage(sock, remoteJid, { text: text.trim() });
 }
 
 async function handleGetDiet(member: any, sock: WASocket, remoteJid: string) {
     if (member && member.diet_plan) {
-        await sock.sendMessage(remoteJid, { text: `🥗 *Sua Dieta:*\n\n${member.diet_plan}` });
+        await humanizedSendMessage(sock, remoteJid, { text: `🥗 *Sua Dieta:*\n\n${member.diet_plan}` });
     } else {
-        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você ainda não possui uma dieta cadastrada.' });
+        await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Você ainda não possui uma dieta cadastrada.' });
     }
 }
 
@@ -661,9 +729,9 @@ async function handleGetStatus(member: any, sock: WASocket, remoteJid: string) {
     if (member) {
         const planName = member.plan?.name || 'Sem plano';
         const expiry = member.plan_end_date ? member.plan_end_date.toLocaleDateString('pt-BR') : 'N/A';
-        await sock.sendMessage(remoteJid, { text: `📋 *Status do Plano*\n\nPlano: ${planName}\nVencimento: ${expiry}\nStatus: ${member.active ? 'Ativo' : 'Inativo'}` });
+        await humanizedSendMessage(sock, remoteJid, { text: `📋 *Status do Plano*\n\nPlano: ${planName}\nVencimento: ${expiry}\nStatus: ${member.active ? 'Ativo' : 'Inativo'}` });
     } else {
-        await sock.sendMessage(remoteJid, { text: 'ℹ️ Cadastro não encontrado.' });
+        await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Cadastro não encontrado.' });
     }
 }
 
@@ -682,7 +750,7 @@ async function handleGetAppointments(member: any, sock: WASocket, remoteJid: str
     });
 
     if (fixedSchedules.length === 0 && oneOffs.length === 0) {
-        await sock.sendMessage(remoteJid, { text: 'ℹ️ Você não possui horários fixos ou agendamentos ativos.\n\nPara definir sua rotina semanal de treinos, fale com a recepção digitando *5*.' });
+        await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Você não possui horários fixos ou agendamentos ativos.\n\nPara definir sua rotina semanal de treinos, fale com a recepção digitando *5*.' });
         return;
     }
 
@@ -705,5 +773,5 @@ async function handleGetAppointments(member: any, sock: WASocket, remoteJid: str
     }
 
     text += `\nPara alterar qualquer horário, procure a recepção.`;
-    await sock.sendMessage(remoteJid, { text });
+    await humanizedSendMessage(sock, remoteJid, { text });
 }

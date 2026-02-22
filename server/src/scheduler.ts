@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { prisma } from './db.js';
-import { sessions } from './whatsappManager.js';
+import { sessions, humanizedSendMessage } from './whatsappManager.js';
 
 export const initScheduler = () => {
     // Run every day at 09:00 AM
@@ -50,7 +50,7 @@ const checkPlanWarnings = async () => {
             const jid = member.phone.includes('@') ? member.phone : `${member.phone}@s.whatsapp.net`;
 
             try {
-                await sock.sendMessage(jid, { text: msg });
+                await humanizedSendMessage(sock, jid, { text: msg });
                 console.log(`Sent warning to ${member.name}`);
             } catch (e) {
                 console.error(`Failed to send warning to ${member.name}`, e);
@@ -87,7 +87,7 @@ const checkPlanExpirations = async () => {
             const jid = member.phone.includes('@') ? member.phone : `${member.phone}@s.whatsapp.net`;
 
             try {
-                await sock.sendMessage(jid, { text: msg });
+                await humanizedSendMessage(sock, jid, { text: msg });
                 console.log(`Sent expiry notice to ${member.name}`);
             } catch (e) {
                 console.error(`Failed to send expiry notice to ${member.name}`, e);
@@ -125,7 +125,7 @@ const notifyOwners = async () => {
             if (sock) {
                 const msg = `📅 *Resumo Diário*\n\nHoje venceram ${expiredCount} planos de membros. Verifique o painel para mais detalhes.`;
                 const jid = tenant.owner_phone.includes('@') ? tenant.owner_phone : `${tenant.owner_phone}@s.whatsapp.net`;
-                await sock.sendMessage(jid, { text: msg });
+                await humanizedSendMessage(sock, jid, { text: msg });
             }
         }
     }
@@ -140,35 +140,72 @@ const checkInactiveMembersChurn = async () => {
     });
 
     for (const tenant of tenants) {
-        if (!tenant.owner_phone) continue;
+        const sock = sessions.get(tenant.id);
+        if (!sock) continue;
 
-        // Find members who haven't checked in for 7 days but have active plans
-        const riskyMembers = await prisma.member.findMany({
-            where: {
-                tenant_id: tenant.id,
-                active: true,
-                plan_end_date: { gte: new Date() },
-                accessLogs: {
-                    none: {
-                        scanned_at: { gte: sevenDaysAgo }
+        // 1. Alert Members Directly (those who disappeared exactly 7 or 15 days ago)
+        const checkDays = [7, 15];
+        for (const days of checkDays) {
+            const targetDateStart = new Date();
+            targetDateStart.setDate(targetDateStart.getDate() - days);
+            targetDateStart.setHours(0, 0, 0, 0);
+            const targetDateEnd = new Date(targetDateStart);
+            targetDateEnd.setHours(23, 59, 59, 999);
+
+            const staleMembers = await prisma.member.findMany({
+                where: {
+                    tenant_id: tenant.id,
+                    active: true,
+                    plan_end_date: { gte: new Date() },
+                    accessLogs: {
+                        some: {
+                            status: 'GRANTED',
+                            scanned_at: { gte: targetDateStart, lte: targetDateEnd }
+                        },
+                        none: {
+                            scanned_at: { gte: new Date(targetDateEnd.getTime() + 1) } // No newer logs
+                        }
                     }
                 }
-            },
-            take: 5
-        });
+            });
 
-        if (riskyMembers.length > 0) {
-            const sock = sessions.get(tenant.id);
-            if (sock) {
+            for (const member of staleMembers) {
+                const firstName = member.name.split(' ')[0];
+                const msg = days === 7
+                    ? `Oi *${firstName}*, tudo bem? 👋\n\nNotamos que você não vem treinar há uma semana! Aconteceu algo? Estamos te esperando para o próximo treino! 💪`
+                    : `Oi *${firstName}*! Sentimos sua falta. 😢\n\nJá faz 15 dias que não te vemos na academia. Não deixe o ritmo cair! Que tal um treino rápido hoje? 🔥`;
+
+                const jid = member.phone.includes('@') ? member.phone : `${member.phone}@s.whatsapp.net`;
+                await humanizedSendMessage(sock, jid, { text: msg });
+            }
+        }
+
+        // 2. Alert Owner about Risky Members (General overview)
+        if (tenant.owner_phone) {
+            const riskyMembers = await prisma.member.findMany({
+                where: {
+                    tenant_id: tenant.id,
+                    active: true,
+                    plan_end_date: { gte: new Date() },
+                    accessLogs: {
+                        none: {
+                            scanned_at: { gte: sevenDaysAgo }
+                        }
+                    }
+                },
+                take: 5
+            });
+
+            if (riskyMembers.length > 0) {
                 let msg = `🧠 *IA Insight: Alunos em Risco*\n\nIdentifiquei que estes alunos não aparecem há mais de 7 dias:\n\n`;
                 riskyMembers.forEach(m => {
                     msg += `• *${m.name.split(' ')[0]}* (${m.phone})\n`;
                 });
-                msg += `\nQue tal enviar uma mensagem de incentivo para eles hoje?`;
+                msg += `\nEnviei mensagens de incentivo automáticas para alguns deles, mas um contato humano da recepção pode ajudar a trazê-los de volta!`;
 
                 const jid = tenant.owner_phone.includes('@') ? tenant.owner_phone : `${tenant.owner_phone}@s.whatsapp.net`;
-                await sock.sendMessage(jid, { text: msg });
+                await humanizedSendMessage(sock, jid, { text: msg });
             }
         }
     }
-};
+}

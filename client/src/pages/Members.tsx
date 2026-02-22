@@ -157,30 +157,34 @@ Domingo:
     return (
         <>
             <div className="flex flex-col h-full animate-fade-in-up">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-10">
-                    <div className="mb-8 lg:mb-0">
-                        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tighter">Gestão de Membros</h1>
-                        <p className="text-slate-500 font-medium">Controle total sobre seus alunos e planos ativos.</p>
+                <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-10">
+                    <div className="flex-1">
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">
+                            Gestão de <span className="text-primary">Membros</span>
+                        </h1>
+                        <p className="text-slate-500 font-medium max-w-2xl">
+                            Controle total sobre seus alunos, planos ativos e acompanhamento de treinos.
+                        </p>
                     </div>
                     <button
                         id="btn-new-member"
                         onClick={openForCreate}
-                        className="flex items-center justify-center gap-3 bg-primary text-white px-10 py-5 rounded-[2rem] font-black transition shadow-2xl shadow-primary/30 active:scale-95 text-sm uppercase tracking-widest"
+                        className="flex items-center justify-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl font-black shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all text-sm"
                     >
-                        <Plus size={24} />
-                        NOVO MEMBRO
+                        <Plus size={20} strokeWidth={3} />
+                        Novo Membro
                     </button>
                 </div>
 
-                <div className="bg-white rounded-[3rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
-                    <div id="member-search" className="p-10 md:p-12 border-b border-slate-50 flex flex-col md:row items-center gap-6">
-                        <h2 className="text-xl font-black text-slate-900 uppercase tracking-widest text-xs mr-auto">Lista de Alunos</h2>
-                        <div className="relative w-full md:max-w-md">
-                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
+                <div className="bg-white rounded-2xl md:rounded-[3rem] shadow-sm border border-slate-100 flex flex-col overflow-hidden mb-20 md:mb-0">
+                    <div id="member-search" className="p-6 md:p-10 border-b border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Lista de Alunos</h2>
+                        <div className="relative w-full sm:max-w-md group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
                             <input
                                 type="text"
-                                placeholder="Buscar membro..."
-                                className="w-full pl-16 pr-6 py-4 bg-slate-50 border-none rounded-[1.5rem] focus:ring-2 focus:ring-primary transition-all font-medium text-slate-600"
+                                placeholder="Buscar por nome ou telefone..."
+                                className="w-full pl-11 pr-6 py-3.5 bg-slate-50 border border-transparent rounded-2xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium text-slate-600 shadow-sm"
                                 value={search}
                                 onChange={e => setSearch(e.target.value)}
                             />
@@ -188,30 +192,80 @@ Domingo:
                     </div>
 
                     {/* Mobile View: Card List */}
-                    <div className="md:hidden divide-y divide-slate-50 overflow-auto max-h-[60vh] touch-pan-y">
-                        {filtered.map(member => {
-                            const isActive = member.active && new Date(member.plan_end_date) > new Date();
-                            return (
-                                <div key={member.id} className="p-5 active:bg-slate-50 transition-colors flex items-center justify-between group">
-                                    <div className="flex-1 min-w-0" onClick={() => handleEdit(member)}>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h4 className="font-bold text-slate-900 truncate">{member.name}</h4>
-                                            {isActive ? <CheckCircle2 size={14} className="text-primary" /> : <XCircle size={14} className="text-slate-300" />}
+                    <div className="md:hidden divide-y divide-slate-100">
+                        {filtered.length === 0 ? (
+                            <div className="p-10 text-center text-slate-400">Nenhum membro encontrado</div>
+                        ) : (
+                            filtered.map(member => {
+                                const isActive = member.active && new Date(member.plan_end_date) > new Date();
+                                return (
+                                    <div key={member.id} className="p-6 space-y-4 active:bg-slate-50 transition-colors" onClick={() => handleEdit(member)}>
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-700">
+                                                    {member.name?.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="font-black text-slate-900">{member.name}</h4>
+                                                        {isActive ? (
+                                                            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.6)]"></div>
+                                                        ) : (
+                                                            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-slate-400 font-bold">{member.phone}</p>
+                                                </div>
+                                            </div>
+                                            <div className={clsx(
+                                                "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border",
+                                                isActive ? 'bg-primary/5 text-primary border-primary/10' : 'bg-red-50 text-red-500 border-red-100'
+                                            )}>
+                                                {isActive ? 'Ativo' : 'Pendente'}
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3 text-xs font-bold text-slate-400 uppercase tracking-tighter">
-                                            <span className="flex items-center gap-1"><Phone size={12} /> {member.phone}</span>
-                                            <span className="text-slate-200">|</span>
-                                            <span>{member.plan?.name || 'Manual'}</span>
+
+                                        <div className="flex items-center justify-between border-t border-slate-50 pt-4">
+                                            <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                                {member.plan?.name || 'Manual'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-bold">
+                                                Expira {member.plan_end_date ? new Date(member.plan_end_date).toLocaleDateString('pt-BR') : '-'}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-end gap-2 pt-2">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const workoutLink = `${window.location.origin}/w/${member.id}`;
+                                                    const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
+                                                    const cleanPhone = member.phone.replace(/\D/g, '');
+                                                    api.post('/chat/send', { jid: `${cleanPhone}@s.whatsapp.net`, text: msg })
+                                                        .then(() => toast.success('Treino enviado!'))
+                                                        .catch(err => toast.error('Erro ao enviar: ' + err.message));
+                                                }}
+                                                className="p-3 bg-emerald-50 text-emerald-600 rounded-xl"
+                                            >
+                                                <Send size={18} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleEdit(member); }}
+                                                className="p-3 bg-blue-50 text-blue-600 rounded-xl"
+                                            >
+                                                <Pencil size={18} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDelete(member.id, member.name); }}
+                                                className="p-3 bg-red-50 text-red-600 rounded-xl"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex gap-1 ml-4">
-                                        <button onClick={() => handleDelete(member.id, member.name)} className="p-3 text-slate-300 hover:text-red-500 transition">
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })
+                        )}
                     </div>
 
                     {/* Desktop View: Table */}

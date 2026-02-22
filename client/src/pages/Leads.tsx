@@ -236,41 +236,41 @@ export const Leads = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
                 {[
-                    { label: 'Leads Totais', value: stats.total, sub: `+${stats.new} Novos`, color: 'blue', icon: Users, filter: null },
-                    { label: 'Conversão', value: `${stats.conversion}%`, sub: 'Taxa de Matrícula', color: 'orange', icon: TrendingUp, filter: 'won' },
-                    { label: 'Em Experimento', value: stats.trial, sub: 'Aulas marcadas', color: 'purple', icon: Calendar, filter: 'trial' },
-                    { label: 'Matriculados', value: stats.matriculated, sub: 'Alunos convertidos', color: 'green', icon: Target, filter: 'won' },
+                    { label: 'Leads Totais', value: stats.total, sub: `+${stats.new}`, color: 'blue', icon: Users, filter: null },
+                    { label: 'Conversão', value: `${stats.conversion}%`, sub: 'Matrícula', color: 'orange', icon: TrendingUp, filter: 'won' },
+                    { label: 'Em Experimento', value: stats.trial, sub: 'Aulas', color: 'purple', icon: Calendar, filter: 'trial' },
+                    { label: 'Matriculados', value: stats.matriculated, sub: 'Alunos', color: 'green', icon: Target, filter: 'won' },
                 ].map((stat, idx) => (
                     <motion.div
                         key={idx}
                         whileHover={{ y: -5 }}
                         onClick={() => setStatusFilter(statusFilter === stat.filter ? null : stat.filter)}
                         className={clsx(
-                            "bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm cursor-pointer transition-all",
+                            "bg-white p-4 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-100 shadow-sm cursor-pointer transition-all",
                             statusFilter === stat.filter && "ring-2 ring-primary border-transparent shadow-lg"
                         )}
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <div className={clsx("w-12 h-12 rounded-2xl flex items-center justify-center",
+                        <div className="flex items-center justify-between mb-2 md:mb-4">
+                            <div className={clsx("w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center",
                                 stat.color === 'blue' ? "bg-blue-50 text-blue-500" :
                                     stat.color === 'orange' ? "bg-orange-50 text-orange-500" :
                                         stat.color === 'purple' ? "bg-purple-50 text-purple-500" :
                                             "bg-green-50 text-green-500"
                             )}>
-                                <stat.icon size={24} />
+                                <stat.icon size={16} className="md:w-6 md:h-6" />
                             </div>
-                            <span className={clsx("text-[10px] font-black uppercase tracking-widest",
+                            <span className={clsx("text-[8px] md:text-[10px] font-black uppercase tracking-widest",
                                 stat.color === 'blue' ? "text-blue-500" :
                                     stat.color === 'orange' ? "text-orange-500" :
                                         stat.color === 'purple' ? "text-purple-500" :
                                             "text-green-500"
                             )}>{stat.label}</span>
                         </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-3xl font-black text-slate-900">{stat.value}</span>
-                            <span className="text-xs font-bold text-slate-400">{stat.sub}</span>
+                        <div className="flex items-baseline gap-1 md:gap-2">
+                            <span className="text-xl md:text-3xl font-black text-slate-900">{stat.value}</span>
+                            <span className="text-[10px] md:text-xs font-bold text-slate-400 truncate">{stat.sub}</span>
                         </div>
                     </motion.div>
                 ))}
@@ -322,9 +322,9 @@ export const Leads = () => {
 
             {/* Content Area */}
             {view === 'kanban' ? (
-                <div id="leads-kanban" className="flex gap-6 overflow-x-auto pb-8 -mx-4 md:-mx-10 px-4 md:px-10 snap-x no-scrollbar">
+                <div id="leads-kanban" className="flex gap-4 md:gap-6 overflow-x-auto pb-8 -mx-4 md:-mx-10 px-4 md:px-10 snap-x no-scrollbar">
                     {COLUMNS.map(col => (
-                        <div key={col.id} className="min-w-[340px] w-80 shrink-0 snap-start flex flex-col gap-5">
+                        <div key={col.id} className="min-w-[300px] md:min-w-[340px] w-[85vw] md:w-80 shrink-0 snap-center md:snap-start flex flex-col gap-5">
                             <div className="flex items-center justify-between px-3">
                                 <div className="flex items-center gap-2.5">
                                     <div className={clsx("w-3.5 h-3.5 rounded-full ring-4 ring-white shadow-sm", col.color)}></div>
@@ -437,8 +437,63 @@ export const Leads = () => {
                     ))}
                 </div>
             ) : (
-                <div className="bg-white rounded-[3rem] border border-slate-200 overflow-hidden shadow-xl shadow-slate-200/20">
-                    <div className="overflow-x-auto">
+                <div className="bg-white rounded-2xl md:rounded-[3rem] border border-slate-200 overflow-hidden shadow-xl shadow-slate-200/20">
+                    {/* Mobile Card List (md:hidden) */}
+                    <div className="md:hidden divide-y divide-slate-100">
+                        {filteredLeads.length === 0 ? (
+                            <div className="p-10 text-center text-slate-400">Nenhum lead encontrado</div>
+                        ) : (
+                            filteredLeads.map(lead => (
+                                <div key={lead.id} className="p-6 space-y-4 active:bg-slate-50 transition-colors" onClick={() => setSelectedLead(lead)}>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-700">
+                                                {lead.name?.charAt(0) || lead.phone.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-slate-900">{lead.name || 'Sem nome'}</h4>
+                                                <p className="text-xs text-slate-400 font-bold">{lead.phone}</p>
+                                            </div>
+                                        </div>
+                                        <div className={clsx(
+                                            "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
+                                            COLUMNS.find(c => c.id === lead.status)?.lightColor,
+                                            COLUMNS.find(c => c.id === lead.status)?.textColor
+                                        )}>
+                                            {COLUMNS.find(c => c.id === lead.status)?.label}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between border-t border-slate-50 pt-4">
+                                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                            {format(new Date(lead.last_message_at), 'dd/MM HH:mm')}
+                                        </div>
+                                        <div className="text-xs font-black text-slate-700">
+                                            R$ {lead.value?.toFixed(2)}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setSelectedLead(lead); }}
+                                            className="p-3 bg-slate-100 text-slate-400 rounded-xl"
+                                        >
+                                            <MessageSquare size={18} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setModalLead(lead); setShowLeadModal(true); }}
+                                            className="p-3 bg-slate-100 text-slate-400 rounded-xl"
+                                        >
+                                            <Edit size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop Table (hidden md:block) */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
