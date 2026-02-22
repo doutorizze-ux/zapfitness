@@ -412,7 +412,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 where: { id: member.id },
                 data: { bot_paused: true }
             });
-            await humanizedSendMessage(sock, remoteJid, { text: '📞 *Atendimento Humano*\n\nO robô foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
+            await humanizedSendMessage(sock, remoteJid, { text: '📞 *Atendimento Humano*\n\nO atendente virtual foi pausado para que a recepção possa falar com você. Para voltar ao menu automático a qualquer momento, digite *Menu*.' });
 
             // Emit event for real-time sound notification
             eventBus.emit(EVENTS.ATTENDANCE_REQUESTED, {
@@ -455,7 +455,7 @@ async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {
     const hasDigitalWorkout = digitalWorkouts > 0;
     const hasManualWorkout = member.workout_routine && member.workout_routine.trim() !== '';
 
-    let menu = `👋 Olá, *${name}*! Bem-vindo(a) à sua academia virtual.\n\nComo posso te ajudar hoje? Digite o número da opção:\n\n`;
+    let menu = `👋 Olá, *${name}*! Bem-vindo(a) à *${member.tenant.name}*.\n\nComo posso te ajudar hoje? Digite o número da opção:\n\n`;
 
     if (hasManualWorkout || hasDigitalWorkout) {
         menu += `1️⃣ *Ver Treino*\n`;
