@@ -16,14 +16,6 @@ interface GateEvent {
     reason?: string;
 }
 
-interface Log {
-    id: string;
-    member?: {
-        name: string;
-    };
-    status: 'GRANTED' | 'DENIED';
-    scanned_at: string;
-}
 
 interface SocketGateData {
     memberName: string;
@@ -52,13 +44,23 @@ export const Turnstiles = () => {
     const fetchRecentLogs = useCallback(async () => {
         try {
             const res = await api.get('/logs');
-            const formatted = res.data.slice(0, 5).map((log: Log) => ({
-                id: log.id,
-                name: log.member?.name || 'Desconhecido',
-                status: log.status,
-                time: new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-            }));
-            setRecentEvents(formatted);
+            const uniqueEvents: GateEvent[] = [];
+            const seenMembers = new Set<string>();
+
+            for (const log of res.data) {
+                const memberName = log.member?.name || 'Desconhecido';
+                if (!seenMembers.has(memberName)) {
+                    uniqueEvents.push({
+                        id: log.id,
+                        name: memberName,
+                        status: log.status,
+                        time: new Date(log.scanned_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    });
+                    seenMembers.add(memberName);
+                }
+                if (uniqueEvents.length >= 5) break;
+            }
+            setRecentEvents(uniqueEvents);
         } catch (err) {
             console.error('Erro ao buscar logs recentes:', err);
         }
@@ -78,22 +80,28 @@ export const Turnstiles = () => {
             socket.emit('join_room', { room: user.tenant_id });
 
             socket.on('gate:open', (data: SocketGateData) => {
-                setRecentEvents(prev => [{
-                    id: Math.random().toString(),
-                    name: data.memberName,
-                    status: 'GRANTED' as const,
-                    time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                }, ...prev].slice(0, 5));
+                setRecentEvents(prev => {
+                    const filtered = prev.filter(e => e.name !== data.memberName);
+                    return [{
+                        id: Math.random().toString(),
+                        name: data.memberName,
+                        status: 'GRANTED' as const,
+                        time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    }, ...filtered].slice(0, 5);
+                });
             });
 
             socket.on('gate:denied', (data: SocketGateData) => {
-                setRecentEvents(prev => [{
-                    id: Math.random().toString(),
-                    name: data.memberName || 'Visitante/Inativo',
-                    status: 'DENIED' as const,
-                    reason: data.reason,
-                    time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                }, ...prev].slice(0, 5));
+                setRecentEvents(prev => {
+                    const filtered = prev.filter(e => e.name !== (data.memberName || 'Visitante/Inativo'));
+                    return [{
+                        id: Math.random().toString(),
+                        name: data.memberName || 'Visitante/Inativo',
+                        status: 'DENIED' as const,
+                        reason: data.reason,
+                        time: new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    }, ...filtered].slice(0, 5);
+                });
             });
         }
 
