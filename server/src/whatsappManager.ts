@@ -253,33 +253,42 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         const remotePhone = remoteJid.split('@')[0].replace(/\D/g, '');
         const last8 = remotePhone.slice(-8);
-        const ddd = remotePhone.length >= 10 ? remotePhone.slice(-11, -9) : (remotePhone.length === 8 ? null : remotePhone.slice(0, 2));
 
-        console.log(`[WA] Searching for member. Remote: ${remotePhone}, Last8: ${last8}, DDD: ${ddd}`);
+        // Log the attempt for debugging
+        console.log(`[WA] Message from ${senderName} (${remotePhone}). Searching member in Tenant ${tenantId}...`);
 
-        // 1. Identify if it's a member (Precise matching + 8rd-digit resilience)
+        // 1. Precise matching (DB Level)
         let member = await prisma.member.findFirst({
             where: {
                 tenant_id: tenantId,
                 OR: [
                     { phone: remotePhone },          // Exact match
                     { phone: { endsWith: last8 } },  // Matches even if 9th digit or DDI is different
-                    { phone: { contains: last8 } }   // Matches even if there are hyphens/spaces (fallback)
+                    { phone: { contains: last8 } }   // Matches even if there are hyphens/spaces
                 ]
             },
             include: { plan: true, tenant: true }
         });
 
-        // 2. Extra Resilient Check: If still not found, search all members and normalize in memory (Small scale)
+        // 2. Ultra-Resilient Check: Normalize everything to last 8 digits in memory
         if (!member) {
+            console.log(`[WA] Initial search failed for ${remotePhone}. Trying ultra-resilient search...`);
             const allMembers = await prisma.member.findMany({
                 where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
             });
+
             member = allMembers.find(m => {
-                const norm = m.phone.replace(/\D/g, '');
-                return norm.endsWith(last8) || last8.endsWith(norm.slice(-8));
+                const dbNorm = m.phone.replace(/\D/g, '');
+                const dbLast8 = dbNorm.slice(-8);
+                return dbLast8 === last8; // Pure match on the core number
             }) || null;
+
+            if (member) {
+                console.log(`[WA] Member ${member.name} found via resilient search (DB: ${member.phone} vs WA: ${remotePhone})`);
+            } else {
+                console.log(`[WA] No member found for ${remotePhone} in Tenant ${tenantId} (Last8: ${last8})`);
+            }
         }
 
         // 3. Lead Identification/Creation (For Non-Members)
