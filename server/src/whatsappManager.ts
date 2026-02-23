@@ -272,22 +272,23 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         let member = allMembers.find(m => {
             const dbPhone = m.phone.replace(/\D/g, '');
-            const dbRegionalId = getRegionalId(dbPhone);
-            const dbPhoneNoDDI = dbPhone.replace(/^55/, '');
+            const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
 
-            // Last 8 and 9 digits for extra safety
             const dbLast8 = dbPhone.slice(-8);
             const remoteLast8 = remotePhone.slice(-8);
-            const dbLast9 = dbPhone.slice(-9);
-            const remoteLast9 = remotePhone.slice(-9);
+            const dbLast10 = dbPhone.slice(-10); // DDD + 8
+            const remoteLast10 = remotePhone.slice(-10);
 
-            return (
-                dbPhone === remotePhone ||             // 1. Exact match (DDI+DDD+Num)
-                dbPhoneNoDDI === remotePhoneNoDDI ||   // 2. Match without DDI
-                dbRegionalId === remoteRegionalId ||   // 3. Regional match (DDD + Last 8)
-                (dbLast9 === remoteLast9 && dbLast9.length >= 9) || // 4. Match last 9 digits (handles 9th digit variation if DDD is same)
-                dbLast8 === remoteLast8                // 5. Match last 8 digits (Final fallback)
+            const isMatch = (
+                dbPhone === remotePhone ||
+                dbPhone.endsWith(remotePhoneNoDDI) ||
+                remotePhone.endsWith(dbPhone.replace(/^55/, '')) ||
+                (dbLast10 === remoteLast10 && dbLast10.length >= 10) ||
+                (dbLast8 === remoteLast8 && dbLast8.length >= 8)
             );
+
+            if (isMatch) console.log(`[WA] Match Found! DB:${dbPhone} vs Remote:${remotePhone}`);
+            return isMatch;
         }) || null;
 
         if (member) {
