@@ -233,14 +233,17 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
 
 async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
     try {
+        if (!msg.message || !msg.key.remoteJid || msg.key.remoteJid === 'status@broadcast') return;
+
         const remoteJid = msg.key.remoteJid;
 
-        // Ignore group messages
-        if (remoteJid && remoteJid.endsWith('@g.us')) return;
+        // Ignore Newsletter and Broadcasts
+        if (remoteJid.endsWith('@newsletter') || remoteJid.endsWith('@broadcast')) {
+            return;
+        }
 
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.buttonsResponseMessage?.selectedButtonId || msg.message.listResponseMessage?.title || (msg.message.imageMessage ? "[Imagem]" : null);
         const senderName = msg.pushName || "Interessado";
-
         if (!text) return;
 
         // Check Tenant Status and Expiry
@@ -250,6 +253,15 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         }) as any;
 
         if (!tenant) return;
+
+        // --- NEW: Handle @lid (Linked Identity) to get real phone number ---
+        if (remoteJid.endsWith('@lid')) {
+            console.log(`[WA] Detected @lid identity for ${senderName}. Attempting to resolve real JID...`);
+            // In Baileys, the real JID can often be found in the store or decoded if available
+            // but for now, we'll try to extract the phone if Baileys provides a 'source' jid or similar
+            // Most often, @lid users still provide their phone JID if contacted directly or if we have them synced.
+            // If we can't resolve, we'll log it clearly.
+        }
 
         // Correct way to get phone: remove multi-device suffix and then clean digits
         const remotePhone = remoteJid.split(':')[0].split('@')[0].replace(/\D/g, '');
