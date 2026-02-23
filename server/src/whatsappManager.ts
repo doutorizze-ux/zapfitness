@@ -251,7 +251,8 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         if (!tenant) return;
 
-        const remotePhone = remoteJid.split('@')[0].replace(/\D/g, '');
+        // Correct way to get phone: remove multi-device suffix and then clean digits
+        const remotePhone = remoteJid.split(':')[0].split('@')[0].replace(/\D/g, '');
 
         const getRegionalId = (phone: string) => {
             const clean = phone.replace(/^55/, '');
