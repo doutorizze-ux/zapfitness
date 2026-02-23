@@ -275,10 +275,18 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             const dbRegionalId = getRegionalId(dbPhone);
             const dbPhoneNoDDI = dbPhone.replace(/^55/, '');
 
+            // Last 8 and 9 digits for extra safety
+            const dbLast8 = dbPhone.slice(-8);
+            const remoteLast8 = remotePhone.slice(-8);
+            const dbLast9 = dbPhone.slice(-9);
+            const remoteLast9 = remotePhone.slice(-9);
+
             return (
                 dbPhone === remotePhone ||             // 1. Exact match (DDI+DDD+Num)
                 dbPhoneNoDDI === remotePhoneNoDDI ||   // 2. Match without DDI
-                dbRegionalId === remoteRegionalId      // 3. Regional match (DDD + Last 8)
+                dbRegionalId === remoteRegionalId ||   // 3. Regional match (DDD + Last 8)
+                (dbLast9 === remoteLast9 && dbLast9.length >= 9) || // 4. Match last 9 digits (handles 9th digit variation if DDD is same)
+                dbLast8 === remoteLast8                // 5. Match last 8 digits (Final fallback)
             );
         }) || null;
 
