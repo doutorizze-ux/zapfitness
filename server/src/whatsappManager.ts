@@ -106,18 +106,16 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
     const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
-    // Fetch latest WA version to avoid 405/connection errors
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`[WA] Using WA version v${version.join('.')}, isLatest: ${isLatest}`);
+    // Removing fetchLatestBaileysVersion as it's known to occasionally cause "Não é possível conectar novos dispositivos"
+    console.log(`[WA] Initializing WA Socket with explicit browser configuration`);
 
     const sock = makeWASocket({
-        version,
         logger,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        browser: Browsers.ubuntu('Chrome'),
+        browser: ['Windows', 'Chrome', '131.0.0.0'], // Very strong disguise as a standard PC
         printQRInTerminal: false,
         syncFullHistory: false,
         markOnlineOnConnect: true,
