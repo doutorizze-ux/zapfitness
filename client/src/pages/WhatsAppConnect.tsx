@@ -6,7 +6,20 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { Zap, ShieldCheck, Smartphone, LogOut, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const getSocketURL = () => {
+    let url = import.meta.env.VITE_API_URL;
+    if (!url || url === '/') {
+        if (typeof window !== 'undefined') {
+            url = window.location.origin;
+        }
+    }
+    return url || 'http://localhost:3000';
+};
+
+const socket = io(getSocketURL(), {
+    transports: ['websocket', 'polling'],
+    reconnectionAttempts: 5
+});
 
 export const WhatsAppConnect = () => {
     const { user } = useAuth();

@@ -66,6 +66,7 @@ export const reconnectSessions = async () => {
 };
 
 export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void) => {
+    console.log(`[WA] Executing initWhatsApp for tenant: ${tenantId}`);
     // 0. Safety: Check if there's already an active session and end it
     const existingSession = sessions.get(tenantId);
     if (existingSession) {
@@ -100,8 +101,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        // browser: ["ZapFitness", "Chrome", "1.0.0"], // Removing this to avoid 405 errors
-        // browser: ["Ubuntu", "Chrome", "20.0.04"], // Removed to let Baileys use default
+        browser: ["ZapFitness", "Chrome", "1.0.0"],
         connectTimeoutMs: 60_000,
         defaultQueryTimeoutMs: 60_000,
         keepAliveIntervalMs: 10_000,
