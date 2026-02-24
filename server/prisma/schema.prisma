@@ -167,6 +167,7 @@ model Member {
   id              String   @id @default(uuid())
   name            String
   phone           String
+  whatsapp_jid    String?  @unique
   active          Boolean  @default(true)
   
   plan_id         String?
@@ -259,6 +260,7 @@ model Lead {
   tenant          Tenant   @relation(fields: [tenant_id], references: [id])
   name            String?
   phone           String
+  whatsapp_jid    String?  @unique
   last_message    String?
   last_message_at DateTime @default(now())
   created_at      DateTime @default(now())

@@ -277,35 +277,48 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         console.log(`[WA] Message from ${senderName}. Remote: ${remotePhone}, RegionalID: ${remoteRegionalId}`);
 
-        // Triple-Check resilient search
-        const allMembers = await prisma.member.findMany({
-            where: { tenant_id: tenantId },
+        // --- STEP 1: Identification by JID (The most reliable way) ---
+        let member = await prisma.member.findUnique({
+            where: { whatsapp_jid: remoteJid },
             include: { plan: true, tenant: true }
         });
 
-        let member = allMembers.find(m => {
-            const dbPhone = m.phone.replace(/\D/g, '');
-            const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
+        // --- STEP 2: Fallback to Phone Matching (if JID not linked yet) ---
+        if (!member) {
+            console.log(`[WA] Searching by phone fallback for ${senderName}...`);
+            const allMembers = await prisma.member.findMany({
+                where: { tenant_id: tenantId },
+                include: { plan: true, tenant: true }
+            });
 
-            const dbLast8 = dbPhone.slice(-8);
-            const remoteLast8 = remotePhone.slice(-8);
-            const dbLast10 = dbPhone.slice(-10); // DDD + 8
-            const remoteLast10 = remotePhone.slice(-10);
+            member = allMembers.find(m => {
+                const dbPhone = m.phone.replace(/\D/g, '');
+                const dbLast8 = dbPhone.slice(-8);
+                const remoteLast8 = remotePhone.slice(-8);
+                const dbLast10 = dbPhone.slice(-10);
+                const remoteLast10 = remotePhone.slice(-10);
 
-            const isMatch = (
-                dbPhone === remotePhone ||
-                dbPhone.endsWith(remotePhoneNoDDI) ||
-                remotePhone.endsWith(dbPhone.replace(/^55/, '')) ||
-                (dbLast10 === remoteLast10 && dbLast10.length >= 10) ||
-                (dbLast8 === remoteLast8 && dbLast8.length >= 8)
-            );
+                return (
+                    dbPhone === remotePhone ||
+                    dbPhone.endsWith(remotePhoneNoDDI) ||
+                    remotePhone.endsWith(dbPhone.replace(/^55/, '')) ||
+                    (dbLast10 === remoteLast10 && dbLast10.length >= 10) ||
+                    (dbLast8 === remoteLast8 && dbLast8.length >= 8)
+                );
+            }) || null;
 
-            if (isMatch) console.log(`[WA] Match Found! DB:${dbPhone} vs Remote:${remotePhone}`);
-            return isMatch;
-        }) || null;
+            // Step 2.5: AUTO-LINK JID (Link the phone to this JID for future messages)
+            if (member) {
+                console.log(`[WA] Member Found via phone. Linking JID ${remoteJid} to ${member.name}`);
+                await prisma.member.update({
+                    where: { id: member.id },
+                    data: { whatsapp_jid: remoteJid }
+                });
+            }
+        }
 
         if (member) {
-            console.log(`[WA] Member Found: ${member.name} (Method: Triple-Check)`);
+            console.log(`[WA] Member Found: ${member.name} (JID: ${remoteJid})`);
         } else {
             console.log(`[WA] No member found for ${remotePhone} in Tenant ${tenantId}`);
         }
@@ -313,21 +326,30 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         // 3. Lead Identification/Creation (For Non-Members)
         let lead: any = null;
         if (!member) {
-            lead = await prisma.lead.findFirst({
-                where: {
-                    tenant_id: tenantId,
-                    OR: [
-                        { phone: remotePhone },
-                        { phone: { endsWith: remoteRegionalId.slice(-8) } }
-                    ]
-                }
+            // Try to find lead by JID first
+            lead = await prisma.lead.findUnique({
+                where: { whatsapp_jid: remoteJid }
             });
+
+            // If not by JID, try by phone
+            if (!lead) {
+                lead = await prisma.lead.findFirst({
+                    where: {
+                        tenant_id: tenantId,
+                        OR: [
+                            { phone: remotePhone },
+                            { phone: { endsWith: remoteRegionalId.slice(-8) } }
+                        ]
+                    }
+                });
+            }
 
             if (!lead) {
                 lead = await prisma.lead.create({
                     data: {
                         tenant_id: tenantId,
                         phone: remotePhone,
+                        whatsapp_jid: remoteJid,
                         name: senderName !== "Interessado" ? senderName : null,
                         status: 'new',
                         last_message: text,
@@ -340,6 +362,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                     data: {
                         last_message: text,
                         last_message_at: new Date(),
+                        whatsapp_jid: remoteJid, // Always ensure JID is linked
                         name: !lead.name && senderName !== "Interessado" ? senderName : lead.name
                     }
                 });
