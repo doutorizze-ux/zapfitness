@@ -1,10 +1,4 @@
-import makeWASocket, {
-    DisconnectReason,
-    useMultiFileAuthState,
-    makeCacheableSignalKeyStore,
-    WASocket,
-    fetchLatestBaileysVersion
-} from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, WASocket } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import path from 'path';
 import fs from 'fs';
@@ -100,18 +94,20 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
     const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`[WA] Using WA version v${version.join('.')}, isLatest: ${isLatest}`);
-
     const sock = makeWASocket({
-        version,
         logger,
         printQRInTerminal: false,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        browser: ["Ubuntu", "Chrome", "20.0.04"],
+        browser: ["ZapFitness", "Chrome", "1.0.0"],
+        connectTimeoutMs: 60_000,
+        defaultQueryTimeoutMs: 60_000,
+        keepAliveIntervalMs: 10_000,
+        emitOwnEvents: true,
+        fireInitQueries: true,
+        generateHighQualityLinkPreview: true,
         syncFullHistory: false,
         markOnlineOnConnect: true,
     });
@@ -282,39 +278,41 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         if (!tenant) return;
 
-        // --- NEW: Handle @lid (Linked Identity) to get real phone number ---
+        // --- STEP 1: Identification (JID/LID/Phone/Name) ---
+        let member = null;
+
+        // 1.1 Robust Phone Extraction (Handling @lid and Multi-device)
         let remoteJidToIdentify = remoteJid;
         if (remoteJid.endsWith('@lid')) {
-            console.log(`[WA] LID Detected. Participant context: ${msg.key.participant || 'none'}`);
-            // Em muitas versões do Baileys, o JID real com telefone está no participant
+            console.log(`[WA] LID Detected from ${senderName}. Context: ${msg.key.participant || 'none'}`);
+            // Often the real JID (with phone) is in msg.key.participant for LID users
             if (msg.key.participant && !msg.key.participant.endsWith('@lid')) {
                 remoteJidToIdentify = msg.key.participant;
+                console.log(`[WA] Resolved LID to real JID: ${remoteJidToIdentify}`);
             }
         }
 
-        // Correct way to get phone: remove multi-device suffix and then clean digits
         const remotePhone = remoteJidToIdentify.split(':')[0].split('@')[0].replace(/\D/g, '');
         const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
         const remoteLast8 = remotePhone.slice(-8);
-        const remoteLast9 = remotePhone.slice(-9);
 
-        console.log(`[WA] Identifying: Name=${senderName}, Phone=${remotePhone}, JID=${remoteJidToIdentify}`);
+        console.log(`[WA] Identification Attempt: Name=${senderName}, Phone=${remotePhone}, JID/LID=${remoteJid}`);
 
-        // --- STEP 1: Identification by JID (The most reliable way) ---
-        let member = await prisma.member.findFirst({
+        // 1.2 Attempt Identification by JID (The most reliable/fastest way)
+        member = await prisma.member.findFirst({
             where: {
+                tenant_id: tenantId,
                 OR: [
                     { whatsapp_jid: remoteJid },
                     { whatsapp_jid: remoteJidToIdentify }
-                ],
-                tenant_id: tenantId
+                ]
             },
             include: { plan: true, tenant: true }
         });
 
-        // --- STEP 2: Fallback to Phone Matching (if JID not linked yet) ---
+        // 1.3 Fallback to Robust Phone Matching
         if (!member) {
-            console.log(`[WA] Searching fallback for ${remotePhone} in Tenant ${tenantId}...`);
+            console.log(`[WA] Fallback: Searching by phone fragments for ${remotePhone}...`);
             const allMembers = await prisma.member.findMany({
                 where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
@@ -324,44 +322,31 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 const dbPhone = m.phone.replace(/\D/g, '');
                 const dbPhoneNoDDI = dbPhone.replace(/^55/, '');
                 const dbLast8 = dbPhone.slice(-8);
-                const dbLast9 = dbPhone.slice(-9);
 
-                // Precise Match
-                if (dbPhone === remotePhone || dbPhoneNoDDI === remotePhoneNoDDI) return true;
-
-                // Cross Match (EndsWith)
-                if (dbPhone.endsWith(remotePhoneNoDDI) || remotePhone.endsWith(dbPhoneNoDDI)) return true;
-
-                // Brazil 9th Digit Resiliency (Match by last 8 or 9 digits)
-                // This catches if DB has 11988887777 and WA sends 1188887777 (or vice versa)
-                if (dbLast8 === remoteLast8 && dbLast8.length >= 8) return true;
-                if (dbLast9 === remoteLast9 && dbLast9.length >= 9) return true;
-
-                return false;
+                // Check for match in various formats (full, without DDI, or just last 8 digits)
+                return (
+                    dbPhone === remotePhone ||
+                    dbPhoneNoDDI === remotePhoneNoDDI ||
+                    (dbLast8 === remoteLast8 && dbLast8.length >= 8)
+                );
             }) || null;
 
-            // Step 2.7: LAST RESORT - Name matching for @lid or unidentified numbers
-            if (!member && senderName !== "Interessado") {
-                console.log(`[WA] Attempting name-based fallback for ${senderName}...`);
+            // 1.4 LAST RESORT: Try to match by name if phone matching failed (Only if name is provided)
+            if (!member && senderName && senderName !== "Interessado") {
+                console.log(`[WA] Last Resort: Attempting name-based match for "${senderName}"...`);
+                const normalizedSenderName = senderName.toLowerCase().trim();
                 member = allMembers.find(m => {
                     const dbName = m.name.toLowerCase();
-                    const sName = senderName.toLowerCase();
-                    // Match if pushName matches exactly or is contained in DB name (min 4 chars)
-                    return (dbName === sName || (dbName.includes(sName) && sName.length >= 4));
+                    // If the WhatsApp name is fully contained in the DB name and is at least 4 chars
+                    return normalizedSenderName.length >= 4 && dbName.includes(normalizedSenderName);
                 }) || null;
 
-                if (member) {
-                    console.log(`[WA] Member found via NAME MATCH: ${member.name}. Linking JID ${remoteJid}...`);
-                    await prisma.member.update({
-                        where: { id: member.id },
-                        data: { whatsapp_jid: remoteJid }
-                    });
-                }
+                if (member) console.log(`[WA] Identification SUCCESS via Name Match: ${member.name}`);
             }
 
-            // Step 2.8: AUTO-LINK JID (Link the phone to this JID for future messages)
-            if (member && !member.whatsapp_jid) {
-                console.log(`[WA] Member Found via fallback. Linking JID ${remoteJid} to ${member.name}`);
+            // 1.5 Auto-link JID for future messages
+            if (member) {
+                console.log(`[WA] Linking JID ${remoteJid} to member ${member.name}`);
                 await prisma.member.update({
                     where: { id: member.id },
                     data: { whatsapp_jid: remoteJid }
@@ -372,9 +357,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         if (member) {
             console.log(`[WA] Member Identified: ${member.name} (UUID: ${member.id})`);
         } else {
-            console.log(`[WA] Identification FAILED for ${remotePhone}. SenderName: ${senderName}. Tentant: ${tenantId}`);
-            const total = await prisma.member.count({ where: { tenant_id: tenantId } });
-            console.log(`[WA] Total members in DB for this tenant: ${total}`);
+            console.log(`[WA] Identification FAILED for ${remotePhone} (${senderName}) in Tenant ${tenantId}`);
         }
 
         // 3. Lead Identification/Creation (For Non-Members)
