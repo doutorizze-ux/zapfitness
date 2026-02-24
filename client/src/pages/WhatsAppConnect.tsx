@@ -39,8 +39,9 @@ export const WhatsAppConnect = () => {
 
         socket.on('connect', joinRoom);
 
-        socket.on('connect_error', (err) => {
-            console.error('[Socket] Erro de conexão:', err);
+        socket.on('disconnect', (reason) => {
+            console.warn('[Socket] Desconectado:', reason);
+            setLoading(false);
         });
 
         api.get('/me').then(res => {

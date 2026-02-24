@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, WASocket } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, WASocket, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import path from 'path';
 import fs from 'fs';
@@ -94,14 +94,19 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
     const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
+    // Fetch latest WA version to avoid 405/connection errors
+    const { version, isLatest } = await fetchLatestBaileysVersion();
+    console.log(`[WA] Using WA version v${version.join('.')}, isLatest: ${isLatest}`);
+
     const sock = makeWASocket({
+        version,
         logger,
         printQRInTerminal: false,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        browser: ["ZapFitness", "Chrome", "1.0.0"],
+        browser: ["Ubuntu", "Chrome", "20.0.04"],
         connectTimeoutMs: 60_000,
         defaultQueryTimeoutMs: 60_000,
         keepAliveIntervalMs: 10_000,
@@ -123,8 +128,18 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
         }
 
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log(`[WA] Connection closed for tenant ${tenantId}. Error: ${JSON.stringify(lastDisconnect?.error, null, 2)}`);
+            const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+            console.log(`[WA] Connection closed for tenant ${tenantId}. Status: ${statusCode}. Should Reconnect: ${shouldReconnect}`);
+
+            // Safety skip: if statusCode is 515 or 403, it's often a corrupt session. Let's delete creds and re-init.
+            if (statusCode === 515 || statusCode === 403) {
+                console.warn(`[WA] CRITICAL: Status ${statusCode} detected. Cleaning up session files for ${tenantId}...`);
+                try {
+                    const credsPath = path.join(process.cwd(), 'sessions', tenantId.trim(), 'creds.json');
+                    if (fs.existsSync(credsPath)) fs.unlinkSync(credsPath);
+                } catch (e) { }
+            }
 
             // Remove from session map if we are not reconnecting or if it's a permanent error
             if (!shouldReconnect) {
@@ -138,7 +153,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
                 setTimeout(() => initWhatsApp(tenantId, onQr), 3000);
             }
         } else if (connection === 'open') {
-            console.log(`[WA] Connection opened for tenant ${tenantId}`);
+            console.log(`[WA] Connection opened for tenant ${tenantId} (V6.0 SUCCESS)`);
             sessions.set(tenantId, sock);
             await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'CONNECTED' } });
 
@@ -161,13 +176,16 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
                 }
 
                 try {
-                    const [result] = await s.onWhatsApp(clean);
-                    if (result && result.exists) {
-                        console.log(`[WA] Synced JID for ${m.name}: ${result.jid}`);
-                        await prisma.member.update({
-                            where: { id: m.id },
-                            data: { whatsapp_jid: result.jid }
-                        });
+                    const results = await s.onWhatsApp(clean);
+                    if (results && results.length > 0) {
+                        const result = results[0];
+                        if (result.exists) {
+                            console.log(`[WA] Sync (V6): Resolved ${m.name} to ${result.jid}`);
+                            await prisma.member.update({
+                                where: { id: m.id },
+                                data: { whatsapp_jid: result.jid }
+                            });
+                        }
                     }
                 } catch (err) {
                     // Silently fail for individual numbers
@@ -332,7 +350,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
         const remoteLast8 = remotePhone.slice(-8);
 
-        console.log(`[WA] Identification Attempt: Name=${senderName}, Phone=${remotePhone}, JID/LID=${remoteJid}`);
+        console.log(`[WA] Identification Attempt (V6.0): Name=${senderName}, Phone=${remotePhone}, JID/LID=${remoteJid}`);
 
         // 1.2 Attempt Identification by JID (The most reliable/fastest way)
         member = await prisma.member.findFirst({
