@@ -142,9 +142,10 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
             qrCodes.delete(tenantId); // Clear QR on close
 
-            // Safety skip: if statusCode is 515, 403, or 401, it's a corrupt or blocked session. Let's delete ALL files and re-init.
-            if (statusCode === 515 || statusCode === 403 || statusCode === 401 || statusCode === 405) {
-                console.warn(`[WA] CRITICAL: Status ${statusCode} detected. Eradicating session files for ${tenantId}...`);
+            // 401: Unauthorized (Logged out), 403: Forbidden, 405: Not Allowed (Version/Browser error)
+            // NEVER DELETE ON 515! 515 is "Restart Required", which Baileys triggers normally right after scanning the QR code.
+            if (statusCode === 401 || statusCode === 403 || statusCode === 405) {
+                console.warn(`[WA] Session rejected with status ${statusCode}. Cleaning up session files for ${tenantId}...`);
                 try {
                     const sessionDir = path.join(process.cwd(), 'sessions', tenantId.trim());
                     if (fs.existsSync(sessionDir)) {
@@ -156,7 +157,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
             }
 
             // Remove from session map if we are not reconnecting or if it's a permanent error
-            if (!shouldReconnect) {
+            if (statusCode === DisconnectReason.loggedOut) {
                 console.log(`Tenant ${tenantId} logged out or permanent disconnect.`);
                 sessions.delete(tenantId);
                 await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'DISCONNECTED' } });
@@ -165,7 +166,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
                 console.log(`[WA] Attempting auto-reconnect for ${tenantId}...`);
                 // Ensure the previous session is cleaned up before re-init
                 sessions.delete(tenantId);
-                setTimeout(() => initWhatsApp(tenantId, onQr), 3000);
+                setTimeout(() => initWhatsApp(tenantId, onQr, onStatus), 3000);
             }
         } else if (connection === 'open') {
             console.log(`[WA] Connection opened for tenant ${tenantId} (V6.0 SUCCESS)`);
