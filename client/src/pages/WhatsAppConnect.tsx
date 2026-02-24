@@ -6,19 +6,10 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { Zap, ShieldCheck, Smartphone, LogOut, CheckCircle2, AlertTriangle } from 'lucide-react';
 
-const getSocketURL = () => {
-    let url = import.meta.env.VITE_API_URL;
-    if (!url || url === '/') {
-        if (typeof window !== 'undefined') {
-            url = window.location.origin;
-        }
-    }
-    return url || 'http://localhost:3000';
-};
-
-const socket = io(getSocketURL(), {
-    transports: ['websocket', 'polling'],
-    reconnectionAttempts: 5
+const socket = io(import.meta.env.VITE_API_URL || '/', {
+    transports: ['polling', 'websocket'],
+    reconnection: true,
+    reconnectionDelay: 1000
 });
 
 export const WhatsAppConnect = () => {
@@ -26,6 +17,7 @@ export const WhatsAppConnect = () => {
     const [qr, setQr] = useState('');
     const [status, setStatus] = useState('DISCONNECTED');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
@@ -35,6 +27,21 @@ export const WhatsAppConnect = () => {
         }
 
         if (!user?.tenant_id) return;
+
+        const joinRoom = () => {
+            console.log('[Socket] Solicitando entrada na sala:', user.tenant_id);
+            socket.emit('join_room', { room: user.tenant_id });
+        };
+
+        if (socket.connected) {
+            joinRoom();
+        }
+
+        socket.on('connect', joinRoom);
+
+        socket.on('connect_error', (err) => {
+            console.error('[Socket] Erro de conexão:', err);
+        });
 
         api.get('/me').then(res => {
             setStatus(res.data.whatsapp_status);
@@ -68,8 +75,17 @@ export const WhatsAppConnect = () => {
     }, [user?.tenant_id, startTutorial, hasSeenTutorial]);
 
     const handleConnect = async () => {
-        setLoading(true);
-        await api.post('/whatsapp/connect');
+        try {
+            setLoading(true);
+            setError(null);
+            await api.post('/whatsapp/connect');
+            // Timeout de segurança: se em 20s não chegar o QR, libera o botão
+            setTimeout(() => setLoading(false), 20000);
+        } catch (err: any) {
+            console.error('[WA] Erro ao iniciar conexão:', err);
+            setError('Falha ao iniciar o WhatsApp. Tente novamente em instantes.');
+            setLoading(false);
+        }
     };
 
     return (
@@ -132,6 +148,11 @@ export const WhatsAppConnect = () => {
                                         Não feche a aba durante o processo de conexão. O processo leva cerca de 10 segundos após a leitura do QR Code.
                                     </p>
                                 </div>
+                                {error && (
+                                    <div className="bg-red-50 text-red-500 p-4 rounded-xl mb-6 text-xs font-bold border border-red-100 animate-shake">
+                                        {error}
+                                    </div>
+                                )}
                                 <button
                                     onClick={handleConnect}
                                     disabled={loading}
