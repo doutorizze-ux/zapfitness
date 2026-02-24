@@ -56,10 +56,17 @@ export const reconnectSessions = async () => {
         try {
             console.log(`[WA] Reconnecting tenant: ${tenant.name} (${tenant.id})`);
             // Pass a callback to emit QR if it expires during restart and user is watching
-            await initWhatsApp(tenant.id.trim(), (qr) => {
-                console.log(`[WA] New QR generated for tenant ${tenant.id} during auto-reconnect`);
-                io.to(tenant.id).emit('qr_code', qr);
-            });
+            await initWhatsApp(
+                tenant.id.trim(),
+                (qr) => {
+                    console.log(`[WA] New QR generated for tenant ${tenant.id} during auto-reconnect`);
+                    io.to(tenant.id).emit('qr_code', qr);
+                },
+                (status) => {
+                    console.log(`[WA] Auto-reconnect status for ${tenant.id}: ${status}`);
+                    io.to(tenant.id).emit('whatsapp_status', status);
+                }
+            );
         } catch (err) {
             console.error(`[WA] Failed to reconnect ${tenant.id}:`, err);
             await prisma.tenant.update({
@@ -70,7 +77,7 @@ export const reconnectSessions = async () => {
     }
 };
 
-export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void) => {
+export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void, onStatus?: (status: string) => void) => {
     console.log(`[WA] Executing initWhatsApp for tenant: ${tenantId}`);
     // 0. Safety: Check if there's already an active session and end it
     const existingSession = sessions.get(tenantId);
@@ -148,6 +155,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
                 console.log(`Tenant ${tenantId} logged out or permanent disconnect.`);
                 sessions.delete(tenantId);
                 await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'DISCONNECTED' } });
+                if (onStatus) onStatus('DISCONNECTED');
             } else {
                 console.log(`[WA] Attempting auto-reconnect for ${tenantId}...`);
                 // Ensure the previous session is cleaned up before re-init
@@ -159,6 +167,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
             sessions.set(tenantId, sock);
             qrCodes.delete(tenantId); // Connected, no more QR needed
             await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'CONNECTED' } });
+            if (onStatus) onStatus('CONNECTED');
 
             // PROACTIVE SYNC: Resolve JIDs for all members to handle LID/9th digit issues
             syncMembersJid(tenantId, sock);

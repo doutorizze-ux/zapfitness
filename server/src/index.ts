@@ -449,22 +449,17 @@ app.post('/api/whatsapp/connect', authMiddleware, async (req: any, res) => {
     console.log(`[API] /api/whatsapp/connect called, tenantId=${tenantId}, timestamp=${new Date().toISOString()}`);
 
     // iniciar fluxo de conexão que chama initWhatsApp(...)
-    initWhatsApp(tenantId, (qr) => {
-        console.log(`[WA] QR Generated for tenant=${tenantId} (length=${qr?.length}) at ${new Date().toISOString()}`);
-        // tentar emitir para a sala do tenant
-        try {
-            console.log(`[WA] Emitting 'qr_code' to room=${tenantId}`);
+    initWhatsApp(
+        tenantId,
+        (qr) => {
+            console.log(`[WA] QR Generated for tenant=${tenantId} (length=${qr?.length}) at ${new Date().toISOString()}`);
             io.to(tenantId).emit('qr_code', qr);
-            console.log(`[WA] Emit done for tenant=${tenantId}`);
-        } catch (emitErr) {
-            console.error(`[WA] Emit ERROR for tenant=${tenantId}:`, emitErr);
+        },
+        (status) => {
+            console.log(`[WA] Status Update for tenant=${tenantId}: ${status}`);
+            io.to(tenantId).emit('whatsapp_status', status);
         }
-    }).then((sock) => {
-        if (sock?.user) {
-            console.log(`[WA] auth success tenant=${tenantId}`);
-            io.to(tenantId).emit('whatsapp_status', 'CONNECTED');
-        }
-    });
+    );
 
     res.json({ status: 'INITIALIZING' });
 });
