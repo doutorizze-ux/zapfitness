@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, WASocket, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import makeWASocket, { DisconnectReason, useMultiFileAuthState, makeCacheableSignalKeyStore, WASocket, fetchLatestBaileysVersion, Browsers } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import path from 'path';
 import fs from 'fs';
@@ -106,18 +106,12 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
     const sock = makeWASocket({
         version,
         logger,
-        printQRInTerminal: false,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        browser: ["Ubuntu", "Chrome", "20.0.04"],
-        connectTimeoutMs: 60_000,
-        defaultQueryTimeoutMs: 60_000,
-        keepAliveIntervalMs: 10_000,
-        emitOwnEvents: true,
-        fireInitQueries: true,
-        generateHighQualityLinkPreview: true,
+        browser: Browsers.ubuntu('Chrome'),
+        printQRInTerminal: false,
         syncFullHistory: false,
         markOnlineOnConnect: true,
     });

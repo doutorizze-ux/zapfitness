@@ -18,6 +18,7 @@ export const WhatsAppConnect = () => {
     const [status, setStatus] = useState('DISCONNECTED');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
@@ -42,6 +43,7 @@ export const WhatsAppConnect = () => {
         socket.on('disconnect', (reason) => {
             console.warn('[Socket] Desconectado:', reason);
             setLoading(false);
+            setHasJoinedRoom(false);
         });
 
         api.get('/me').then(res => {
@@ -66,14 +68,23 @@ export const WhatsAppConnect = () => {
 
         socket.on('joined_room', (data) => {
             console.log('[Socket] Entrou na sala:', data.room);
+            setHasJoinedRoom(true);
         });
 
+        // Forced interval to ensure room membership (Safety measure)
+        const interval = setInterval(() => {
+            if (!hasJoinedRoom && socket.connected) joinRoom();
+        }, 5000);
+
         return () => {
+            clearInterval(interval);
             socket.off('qr_code');
             socket.off('whatsapp_status');
             socket.off('joined_room');
+            socket.off('connect');
+            socket.off('disconnect');
         }
-    }, [user?.tenant_id, startTutorial, hasSeenTutorial]);
+    }, [user?.tenant_id, startTutorial, hasSeenTutorial, hasJoinedRoom]);
 
     const handleConnect = async () => {
         try {
