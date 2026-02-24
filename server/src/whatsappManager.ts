@@ -406,13 +406,29 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             // 1.4 LAST RESORT: Try to match by name if phone matching failed (Only if name is provided)
             if (!member && senderName && senderName !== "Interessado") {
                 console.log(`[WA] Last Resort: Attempting name-based match for "${senderName}"...`);
-                const normalizedSenderName = senderName.toLowerCase().trim();
-                member = allMembers.find(m => {
-                    const dbName = m.name.toLowerCase();
-                    // If the WhatsApp name is fully contained in the DB name and is at least 4 chars
-                    return normalizedSenderName.length >= 4 && dbName.includes(normalizedSenderName);
-                }) || null;
+                // Remove emojis and special characters from sender name
+                const cleanSenderName = senderName.toLowerCase().replace(/[^\p{L}\s]/gu, '').trim();
 
+                if (cleanSenderName.length >= 3) {
+                    // Try exact substring match first
+                    member = allMembers.find(m => {
+                        const dbName = m.name.toLowerCase();
+                        return dbName.includes(cleanSenderName) || cleanSenderName.includes(dbName);
+                    }) || null;
+
+                    // Try word-by-word unique match if full string fails
+                    if (!member) {
+                        const words = cleanSenderName.split(/\s+/).filter((w: string) => w.length >= 4);
+                        for (const word of words) {
+                            const matches = allMembers.filter(m => m.name.toLowerCase().includes(word));
+                            // Only match if exactly one person has this name part (to avoid matching 'Maria' to 10 people)
+                            if (matches.length === 1) {
+                                member = matches[0];
+                                break;
+                            }
+                        }
+                    }
+                }
                 if (member) console.log(`[WA] Identification SUCCESS via Name Match: ${member.name}`);
             }
 
