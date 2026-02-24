@@ -13,6 +13,14 @@ const __dirname = path.dirname(__filename);
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Store multiple WhatsApp sessions: tenantId -> WASocket
+export const sessions = new Map<string, WASocket>();
+const qrCodes = new Map<string, string>(); // Store last QR for each tenant
+
+export function getLatestQR(tenantId: string) {
+    return qrCodes.get(tenantId);
+}
+
 export async function humanizedSendMessage(sock: WASocket, jid: string, content: any) {
     try {
         if (content.text) {
@@ -28,9 +36,6 @@ export async function humanizedSendMessage(sock: WASocket, jid: string, content:
         return await sock.sendMessage(jid, content); // Fallback
     }
 }
-
-// Store multiple WhatsApp sessions: tenantId -> WASocket
-export const sessions = new Map<string, WASocket>();
 
 export const getSession = (tenantId: string) => sessions.get(tenantId);
 export const reconnectSessions = async () => {
@@ -124,6 +129,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
         console.log(`[WA] Connection update for ${tenantId}:`, { connection, qr: !!qr });
 
         if (qr && onQr) {
+            qrCodes.set(tenantId, qr); // Cache the QR code
             onQr(qr);
         }
 
@@ -131,6 +137,8 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
             const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             console.log(`[WA] Connection closed for tenant ${tenantId}. Status: ${statusCode}. Should Reconnect: ${shouldReconnect}`);
+
+            qrCodes.delete(tenantId); // Clear QR on close
 
             // Safety skip: if statusCode is 515 or 403, it's often a corrupt session. Let's delete creds and re-init.
             if (statusCode === 515 || statusCode === 403) {
@@ -155,6 +163,7 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
         } else if (connection === 'open') {
             console.log(`[WA] Connection opened for tenant ${tenantId} (V6.0 SUCCESS)`);
             sessions.set(tenantId, sock);
+            qrCodes.delete(tenantId); // Connected, no more QR needed
             await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'CONNECTED' } });
 
             // PROACTIVE SYNC: Resolve JIDs for all members to handle LID/9th digit issues

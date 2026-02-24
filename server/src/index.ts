@@ -1402,6 +1402,19 @@ io.on('connection', (socket: any) => {
 
             socket.join(room);
             console.log(`[IO] socket ${socket.id} joined room=${room} (Authenticated)`);
+
+            // Immediately send current status and any pending QR code
+            const { getLatestQR, getSession } = await import('./whatsappManager.js');
+            const pendingQr = getLatestQR(room);
+            if (pendingQr) {
+                socket.emit('qr_code', pendingQr);
+            }
+
+            const activeSession = getSession(room);
+            if (activeSession?.user) {
+                socket.emit('whatsapp_status', 'CONNECTED');
+            }
+
             socket.emit('joined_room', { room, socketId: socket.id });
         } catch (err) {
             console.error('[IO] Error on join_room:', err);
