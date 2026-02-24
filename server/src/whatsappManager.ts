@@ -138,11 +138,47 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
                 setTimeout(() => initWhatsApp(tenantId, onQr), 3000);
             }
         } else if (connection === 'open') {
-            console.log(`Connection opened for tenant ${tenantId}`);
+            console.log(`[WA] Connection opened for tenant ${tenantId}`);
             sessions.set(tenantId, sock);
             await prisma.tenant.update({ where: { id: tenantId }, data: { whatsapp_status: 'CONNECTED' } });
+
+            // PROACTIVE SYNC: Resolve JIDs for all members to handle LID/9th digit issues
+            syncMembersJid(tenantId, sock);
         }
     });
+
+    async function syncMembersJid(tId: string, s: WASocket) {
+        try {
+            console.log(`[WA] Starting proactive JID sync for Tenant ${tId}...`);
+            const members = await prisma.member.findMany({
+                where: { tenant_id: tId, whatsapp_jid: null }
+            });
+
+            for (const m of members) {
+                let clean = m.phone.replace(/\D/g, '');
+                if (clean.length >= 10 && clean.length <= 11 && !clean.startsWith('55')) {
+                    clean = '55' + clean;
+                }
+
+                try {
+                    const [result] = await s.onWhatsApp(clean);
+                    if (result && result.exists) {
+                        console.log(`[WA] Synced JID for ${m.name}: ${result.jid}`);
+                        await prisma.member.update({
+                            where: { id: m.id },
+                            data: { whatsapp_jid: result.jid }
+                        });
+                    }
+                } catch (err) {
+                    // Silently fail for individual numbers
+                }
+                await delay(500); // Avoid rate limit
+            }
+            console.log(`[WA] JID Sync complete for Tenant ${tId}`);
+        } catch (error) {
+            console.error(`[WA] Sync Error:`, error);
+        }
+    }
 
     sock.ev.on('messages.upsert', async (m) => {
         if (m.type === 'notify') {
