@@ -142,13 +142,17 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
             qrCodes.delete(tenantId); // Clear QR on close
 
-            // Safety skip: if statusCode is 515 or 403, it's often a corrupt session. Let's delete creds and re-init.
-            if (statusCode === 515 || statusCode === 403) {
-                console.warn(`[WA] CRITICAL: Status ${statusCode} detected. Cleaning up session files for ${tenantId}...`);
+            // Safety skip: if statusCode is 515, 403, or 401, it's a corrupt or blocked session. Let's delete ALL files and re-init.
+            if (statusCode === 515 || statusCode === 403 || statusCode === 401 || statusCode === 405) {
+                console.warn(`[WA] CRITICAL: Status ${statusCode} detected. Eradicating session files for ${tenantId}...`);
                 try {
-                    const credsPath = path.join(process.cwd(), 'sessions', tenantId.trim(), 'creds.json');
-                    if (fs.existsSync(credsPath)) fs.unlinkSync(credsPath);
-                } catch (e) { }
+                    const sessionDir = path.join(process.cwd(), 'sessions', tenantId.trim());
+                    if (fs.existsSync(sessionDir)) {
+                        fs.rmSync(sessionDir, { recursive: true, force: true });
+                    }
+                } catch (e) {
+                    console.error('[WA] Error cleaning session on critical failure:', e);
+                }
             }
 
             // Remove from session map if we are not reconnecting or if it's a permanent error
