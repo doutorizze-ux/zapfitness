@@ -212,18 +212,42 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     // Save outgoing message
     const phone = jid.split('@')[0].replace(/\D/g, '');
 
-    // Try to find member
+    // Try to find member or lead and update their JID
     const member = await prisma.member.findFirst({
         where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
     });
+
+    if (member && !member.whatsapp_jid) {
+        await prisma.member.update({
+            where: { id: member.id },
+            data: { whatsapp_jid: targetJid }
+        });
+    }
+
+    let leadId = null;
+    if (!member) {
+        const lead = await prisma.lead.findFirst({
+            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
+        });
+        if (lead) {
+            leadId = lead.id;
+            if (!lead.whatsapp_jid) {
+                await prisma.lead.update({
+                    where: { id: lead.id },
+                    data: { whatsapp_jid: targetJid }
+                });
+            }
+        }
+    }
 
     await prisma.chatMessage.create({
         data: {
             tenant_id: tenantId,
             content: text,
             from_me: true,
-            jid: jid,
+            jid: targetJid,
             member_id: member?.id,
+            lead_id: leadId,
             type: 'text'
         }
     });
@@ -265,27 +289,21 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         // Correct way to get phone: remove multi-device suffix and then clean digits
         const remotePhone = remoteJid.split(':')[0].split('@')[0].replace(/\D/g, '');
-
-        const getRegionalId = (phone: string) => {
-            const clean = phone.replace(/^55/, '');
-            if (clean.length < 10) return clean;
-            return clean.slice(0, 2) + clean.slice(-8);
-        };
-
-        const remoteRegionalId = getRegionalId(remotePhone);
         const remotePhoneNoDDI = remotePhone.replace(/^55/, '');
+        const remoteLast8 = remotePhone.slice(-8);
+        const remoteLast9 = remotePhone.slice(-9);
 
-        console.log(`[WA] Message from ${senderName}. Remote: ${remotePhone}, RegionalID: ${remoteRegionalId}`);
+        console.log(`[WA] Message from ${senderName}. Remote Phone: ${remotePhone}, NoDDI: ${remotePhoneNoDDI}, Last8: ${remoteLast8}`);
 
         // --- STEP 1: Identification by JID (The most reliable way) ---
-        let member = await prisma.member.findUnique({
-            where: { whatsapp_jid: remoteJid },
+        let member = await prisma.member.findFirst({
+            where: { whatsapp_jid: remoteJid, tenant_id: tenantId },
             include: { plan: true, tenant: true }
         });
 
         // --- STEP 2: Fallback to Phone Matching (if JID not linked yet) ---
         if (!member) {
-            console.log(`[WA] Searching by phone fallback for ${senderName}...`);
+            console.log(`[WA] Searching fallback for ${remotePhone} in Tenant ${tenantId}...`);
             const allMembers = await prisma.member.findMany({
                 where: { tenant_id: tenantId },
                 include: { plan: true, tenant: true }
@@ -293,18 +311,22 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
             member = allMembers.find(m => {
                 const dbPhone = m.phone.replace(/\D/g, '');
+                const dbPhoneNoDDI = dbPhone.replace(/^55/, '');
                 const dbLast8 = dbPhone.slice(-8);
-                const remoteLast8 = remotePhone.slice(-8);
-                const dbLast10 = dbPhone.slice(-10);
-                const remoteLast10 = remotePhone.slice(-10);
+                const dbLast9 = dbPhone.slice(-9);
 
-                return (
-                    dbPhone === remotePhone ||
-                    dbPhone.endsWith(remotePhoneNoDDI) ||
-                    remotePhone.endsWith(dbPhone.replace(/^55/, '')) ||
-                    (dbLast10 === remoteLast10 && dbLast10.length >= 10) ||
-                    (dbLast8 === remoteLast8 && dbLast8.length >= 8)
-                );
+                // Precise Match
+                if (dbPhone === remotePhone || dbPhoneNoDDI === remotePhoneNoDDI) return true;
+
+                // Cross Match (EndsWith)
+                if (dbPhone.endsWith(remotePhoneNoDDI) || remotePhone.endsWith(dbPhoneNoDDI)) return true;
+
+                // Brazil 9th Digit Resiliency (Match by last 8 or 9 digits)
+                // This catches if DB has 11988887777 and WA sends 1188887777 (or vice versa)
+                if (dbLast8 === remoteLast8 && dbLast8.length >= 8) return true;
+                if (dbLast9 === remoteLast9 && dbLast9.length >= 9) return true;
+
+                return false;
             }) || null;
 
             // Step 2.5: AUTO-LINK JID (Link the phone to this JID for future messages)
@@ -318,9 +340,12 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         }
 
         if (member) {
-            console.log(`[WA] Member Found: ${member.name} (JID: ${remoteJid})`);
+            console.log(`[WA] Member Identified: ${member.name} (UUID: ${member.id})`);
         } else {
-            console.log(`[WA] No member found for ${remotePhone} in Tenant ${tenantId}`);
+            console.log(`[WA] Identification FAILED for ${remotePhone}. Total candidates checked in tenant: ${await prisma.member.count({ where: { tenant_id: tenantId } })}`);
+            // Se falhou, vamos logar os primeiros 5 números da DB deste tenant para comparação visual no log
+            const samples = await prisma.member.findMany({ where: { tenant_id: tenantId }, take: 5, select: { name: true, phone: true } });
+            console.log(`[WA] Sample DB members for comparison:`, JSON.stringify(samples));
         }
 
         // 3. Lead Identification/Creation (For Non-Members)
@@ -338,7 +363,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                         tenant_id: tenantId,
                         OR: [
                             { phone: remotePhone },
-                            { phone: { endsWith: remoteRegionalId.slice(-8) } }
+                            { phone: { endsWith: remoteLast8 } }
                         ]
                     }
                 });
