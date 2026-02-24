@@ -106,19 +106,22 @@ export const initWhatsApp = async (tenantId: string, onQr?: (qr: string) => void
 
     const { state, saveCreds } = await useMultiFileAuthState(authPath);
 
-    // Removing fetchLatestBaileysVersion as it's known to occasionally cause "Não é possível conectar novos dispositivos"
     console.log(`[WA] Initializing WA Socket with explicit browser configuration`);
 
+    // WA API completely rejects connections (405) without a valid Web version
+    const { version } = await fetchLatestBaileysVersion();
+
     const sock = makeWASocket({
+        version,
         logger,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        browser: ['Windows', 'Chrome', '131.0.0.0'], // Very strong disguise as a standard PC
+        browser: Browsers.macOS('Desktop'), // Official Baileys recommended bypass for device link errors
         printQRInTerminal: false,
         syncFullHistory: false,
-        markOnlineOnConnect: true,
+        markOnlineOnConnect: false, // Setting to false often resolves "Não é possível conectar" errors
     });
 
     sock.ev.on('creds.update', saveCreds);
