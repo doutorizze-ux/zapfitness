@@ -748,7 +748,7 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
         const id = req.params.id?.trim();
         console.log(`[PublicAPI] Searching for ID: ${id}`);
 
-        const workouts = await prisma.workout.findMany({
+        let workouts = await prisma.workout.findMany({
             where: {
                 OR: [
                     { id: id },
@@ -772,6 +772,29 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
             },
             orderBy: { created_at: 'desc' }
         });
+
+        // If no digital workouts, check if there's a manual workout (workout_routine)
+        if (workouts.length === 0) {
+            const member = await prisma.member.findFirst({
+                where: { id: id },
+                include: { tenant: { select: { name: true, primary_color: true, logo_url: true } } }
+            });
+
+            if (member && member.workout_routine && member.workout_routine.trim() !== '') {
+                console.log(`[PublicAPI] Found manual workout routine for member ${member.name}. Synthesizing response.`);
+                workouts = [{
+                    id: `manual-${member.id}`,
+                    name: 'Ficha de Treino',
+                    notes: member.workout_routine,
+                    active: true,
+                    exercises: [],
+                    member: {
+                        name: member.name,
+                        tenant: member.tenant
+                    }
+                } as any];
+            }
+        }
 
         console.log(`[PublicAPI] Result: Found ${workouts.length} workouts for target ${id}`);
         res.json(workouts);

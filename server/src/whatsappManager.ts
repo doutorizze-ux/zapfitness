@@ -891,18 +891,22 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
 
     let text = `💪 *Seu Treino*\n\n`;
 
+    const baseUrl = process.env.FRONTEND_URL || 'https://zapp.fitness';
+
     if (hasDigital) {
         text += `📱 *Treinos Digitais (Interativos):*\n`;
-        const baseUrl = process.env.FRONTEND_URL || 'https://zapp.fitness';
         digitalWorkouts.forEach((w: any) => {
             text += `• *${w.name}* (${w.exercises.length} exercícios)\n`;
-            text += `🔗 Link: ${baseUrl}/w/${w.id}\n\n`;
         });
+        text += '\n'; // spacing
     }
 
     if (hasManual) {
-        text += `📝 *Anotações / Ficha Manual:*\n${member.workout_routine}\n`;
+        text += `📝 *Anotações / Ficha Manual:*\n${member.workout_routine}\n\n`;
     }
+
+    // Always send the smart link so the user gets what they expect
+    text += `🔗 *Acesse sua Ficha Completa aqui:*\n${baseUrl}/w/${member.id}`;
 
     await humanizedSendMessage(sock, remoteJid, { text: text.trim() });
 }
