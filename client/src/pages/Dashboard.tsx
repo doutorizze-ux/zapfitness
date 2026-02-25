@@ -228,6 +228,8 @@ export const Dashboard = () => {
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
                             { label: 'Chat', path: '/dashboard/chat', icon: MessageSquare },
+                            { label: 'Membros', path: '/dashboard/members', icon: Users },
+                            { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
 
