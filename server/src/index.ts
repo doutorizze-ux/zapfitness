@@ -746,9 +746,8 @@ app.delete('/api/workouts/:id', authMiddleware, async (req: any, res) => {
 app.get('/api/public/workouts/:id', async (req: any, res) => {
     try {
         const id = req.params.id?.trim();
-        console.log(`[PublicAPI] Finding workouts for target: ${id}`);
+        console.log(`[PublicAPI] Searching for ID: ${id}`);
 
-        // Search for workouts where ID is the workout ID OR the member ID
         const workouts = await prisma.workout.findMany({
             where: {
                 OR: [
@@ -774,12 +773,7 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
             orderBy: { created_at: 'desc' }
         });
 
-        if (workouts.length === 0) {
-            console.warn(`[PublicAPI] No active workouts found for search: ${id}`);
-        } else {
-            console.log(`[PublicAPI] Success: Found ${workouts.length} workout segments for ${workouts[0].member.name}`);
-        }
-
+        console.log(`[PublicAPI] Result: Found ${workouts.length} workouts for target ${id}`);
         res.json(workouts);
     } catch (e: any) {
         console.error(`[PublicAPI] Error:`, e);

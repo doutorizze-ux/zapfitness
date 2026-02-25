@@ -259,41 +259,45 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     const sock = sessions.get(tenantId);
     if (!sock) throw new Error('WhatsApp não conectado');
 
-    // 1. Normalize the JID/Phone
-    let cleanNumber = jid.split('@')[0].replace(/\D/g, '');
+    let targetJid = jid;
 
-    // Auto-prepend Brazil country code if it looks like a local number (10 or 11 digits)
-    if (cleanNumber.length >= 10 && cleanNumber.length <= 11 && !cleanNumber.startsWith('55')) {
-        cleanNumber = '55' + cleanNumber;
-    }
+    // Only try to resolve/normalize if it looks like a phone number (not a LID)
+    if (!jid.endsWith('@lid')) {
+        let cleanNumber = jid.split('@')[0].replace(/\D/g, '');
 
-    // 2. Resolve the correct JID using onWhatsApp (handles the 9th digit nightmare in Brazil)
-    let targetJid = cleanNumber + '@s.whatsapp.net';
-    try {
-        const results = await sock.onWhatsApp(cleanNumber);
-        if (results && results.length > 0 && results[0].exists) {
-            targetJid = results[0].jid;
+        if (cleanNumber.length >= 10 && cleanNumber.length <= 11 && !cleanNumber.startsWith('55')) {
+            cleanNumber = '55' + cleanNumber;
         }
-    } catch (e) {
-        console.warn(`[WA] Could not resolve JID for ${cleanNumber}, using fallback:`, e);
+
+        targetJid = cleanNumber + '@s.whatsapp.net';
+        try {
+            const results = await sock.onWhatsApp(cleanNumber);
+            if (results && results.length > 0 && results[0].exists) {
+                targetJid = results[0].jid;
+            }
+        } catch (e) {
+            console.warn(`[WA] Could not resolve JID for ${cleanNumber}, using fallback:`, e);
+        }
     }
 
-    console.log(`[WA] Sending message to resolved JID: ${targetJid} (Original: ${jid})`);
+    console.log(`[WA] Sending message to target JID: ${targetJid}`);
     const result = await humanizedSendMessage(sock, targetJid, { text });
 
-    // Save outgoing message
-    const phone = jid.split('@')[0].replace(/\D/g, '');
+    // Try to find member or lead to save the JID if missing
+    let member = null;
+    let phone = jid.split('@')[0].replace(/\D/g, '');
 
-    // Try to find member or lead and update their JID
-    const member = await prisma.member.findFirst({
-        where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
-    });
-
-    if (member && !member.whatsapp_jid) {
-        await prisma.member.update({
-            where: { id: member.id },
-            data: { whatsapp_jid: targetJid }
+    if (!jid.endsWith('@lid')) {
+        member = await prisma.member.findFirst({
+            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
         });
+
+        if (member && !member.whatsapp_jid) {
+            await prisma.member.update({
+                where: { id: member.id },
+                data: { whatsapp_jid: targetJid }
+            });
+        }
     }
 
     let leadId = null;
