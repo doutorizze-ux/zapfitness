@@ -541,9 +541,20 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         }
 
         // 1.5 Bot Pause Logic
-        if (member.bot_paused && !isMenuRequest) {
-            console.log(`[WA] Bot paused for member ${member.name} (${remotePhone}). Ignoring: ${cleanText}`);
-            return;
+        if (member.bot_paused) {
+            // IF PAUSED: Only the strict command "menu" can unpause it
+            if (cleanText === 'menu') {
+                console.log(`[WA] Member ${member.name} requested UNPAUSE via 'menu' command.`);
+                await prisma.member.update({
+                    where: { id: member.id },
+                    data: { bot_paused: false }
+                });
+                member.bot_paused = false;
+                // Continue to show menu below
+            } else {
+                console.log(`[WA] Bot paused for member ${member.name} (${remotePhone}). Ignoring message during human attendance: ${cleanText}`);
+                return;
+            }
         }
 
         // --- OPENING HOURS CHECK (For Menu) ---
@@ -558,17 +569,8 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         const isClosed = tenant.opening_time && tenant.closing_time &&
             (currentTimeStr < tenant.opening_time || currentTimeStr > tenant.closing_time);
 
-        // Menu Navigation for Members (and unpausing)
+        // Menu Navigation for Members
         if (isMenuRequest) {
-            console.log(`[WA] Menu request from ${member.name}. Unpausing if needed.`);
-            if (member.bot_paused) {
-                await prisma.member.update({
-                    where: { id: member.id },
-                    data: { bot_paused: false }
-                });
-                member.bot_paused = false;
-            }
-
             if (isClosed) {
                 await humanizedSendMessage(sock, remoteJid, {
                     text: `👋 Olá, *${member.name.split(' ')[0]}*!\n\nNo momento a *${tenant.name}* está fechada. Nosso horário é das ${tenant.opening_time} às ${tenant.closing_time}.\n\nComo posso ajudar?`

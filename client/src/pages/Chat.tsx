@@ -22,6 +22,7 @@ interface ChatMember {
     name: string;
     phone: string;
     active: boolean;
+    bot_paused: boolean;
     last_message?: string;
     last_message_at?: string;
     unread_count?: number;
@@ -109,6 +110,22 @@ export const Chat = () => {
             setMessages([]);
         }
     }, [selectedMember, fetchMessages]);
+
+    const handleUnpauseBot = async () => {
+        if (!selectedMember) return;
+        try {
+            await api.post(`/members/${selectedMember.id}/unpause`);
+            toast.success('Atendimento encerrado e Bot religado!');
+            // Update local state
+            setMembers(prev => prev.map(m =>
+                m.id === selectedMember.id ? { ...m, bot_paused: false } : m
+            ));
+            setSelectedMember(prev => prev ? { ...prev, bot_paused: false } : null);
+        } catch (err) {
+            console.error('Error unpausing bot:', err);
+            toast.error('Erro ao religar o bot');
+        }
+    };
 
     const handleSendMessage = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -245,9 +262,23 @@ export const Chat = () => {
                                         <Phone size={10} />
                                         {selectedMember.phone}
                                     </div>
+                                    {selectedMember.bot_paused && (
+                                        <div className="flex items-center gap-1.5 mt-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 w-fit">
+                                            <Brain size={10} />
+                                            <span className="text-[9px] font-black uppercase tracking-tighter">Bot Pausado</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
+                                {selectedMember.bot_paused && (
+                                    <button
+                                        onClick={handleUnpauseBot}
+                                        className="hidden sm:flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
+                                    >
+                                        Encerrar Atendimento
+                                    </button>
+                                )}
                                 <button className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
                                     <Clock size={20} />
                                 </button>
@@ -256,6 +287,21 @@ export const Chat = () => {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Mobile handleUnpauseBot button */}
+                        {selectedMember.bot_paused && (
+                            <div className="md:hidden px-4 py-2 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                                <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
+                                    <Brain size={14} /> Atendimento Humano Ativo
+                                </span>
+                                <button
+                                    onClick={handleUnpauseBot}
+                                    className="text-[10px] font-black text-primary uppercase underline tracking-widest"
+                                >
+                                    Encerrar
+                                </button>
+                            </div>
+                        )}
 
                         {/* Messages Body */}
                         <div

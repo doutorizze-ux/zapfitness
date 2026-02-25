@@ -468,7 +468,17 @@ app.post('/api/chat/send', authMiddleware, async (req: any, res) => {
     try {
         const { jid, text } = req.body;
         if (!jid || !text) return res.status(400).json({ error: 'JID e texto são obrigatórios' });
+
+        // 1. Send the message
         await sendMessageToJid(req.user.tenant_id, jid, text);
+
+        // 2. Automatically pause the bot for this member/lead (human intervention)
+        const phone = jid.split('@')[0].replace(/\D/g, '');
+        await prisma.member.updateMany({
+            where: { tenant_id: req.user.tenant_id, OR: [{ whatsapp_jid: jid }, { phone: { contains: phone.slice(-8) } }] },
+            data: { bot_paused: true }
+        });
+
         res.json({ success: true });
     } catch (e: any) {
         console.error('[Chat] Erro ao enviar mensagem:', e);
@@ -838,6 +848,35 @@ app.get('/api/whatsapp/status', authMiddleware, async (req: any, res) => {
 });
 
 
+
+app.post('/api/members/:id/unpause', authMiddleware, async (req: any, res) => {
+    try {
+        const member = await prisma.member.findFirst({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id }
+        });
+
+        if (!member) return res.status(404).json({ error: 'Membro não encontrado' });
+
+        await prisma.member.update({
+            where: { id: member.id },
+            data: { bot_paused: false }
+        });
+
+        // Notify member via WhatsApp that automatic service is resumed
+        const cleanPhone = member.phone.replace(/\D/g, '');
+        const jid = member.whatsapp_jid || `${cleanPhone}@s.whatsapp.net`;
+
+        try {
+            await sendMessageToJid(req.user.tenant_id, jid, '🤖 *Atendimento Automático Retomado*\n\nO bot voltou a ficar ativo. Se precisar de algo, basta escolher uma opção do menu ou digitar *Menu*.');
+        } catch (e) {
+            console.warn('[API] Could not send unpause notification via WhatsApp');
+        }
+
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.get('/api/members', authMiddleware, async (req: any, res) => {
     const members = await prisma.member.findMany({
