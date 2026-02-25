@@ -228,8 +228,6 @@ export const Dashboard = () => {
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
                             { label: 'Chat', path: '/dashboard/chat', icon: MessageSquare },
-                            { label: 'Membros', path: '/dashboard/members', icon: Users },
-                            { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', path: '/dashboard/appointments', icon: Calendar }] : []),
                             { label: 'Whats', path: '/dashboard/whatsapp', icon: Zap },
 
@@ -287,6 +285,8 @@ export const Dashboard = () => {
                         <div className="absolute bottom-20 left-0 right-0 animate-fade-in-up">
                             <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
                                 {[
+                                    { label: 'Membros', path: '/dashboard/members', icon: Users },
+                                    { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
                                     { label: 'Planos', path: '/dashboard/plans', icon: Activity },
                                     { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
                                     { label: 'Dinheiro', path: '/dashboard/finance', icon: CreditCard },
