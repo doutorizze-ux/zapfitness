@@ -753,8 +753,7 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
                 OR: [
                     { id: id },
                     { member_id: id }
-                ],
-                active: true
+                ]
             },
             include: {
                 exercises: {
