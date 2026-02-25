@@ -19,5 +19,12 @@ Este documento registra as ideias e planos discutidos para a evolução do siste
 ## 📈 Negócio & Escala
 - [ ] Painel de Métricas Avançadas (MRR, LTV, Previsão de Receita).
 
+## 🛠️ Manutenibilidade & Estabilidade (WhatsApp)
+- [x] **Identificação de Múltiplas Camadas (V6.0)**: Uso de Telefone, LID e Nome (Limpeza de Emojis/S/Z).
+- [x] **Auto-Recuperação de Sessão**: Limpeza automática de pastas corrompidas (Erro 515/403).
+- [x] **Disfarce de Navegador**: Identidade como Apple macOS/Desktop para evitar bloqueios.
+- [ ] **Monitor de Saúde do Bot**: Notificar administrador no painel se o bot desconectar por mais de 10 min.
+- [ ] **Botão "Vincular Aluno"**: Permitir que a recepção force o vínculo manual se a identificação automática falhar.
+
 ---
 *Documento gerado em 21/02/2026 para guiar o desenvolvimento futuro.*
