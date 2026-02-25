@@ -746,25 +746,14 @@ app.delete('/api/workouts/:id', authMiddleware, async (req: any, res) => {
 app.get('/api/public/workouts/:id', async (req: any, res) => {
     try {
         const id = req.params.id?.trim();
-        console.log(`[PublicAPI] Request received for ID: ${id}`);
+        console.log(`[PublicAPI] Finding workouts for target: ${id}`);
 
-        // Final fallback: Search ANY workout with this ID, even if inactive, just to verify existence
-        const anyWorkout = await prisma.workout.findFirst({
-            where: { id: id }
-        });
-
-        if (!anyWorkout) {
-            console.warn(`[PublicAPI] ❌ CRITICAL: Workout ${id} NOT FOUND in database at all.`);
-            return res.json([]);
-        }
-
-        console.log(`[PublicAPI] Base workout found: ${anyWorkout.name}, Active: ${anyWorkout.active}, Member: ${anyWorkout.member_id}`);
-
+        // Search for workouts where ID is the workout ID OR the member ID
         const workouts = await prisma.workout.findMany({
             where: {
                 OR: [
                     { id: id },
-                    { member_id: anyWorkout.member_id }
+                    { member_id: id }
                 ],
                 active: true
             },
@@ -772,8 +761,7 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
                 exercises: {
                     include: { exercise: true },
                     orderBy: { order: 'asc' }
-                }
-                ,
+                },
                 member: {
                     select: {
                         name: true,
@@ -786,10 +774,15 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
             orderBy: { created_at: 'desc' }
         });
 
-        console.log(`[PublicAPI] ✅ Final Result: Found ${workouts.length} active segments for member.`);
+        if (workouts.length === 0) {
+            console.warn(`[PublicAPI] No active workouts found for search: ${id}`);
+        } else {
+            console.log(`[PublicAPI] Success: Found ${workouts.length} workout segments for ${workouts[0].member.name}`);
+        }
+
         res.json(workouts);
     } catch (e: any) {
-        console.error(`[PublicAPI] Internal Error:`, e);
+        console.error(`[PublicAPI] Error:`, e);
         res.status(500).json({ error: e.message });
     }
 });
