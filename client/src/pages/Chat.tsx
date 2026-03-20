@@ -168,7 +168,7 @@ export const Chat = () => {
     });
 
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] bg-white rounded-2xl md:rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
+        <div className="flex flex-col md:flex-row h-[calc(100vh-220px)] md:h-[calc(100vh-180px)] bg-white rounded-2xl md:rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
             {/* Sidebar: Member List */}
             <div className={clsx(
                 "w-full md:w-80 lg:w-96 border-r border-slate-50 flex flex-col bg-slate-50/30",
