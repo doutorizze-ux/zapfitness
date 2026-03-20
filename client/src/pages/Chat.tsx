@@ -306,7 +306,7 @@ export const Chat = () => {
                         {/* Messages Body */}
                         <div
                             ref={scrollRef}
-                            className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 bg-slate-50/30 no-scrollbar"
+                            className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 bg-slate-50/30"
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center h-full">
@@ -364,7 +364,7 @@ export const Chat = () => {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 md:p-8 pb-32 md:pb-8 bg-white border-t border-slate-50">
+                        <div className="p-4 md:p-8 pb-32 md:pb-8 bg-white border-t border-slate-50 flex-shrink-0">
                             <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-4 bg-slate-50 p-1 md:p-2 rounded-2xl md:rounded-[2rem] shadow-inner focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                                 <button type="button" className="p-2 md:p-4 text-slate-400 hover:text-primary transition-all rounded-full hover:bg-white shadow-sm">
                                     <Paperclip size={20} />
