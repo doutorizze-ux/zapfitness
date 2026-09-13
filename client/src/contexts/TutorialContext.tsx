@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import Joyride, { STATUS, type CallBackProps, type Step, type Styles } from 'react-joyride';
 
 interface TutorialContextType {
@@ -179,19 +179,19 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
         }
     };
 
-    const hasSeenTutorial = (tutorialId: string) => {
+    const hasSeenTutorial = useCallback((tutorialId: string) => {
         const seen = getSeenTutorials();
         return seen.includes(tutorialId);
-    };
+    }, []);
 
-    const markAsSeen = (tutorialId: string) => {
+    const markAsSeen = useCallback((tutorialId: string) => {
         const seen = getSeenTutorials();
         if (!seen.includes(tutorialId)) {
             localStorage.setItem('zapfitness_tutorials_seen', JSON.stringify([...seen, tutorialId]));
         }
-    };
+    }, []);
 
-    const startTutorial = (tutorialId: string) => {
+    const startTutorial = useCallback((tutorialId: string) => {
         const tutorialSteps = TUTORIAL_STEPS[tutorialId];
         if (tutorialSteps) {
             setSteps(tutorialSteps);
@@ -200,9 +200,9 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
         } else {
             console.warn(`Tutorial ID "${tutorialId}" not found.`);
         }
-    };
+    }, []);
 
-    const handleJoyrideCallback = (data: CallBackProps) => {
+    const handleJoyrideCallback = useCallback((data: CallBackProps) => {
         const { status } = data;
 
         if (([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)) {
@@ -212,17 +212,25 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) 
                 setActiveTutorial(null);
             }
         }
-    };
+    }, [activeTutorial, markAsSeen]);
+
+    const contextValue = useMemo(() => ({
+        startTutorial,
+        hasSeenTutorial,
+        activeTutorial,
+    }), [startTutorial, hasSeenTutorial, activeTutorial]);
 
     return (
-        <TutorialContext.Provider value={{ startTutorial, hasSeenTutorial, activeTutorial }}>
+        <TutorialContext.Provider value={contextValue}>
             <Joyride
                 run={run}
                 steps={steps}
                 continuous
                 showProgress
                 showSkipButton
-                disableOverlayClose={true} // Force user to interact with the tour
+                /* Keep the tour informative without trapping the application behind its overlay. */
+                disableOverlayClose={false}
+                spotlightClicks
                 spotlightPadding={10}
                 styles={tutorialStyles}
                 callback={handleJoyrideCallback}

@@ -172,11 +172,11 @@ export const Exercises = () => {
                                 <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                                     <Dumbbell size={24} />
                                 </div>
-                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => { setEditingExercise(ex); setShowModal(true); }} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition">
+                                <div className="flex gap-1 touch-visible-actions transition-opacity">
+                                    <button type="button" onClick={() => { setEditingExercise(ex); setShowModal(true); }} className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition">
                                         <Pencil size={18} />
                                     </button>
-                                    <button onClick={() => handleDelete(ex.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition">
+                                    <button type="button" onClick={() => handleDelete(ex.id)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition">
                                         <Trash2 size={18} />
                                     </button>
                                 </div>
@@ -255,7 +255,7 @@ export const Exercises = () => {
                         >
                             <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
                                 <h3 className="text-xl font-black text-slate-900">{editingExercise?.id ? 'Editar Exercício' : 'Novo Exercício'}</h3>
-                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition">
+                                <button type="button" onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition">
                                     <LayoutGrid size={24} />
                                 </button>
                             </div>

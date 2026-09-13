@@ -181,6 +181,7 @@ export const Appointments = () => {
 
                 <div className="flex items-center gap-2 bg-white p-2 rounded-[2rem] shadow-sm border border-slate-100">
                     <button
+                        type="button"
                         onClick={() => setViewMode('daily')}
                         className={clsx(
                             "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
@@ -191,6 +192,7 @@ export const Appointments = () => {
                         DIÁRIO
                     </button>
                     <button
+                        type="button"
                         onClick={() => setViewMode('fixed')}
                         className={clsx(
                             "px-8 py-4 rounded-[1.5rem] font-black transition-all flex items-center gap-3 text-xs uppercase tracking-widest",
@@ -205,7 +207,7 @@ export const Appointments = () => {
 
             {viewMode === 'daily' && (
                 <div className="bg-white rounded-[3rem] p-6 shadow-sm border border-slate-100 mb-8 flex items-center justify-between">
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
+                    <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, -1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
                         <ChevronLeft size={32} />
                     </button>
                     <div className="text-center">
@@ -216,13 +218,14 @@ export const Appointments = () => {
                             {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
                         </h2>
                     </div>
-                    <button onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
+                    <button type="button" onClick={() => setSelectedDate(addDays(selectedDate, 1))} className="p-4 hover:bg-slate-50 rounded-2xl text-slate-300 hover:text-primary transition-all">
                         <ChevronRight size={32} />
                     </button>
                 </div>
             )}
 
             <button
+                type="button"
                 onClick={() => setShowModal(true)}
                 className="w-full mb-12 bg-primary text-white p-7 rounded-[2.5rem] font-black hover:opacity-90 transition-all shadow-2xl shadow-primary/20 flex items-center justify-center gap-4 active:scale-[0.98] text-sm uppercase tracking-widest"
             >
@@ -297,8 +300,9 @@ export const Appointments = () => {
                             </div>
 
                             <button
+                                type="button"
                                 onClick={() => handleDelete(item.id, item.isFixed)}
-                                className="p-4 bg-slate-50 text-slate-300 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                className="p-4 bg-slate-50 text-slate-300 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all touch-visible-actions"
                             >
                                 <Trash2 size={24} />
                             </button>
@@ -318,7 +322,7 @@ export const Appointments = () => {
                                     <h3 className="text-3xl font-black text-slate-900 tracking-tight">Novo Agendamento</h3>
                                     <p className="text-slate-500 font-medium text-lg italic">Defina o compromisso do aluno.</p>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
+                                <button type="button" onClick={() => setShowModal(false)} className="p-3 hover:bg-slate-100 rounded-2xl transition-colors">
                                     <XCircle size={32} className="text-slate-300" />
                                 </button>
                             </div>

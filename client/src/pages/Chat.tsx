@@ -168,10 +168,10 @@ export const Chat = () => {
     });
 
     return (
-        <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-180px)] bg-white rounded-2xl md:rounded-[3rem] shadow-2xl border border-slate-100 overflow-visible md:overflow-hidden animate-fade-in-up">
+        <div className="flex flex-col md:flex-row h-[calc(100dvh-10.5rem)] min-h-0 min-w-0 md:h-[calc(100vh-180px)] bg-white rounded-2xl md:rounded-[3rem] shadow-2xl border border-slate-100 overflow-hidden animate-fade-in-up">
             {/* Sidebar: Member List */}
             <div className={clsx(
-                "w-full md:w-80 lg:w-96 border-r border-slate-50 flex flex-col bg-slate-50/30",
+                "w-full md:w-80 lg:w-96 min-h-0 shrink-0 border-r border-slate-50 flex flex-col bg-slate-50/30",
                 selectedMember ? "hidden md:flex" : "flex"
             )}>
                 <div className="p-4 md:p-8 border-b border-slate-50">
@@ -191,7 +191,7 @@ export const Chat = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
                     {filteredMembers.length === 0 ? (
                         <div className="p-10 text-center">
                             <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Nenhum aluno encontrado</p>
@@ -236,15 +236,16 @@ export const Chat = () => {
 
             {/* Main Chat Area */}
             <div className={clsx(
-                "flex-1 flex flex-col bg-white",
+                "flex-1 min-w-0 min-h-0 flex flex-col bg-white",
                 !selectedMember ? "hidden md:flex" : "flex"
             )}>
                 {selectedMember ? (
                     <>
                         {/* Chat Header */}
                         <div className="px-4 md:px-8 py-4 md:py-6 border-b border-slate-50 flex items-center justify-between bg-white z-10 shrink-0">
-                            <div className="flex items-center gap-2 md:gap-4">
+                            <div className="min-w-0 flex items-center gap-2 md:gap-4">
                                 <button
+                                    type="button"
                                     onClick={() => setSelectedMember(null)}
                                     className="md:hidden p-2 -ml-2 text-slate-400 hover:text-primary transition-all"
                                 >
@@ -253,14 +254,14 @@ export const Chat = () => {
                                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black shrink-0">
                                     {selectedMember.name.charAt(0)}
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <h3 className="font-black text-slate-900 tracking-tight">{selectedMember.name}</h3>
+                                        <h3 className="font-black text-slate-900 tracking-tight truncate">{selectedMember.name}</h3>
                                         <CheckCircle2 size={16} className="text-primary" />
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <div className="flex min-w-0 items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                         <Phone size={10} />
-                                        {selectedMember.phone}
+                                        <span className="truncate">{selectedMember.phone}</span>
                                     </div>
                                     {selectedMember.bot_paused && (
                                         <div className="flex items-center gap-1.5 mt-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 w-fit">
@@ -273,16 +274,17 @@ export const Chat = () => {
                             <div className="flex items-center gap-2">
                                 {selectedMember.bot_paused && (
                                     <button
+                                        type="button"
                                         onClick={handleUnpauseBot}
                                         className="hidden sm:flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20"
                                     >
                                         Encerrar Atendimento
                                     </button>
                                 )}
-                                <button className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                                <button type="button" className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
                                     <Clock size={20} />
                                 </button>
-                                <button className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
+                                <button type="button" className="p-3 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
                                     <MoreVertical size={20} />
                                 </button>
                             </div>
@@ -295,6 +297,7 @@ export const Chat = () => {
                                     <Brain size={14} /> Atendimento Humano Ativo
                                 </span>
                                 <button
+                                    type="button"
                                     onClick={handleUnpauseBot}
                                     className="text-[10px] font-black text-primary uppercase underline tracking-widest"
                                 >
@@ -306,7 +309,7 @@ export const Chat = () => {
                         {/* Messages Body */}
                         <div
                             ref={scrollRef}
-                            className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 bg-slate-50/30"
+                            className="flex-1 min-h-0 min-w-0 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 bg-slate-50/30"
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center h-full">
@@ -340,12 +343,12 @@ export const Chat = () => {
                                                 msg.from_me ? "justify-end" : "justify-start"
                                             )}>
                                                 <div className={clsx(
-                                                    "max-w-[70%] p-5 rounded-[2rem] shadow-sm relative group",
+                                                    "max-w-[70%] min-w-0 break-words p-5 rounded-[2rem] shadow-sm relative group",
                                                     msg.from_me
                                                         ? "bg-primary text-white rounded-tr-none shadow-primary/20"
                                                         : "bg-white text-slate-800 rounded-tl-none border border-slate-100"
                                                 )}>
-                                                    <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">
+                                                    <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap break-words">
                                                         {msg.content}
                                                     </p>
                                                     <div className={clsx(
@@ -364,15 +367,15 @@ export const Chat = () => {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 md:p-8 pb-32 md:pb-8 bg-white border-t border-slate-50 flex-shrink-0">
-                            <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-4 bg-slate-50 p-1 md:p-2 rounded-2xl md:rounded-[2rem] shadow-inner focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+                        <div className="min-w-0 p-4 md:p-8 pb-32 md:pb-8 bg-white border-t border-slate-50 flex-shrink-0">
+                            <form onSubmit={handleSendMessage} className="min-w-0 flex items-center gap-2 md:gap-4 bg-slate-50 p-1 md:p-2 rounded-2xl md:rounded-[2rem] shadow-inner focus-within:ring-2 focus-within:ring-primary/20 transition-all">
                                 <button type="button" className="p-2 md:p-4 text-slate-400 hover:text-primary transition-all rounded-full hover:bg-white shadow-sm">
                                     <Paperclip size={20} />
                                 </button>
                                 <input
                                     type="text"
                                     placeholder="Digite sua mensagem..."
-                                    className="flex-1 bg-transparent border-none outline-none py-2 md:py-4 px-2 text-xs md:text-sm font-medium text-slate-800"
+                                    className="flex-1 min-w-0 bg-transparent border-none outline-none py-2 md:py-4 px-2 text-xs md:text-sm font-medium text-slate-800"
                                     value={newMessage}
                                     onChange={e => setNewMessage(e.target.value)}
                                 />
@@ -386,7 +389,7 @@ export const Chat = () => {
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-20 text-center space-y-6">
+                    <div className="flex-1 min-h-0 min-w-0 flex flex-col items-center justify-center p-6 md:p-20 text-center space-y-6 overflow-y-auto">
                         <div className="w-32 h-32 bg-slate-50 rounded-[3rem] flex items-center justify-center text-slate-200">
                             <Brain size={64} className="animate-pulse" />
                         </div>

@@ -301,8 +301,8 @@ Domingo:
                                                 </span>
                                             </td>
                                             <td className="px-12 py-6">
-                                                <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-0 translate-x-4">
-                                                    <button onClick={() => {
+                                                <div className="flex gap-2 justify-end touch-visible-actions transition-opacity">
+                                                    <button type="button" onClick={() => {
                                                         const workoutLink = `${window.location.origin}/w/${member.id}`;
                                                         const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
 
@@ -315,10 +315,10 @@ Domingo:
                                                     }} className="p-4 bg-white shadow-sm border border-slate-50 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-2xl transition-all" title="Enviar no WhatsApp">
                                                         <Send size={20} />
                                                     </button>
-                                                    <button onClick={() => handleEdit(member)} className="p-4 bg-white shadow-sm border border-slate-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl transition-all" title="Editar">
+                                                    <button type="button" onClick={() => handleEdit(member)} className="p-4 bg-white shadow-sm border border-slate-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl transition-all" title="Editar">
                                                         <Pencil size={20} />
                                                     </button>
-                                                    <button onClick={() => handleDelete(member.id, member.name)} className="p-4 bg-white shadow-sm border border-slate-50 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all" title="Excluir">
+                                                    <button type="button" onClick={() => handleDelete(member.id, member.name)} className="p-4 bg-white shadow-sm border border-slate-50 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all" title="Excluir">
                                                         <Trash2 size={20} />
                                                     </button>
                                                 </div>

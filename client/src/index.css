@@ -2,6 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * The application is used inside a scrollable dashboard and on narrow touch
+ * screens. Keep the document from creating a second horizontal scroll area
+ * and use the dynamic viewport height available on mobile browsers.
+ */
+:root,
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+}
+
+html {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+/* Prevent long names, URLs and WhatsApp messages from widening a page. */
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  /* iOS Safari zooms focused controls below 16px. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 :root {
   font-family: 'Outfit', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   --primary-color: #f97316;
@@ -12,6 +79,25 @@ body {
   background-color: #f8fafc;
   color: #1e293b;
   scroll-behavior: smooth;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Actions hidden on hover must remain reachable on touch devices. */
+.touch-visible-actions {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .touch-visible-actions {
+    opacity: 0;
+  }
+
+  .group:hover .touch-visible-actions {
+    opacity: 1;
+  }
 }
 
 @layer utilities {

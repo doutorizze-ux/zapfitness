@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2 } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -62,10 +62,10 @@ export const Dashboard = () => {
     const currentItem = filteredNavItems.find(item => item.path === location.pathname) || filteredNavItems[0];
 
     return (
-        <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex h-dvh min-h-0 min-w-0 bg-slate-50 overflow-hidden">
             <NotificationHandler />
             {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-72 bg-slate-950 text-white flex-col shadow-2xl z-20">
+            <aside className="hidden md:flex w-72 shrink-0 bg-slate-950 text-white flex-col shadow-2xl z-20">
                 <div className="p-8 border-b border-slate-800">
                     <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 bg-white">
@@ -157,7 +157,7 @@ export const Dashboard = () => {
             </aside>
 
             {/* Main Content Area */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+            <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full overflow-hidden relative">
 
                 {/* Mobile Top Header */}
                 <header className="md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
@@ -172,7 +172,7 @@ export const Dashboard = () => {
                         <h1 className="text-lg font-black text-slate-900 tracking-tight truncate max-w-[150px]">{user?.name || currentItem.label}</h1>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="p-2 text-slate-500 hover:text-primary transition-colors relative">
+                        <button type="button" className="p-2 text-slate-500 hover:text-primary transition-colors relative">
                             <Bell size={20} />
                             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                         </button>
@@ -202,8 +202,8 @@ export const Dashboard = () => {
                 </header>
 
                 {/* Content Container */}
-                <main id="main-content" className="flex-1 overflow-y-auto min-h-0 pb-32 md:pb-8 touch-pan-y">
-                    <div className="p-4 md:p-10 max-w-7xl mx-auto">
+                <main id="main-content" className="flex-1 min-w-0 overflow-y-auto overscroll-contain min-h-0 pb-32 md:pb-8 touch-pan-y">
+                    <div className="w-full min-w-0 p-4 md:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
                             <Route path="/chat" element={<Chat />} />
@@ -222,8 +222,8 @@ export const Dashboard = () => {
                 </main>
 
                 {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
-                <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50">
-                    <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
+                <div className="md:hidden pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50">
+                    <nav className="pointer-events-auto bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
@@ -264,6 +264,7 @@ export const Dashboard = () => {
 
                         {/* Expand Button */}
                         <button
+                            type="button"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className={clsx(
                                 "flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-300 flex-1",
@@ -282,7 +283,7 @@ export const Dashboard = () => {
 
                     {/* Expandable Menu Overlay (Glassmorphism Modal) */}
                     {isMobileMenuOpen && (
-                        <div className="absolute bottom-20 left-0 right-0 animate-fade-in-up">
+                        <div className="pointer-events-auto absolute bottom-20 left-0 right-0 animate-fade-in-up">
                             <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
                                 {[
                                     { label: 'Membros', path: '/dashboard/members', icon: Users },
@@ -306,6 +307,7 @@ export const Dashboard = () => {
                                     </Link>
                                 ))}
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         if (window.confirm('Deseja realmente sair?')) {
                                             logout();
@@ -327,7 +329,7 @@ export const Dashboard = () => {
                 {/* Overlay Background to close menu */}
                 {isMobileMenuOpen && (
                     <div
-                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in pointer-events-auto"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
                 )}
@@ -336,123 +338,338 @@ export const Dashboard = () => {
     );
 };
 
+interface DashboardMemberSummary {
+    id?: string;
+    active?: boolean;
+    plan_end_date?: string | null;
+}
+
+interface DashboardAccessSummary {
+    scanned_at?: string;
+    status?: string;
+    member_id?: string | null;
+}
+
+interface DashboardAppointmentSummary {
+    dateTime?: string;
+    status?: string;
+    type?: string;
+    member?: { name?: string } | null;
+}
+
+interface DashboardTenantSummary {
+    name?: string;
+    whatsapp_status?: string;
+}
+
+interface DashboardSnapshot {
+    members: {
+        total: number;
+        active: number;
+        expiring: number;
+        expired: number;
+    };
+    finance: {
+        monthly_income: number;
+        pending_amount: number;
+        overdue_amount: number;
+    };
+    access: {
+        today: number;
+        granted: number;
+        uniqueMembers: number;
+    };
+    nextAppointment: DashboardAppointmentSummary | null;
+    whatsappStatus: string;
+}
+
+const EMPTY_DASHBOARD_SNAPSHOT: DashboardSnapshot = {
+    members: { total: 0, active: 0, expiring: 0, expired: 0 },
+    finance: { monthly_income: 0, pending_amount: 0, overdue_amount: 0 },
+    access: { today: 0, granted: 0, uniqueMembers: 0 },
+    nextAppointment: null,
+    whatsappStatus: 'DISCONNECTED'
+};
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 2
+}).format(Number(value) || 0);
+
+const formatToday = () => new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long'
+}).format(new Date());
+
+const formatRefreshTime = (date: Date | null) => date
+    ? date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : '--:--';
+
 const Welcome = () => {
     const navigate = useNavigate();
-    const [stats, setStats] = React.useState<{ name?: string } | null>(null);
+    const { user } = useAuth();
+    const [tenant, setTenant] = React.useState<DashboardTenantSummary | null>(null);
+    const [snapshot, setSnapshot] = React.useState<DashboardSnapshot>(EMPTY_DASHBOARD_SNAPSHOT);
+    const [loading, setLoading] = React.useState(true);
+    const [refreshing, setRefreshing] = React.useState(false);
+    const [lastUpdated, setLastUpdated] = React.useState<Date | null>(null);
+
+    const loadDashboard = React.useCallback(async (isRefresh = false) => {
+        if (isRefresh) setRefreshing(true);
+        else setLoading(true);
+
+        const today = new Date();
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const nextSevenDays = new Date(todayStart);
+        nextSevenDays.setDate(nextSevenDays.getDate() + 7);
+        const dateParam = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+        const results = await Promise.allSettled([
+            api.get('/me'),
+            api.get('/members'),
+            api.get('/finance/stats'),
+            api.get('/logs'),
+            user?.enable_scheduling ? api.get('/appointments', { params: { date: dateParam } }) : Promise.resolve({ data: [] })
+        ]);
+
+        const getData = <T,>(index: number, fallback: T): T => {
+            const result = results[index];
+            return result?.status === 'fulfilled' ? result.value.data as T : fallback;
+        };
+
+        const members = getData<DashboardMemberSummary[]>(1, []);
+        const finance = getData<DashboardSnapshot['finance']>(2, EMPTY_DASHBOARD_SNAPSHOT.finance);
+        const logs = getData<DashboardAccessSummary[]>(3, []);
+        const appointments = getData<DashboardAppointmentSummary[]>(4, []);
+        const now = new Date();
+        const activeMembers = members.filter(member => {
+            if (!member.active || !member.plan_end_date) return false;
+            return new Date(member.plan_end_date) > now;
+        });
+        const expiringMembers = activeMembers.filter(member => {
+            const endDate = new Date(member.plan_end_date as string);
+            return endDate <= nextSevenDays;
+        });
+        const expiredMembers = members.filter(member => !member.active || !member.plan_end_date || new Date(member.plan_end_date) <= now);
+        const todayLogs = logs.filter(log => log.scanned_at && new Date(log.scanned_at) >= todayStart);
+        const grantedLogs = todayLogs.filter(log => log.status === 'GRANTED');
+        const uniqueAccessMembers = new Set(grantedLogs.map(log => log.member_id).filter(Boolean));
+        const nextAppointment = appointments
+            .filter(appointment => appointment.dateTime && new Date(appointment.dateTime) >= now && appointment.status !== 'CANCELLED')
+            .sort((a, b) => new Date(a.dateTime as string).getTime() - new Date(b.dateTime as string).getTime())[0] || null;
+
+        const tenantData = getData<DashboardTenantSummary>(0, {});
+        setTenant(tenantData);
+        setSnapshot({
+            members: {
+                total: members.length,
+                active: activeMembers.length,
+                expiring: expiringMembers.length,
+                expired: expiredMembers.length
+            },
+            finance: {
+                monthly_income: Number(finance.monthly_income) || 0,
+                pending_amount: Number(finance.pending_amount) || 0,
+                overdue_amount: Number(finance.overdue_amount) || 0
+            },
+            access: {
+                today: todayLogs.length,
+                granted: grantedLogs.length,
+                uniqueMembers: uniqueAccessMembers.size
+            },
+            nextAppointment,
+            whatsappStatus: tenantData.whatsapp_status || 'DISCONNECTED'
+        });
+        setLastUpdated(new Date());
+        setLoading(false);
+        setRefreshing(false);
+    }, [user?.enable_scheduling]);
 
     React.useEffect(() => {
-        api.get('/me').then(res => setStats(res.data)).catch(console.error);
-    }, []);
+        loadDashboard();
+    }, [loadDashboard]);
+
+    const activeRate = snapshot.members.total > 0
+        ? Math.round((snapshot.members.active / snapshot.members.total) * 100)
+        : 0;
+    const accessRate = snapshot.members.active > 0
+        ? Math.min(100, Math.round((snapshot.access.uniqueMembers / snapshot.members.active) * 100))
+        : 0;
+    const greetingName = tenant?.name || user?.name || 'sua academia';
+    const whatsappConnected = snapshot.whatsappStatus === 'CONNECTED';
+
+    const kpis = [
+        {
+            label: 'Membros ativos',
+            value: loading ? '—' : snapshot.members.active.toString(),
+            detail: `${snapshot.members.total} cadastrados`,
+            icon: Users,
+            tone: 'bg-orange-50 text-primary',
+            action: () => navigate('/dashboard/members')
+        },
+        {
+            label: 'Receita no mês',
+            value: loading ? '—' : formatCurrency(snapshot.finance.monthly_income),
+            detail: 'Pagamentos confirmados',
+            icon: TrendingUp,
+            tone: 'bg-emerald-50 text-emerald-600',
+            action: () => navigate('/dashboard/finance')
+        },
+        {
+            label: 'A receber',
+            value: loading ? '—' : formatCurrency(snapshot.finance.pending_amount),
+            detail: snapshot.finance.overdue_amount > 0 ? `${formatCurrency(snapshot.finance.overdue_amount)} em atraso` : 'Sem atrasos registrados',
+            icon: WalletCards,
+            tone: 'bg-blue-50 text-blue-600',
+            action: () => navigate('/dashboard/finance')
+        },
+        {
+            label: 'Acessos hoje',
+            value: loading ? '—' : snapshot.access.today.toString(),
+            detail: `${snapshot.access.granted} liberados`,
+            icon: Activity,
+            tone: 'bg-violet-50 text-violet-600',
+            action: () => navigate('/dashboard/logs')
+        }
+    ];
 
     return (
-        <div className="animate-fade-in-up">
-            <div className="mb-12 p-4 md:p-0">
-                <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tighter">
-                    Olá, <span className="text-primary">{stats?.name || 'Fitness'}!</span> 👋
-                </h1>
-                <p className="text-slate-500 font-medium text-lg">Aqui está o que está acontecendo hoje.</p>
+        <div className="animate-fade-in-up min-w-0">
+            <div className="mb-8 flex flex-col gap-5 px-4 sm:px-0 lg:flex-row lg:items-end lg:justify-between">
+                <div className="min-w-0">
+                    <div className="mb-3 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+                        <span className="rounded-full bg-primary/10 px-3 py-1">Central de operações</span>
+                        <span className="text-slate-400">{formatToday()}</span>
+                    </div>
+                    <h1 className="break-words text-3xl font-black tracking-tighter text-slate-900 sm:text-4xl md:text-5xl">
+                        Olá, <span className="text-primary">{greetingName}!</span> 👋
+                    </h1>
+                    <p className="mt-2 max-w-2xl text-base font-medium leading-relaxed text-slate-500 sm:text-lg">Uma visão clara para você cuidar da operação, da receita e da experiência dos seus alunos.</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => loadDashboard(true)}
+                    disabled={refreshing}
+                    className="flex w-full shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-black uppercase tracking-widest text-slate-600 shadow-sm transition-all hover:border-primary/30 hover:text-primary disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+                >
+                    <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+                    Atualizar painel
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                {/* AI Insights Card */}
-                <div className="lg:col-span-2 bg-[#1e293b] rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-[100px] group-hover:bg-primary/20 transition-all duration-700"></div>
+            <div className="mb-8 grid min-w-0 grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:px-0 xl:grid-cols-4">
+                {kpis.map((kpi) => {
+                    const Icon = kpi.icon;
+                    return (
+                        <button
+                            type="button"
+                            key={kpi.label}
+                            onClick={kpi.action}
+                            className="group min-w-0 rounded-[2rem] border border-slate-100 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-primary/20 hover:shadow-xl hover:shadow-slate-200/50 sm:p-6"
+                        >
+                            <div className="mb-7 flex items-start justify-between gap-3">
+                                <div className={clsx('flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl', kpi.tone)}><Icon size={21} /></div>
+                                <ArrowUpRight size={17} className="text-slate-300 transition-colors group-hover:text-primary" />
+                            </div>
+                            <div className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">{kpi.label}</div>
+                            <div className="mt-2 truncate text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{kpi.value}</div>
+                            <div className="mt-2 truncate text-xs font-semibold text-slate-400">{kpi.detail}</div>
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-3">
+                <div className="relative min-w-0 overflow-hidden rounded-[2.5rem] bg-[#1e293b] p-6 text-white shadow-2xl sm:p-8 lg:col-span-2">
+                    <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary/15 blur-[80px]"></div>
                     <div className="relative z-10">
-                        <div className="flex items-center gap-4 mb-10">
-                            <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/10">
-                                <Brain className="text-primary" size={28} />
+                        <div className="mb-8 flex items-start justify-between gap-4">
+                            <div className="flex min-w-0 items-center gap-4">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/20 text-primary"><Brain size={25} /></div>
+                                <div className="min-w-0">
+                                    <h3 className="truncate text-xl font-black tracking-tight sm:text-2xl">Prioridades da operação</h3>
+                                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Ações baseadas nos dados atuais</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-2xl font-black tracking-tight">Insights da Inteligência Artificial</h3>
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Análise preditiva em tempo real</p>
-                            </div>
+                            <Sparkles className="hidden shrink-0 text-primary sm:block" size={20} />
                         </div>
-
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <TrendingUp className="text-primary" size={20} />
-                                    <span className="text-sm font-black text-primary uppercase tracking-widest">Oportunidade de Receita</span>
-                                </div>
-                                <p className="text-sm text-slate-300 font-medium leading-relaxed">Você tem <span className="text-white font-black">12 alunos</span> com planos vencendo nos próximos 7 dias. Enviar lembrete automático?</p>
-                                <button onClick={() => alert('🧠 IA ZapFitness: Iniciando processamento de lembretes via WhatsApp para os 12 alunos...')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-primary text-white px-6 py-3 rounded-2xl hover:scale-105 transition-all shadow-lg shadow-primary/20">Executar Ação</button>
+                        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="min-w-0 rounded-[2rem] border border-white/5 bg-white/5 p-5 transition-colors hover:bg-white/10 sm:p-6">
+                                <div className="mb-3 flex items-center gap-3"><TrendingUp className="shrink-0 text-primary" size={19} /><span className="text-[10px] font-black uppercase tracking-widest text-primary">Oportunidade de receita</span></div>
+                                <p className="text-sm font-medium leading-relaxed text-slate-300">Você tem <span className="font-black text-white">{snapshot.members.expiring} alunos</span> com plano vencendo nos próximos 7 dias. Antecipe a renovação para proteger seu faturamento.</p>
+                                <button type="button" onClick={() => navigate('/dashboard/members')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">Ver renovações <ArrowUpRight size={14} /></button>
                             </div>
-
-                            <div className="bg-white/5 border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/10 transition-all cursor-pointer group/card">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <AlertCircle className="text-orange-400" size={20} />
-                                    <span className="text-sm font-black text-orange-400 uppercase tracking-widest">Risco de Churn</span>
-                                </div>
-                                <p className="text-sm text-slate-300 font-medium leading-relaxed"><span className="text-white font-black">5 alunos</span> frequentes não aparecem há mais de 10 dias. Recomenda-se incentivo.</p>
-                                <button onClick={() => navigate('/dashboard/members')} className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 text-white px-6 py-3 rounded-2xl hover:bg-white/20 transition-all border border-white/10">Ver Alunos</button>
+                            <div className="min-w-0 rounded-[2rem] border border-white/5 bg-white/5 p-5 transition-colors hover:bg-white/10 sm:p-6">
+                                <div className="mb-3 flex items-center gap-3"><AlertCircle className="shrink-0 text-orange-400" size={19} /><span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Atenção necessária</span></div>
+                                <p className="text-sm font-medium leading-relaxed text-slate-300"><span className="font-black text-white">{snapshot.members.expired} alunos</span> estão sem plano ativo ou com a validade encerrada. Uma revisão rápida evita bloqueios e melhora a experiência.</p>
+                                <button type="button" onClick={() => navigate('/dashboard/members')} className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white transition-all hover:bg-white/20">Revisar alunos <ArrowUpRight size={14} /></button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Stats Sidebar */}
-                <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-10">
-                            <h4 className="font-black text-slate-900 uppercase tracking-[0.2em] text-[10px]">Saúde da Academia</h4>
-                            <Sparkles className="text-primary animate-pulse" size={18} />
+                <div className="min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-8 flex items-center justify-between gap-3"><h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900">Saúde da academia</h4><Sparkles className="animate-pulse text-primary" size={18} /></div>
+                    <div className="space-y-7">
+                        <div>
+                            <div className="mb-3 flex justify-between gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400"><span>BASE ATIVA</span><span className="text-primary">{activeRate}%</span></div>
+                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)] transition-all duration-700" style={{ width: `${activeRate}%` }}></div></div>
                         </div>
-                        <div className="space-y-10">
-                            <div>
-                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                                    <span>ENGAJAMENTO</span>
-                                    <span className="text-primary">85%</span>
-                                </div>
-                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                    <div className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)]" style={{ width: '85%' }}></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">
-                                    <span>RETENÇÃO</span>
-                                    <span className="text-primary">92%</span>
-                                </div>
-                                <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                                    <div className="bg-primary h-full rounded-full shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)]" style={{ width: '92%' }}></div>
-                                </div>
-                            </div>
+                        <div>
+                            <div className="mb-3 flex justify-between gap-3 text-[10px] font-black uppercase tracking-widest text-slate-400"><span>PRESENÇA HOJE</span><span className="text-primary">{accessRate}%</span></div>
+                            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.4)] transition-all duration-700" style={{ width: `${accessRate}%` }}></div></div>
                         </div>
                     </div>
-                    <div className="mt-12 p-6 bg-blue-50/50 rounded-3xl border border-blue-100">
-                        <p className="text-[11px] font-bold text-blue-800 leading-relaxed italic text-center">
-                            "A IA detectou que treinos de quarta-feira têm 20% mais faltas. Considere uma aula especial para este dia."
-                        </p>
+                    <div className="mt-8 rounded-3xl border border-blue-100 bg-blue-50/50 p-5">
+                        <div className="mb-2 flex items-center gap-2 text-blue-700"><CheckCircle2 size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Leitura operacional</span></div>
+                        <p className="text-xs font-bold leading-relaxed text-blue-800">{snapshot.access.uniqueMembers > 0 ? `${snapshot.access.uniqueMembers} membros já passaram pela academia hoje.` : 'Ainda não há acessos liberados registrados hoje.'}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Onboarding Tips */}
-            <div className="bg-[#1e293b] rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-[80px]"></div>
-                <div className="relative z-10">
-                    <h3 className="text-3xl font-black mb-10 tracking-tight flex items-center gap-3">
-                        <Zap className="text-primary fill-primary" size={32} />
-                        Próximos Passos
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-2">
+                <div className="min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-6 flex items-center justify-between gap-3"><div><h3 className="text-xl font-black tracking-tight text-slate-900">Atalhos da operação</h3><p className="mt-1 text-xs font-medium text-slate-400">Chegue às tarefas mais importantes em um toque.</p></div><Zap className="shrink-0 text-primary" size={22} /></div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {[
-                            { step: '1', title: 'WhatsApp', color: 'text-primary', desc: 'Ative seu bot na aba WhatsApp para automatizar a recepção.' },
-                            { step: '2', title: 'Planos', color: 'text-primary', desc: 'Cadastre suas mensalidades para vincular aos alunos.' },
-                            { step: '3', title: 'Membros', color: 'text-primary', desc: 'Adicione seus alunos e gere o acesso inteligente deles.' }
-                        ].map((item, i) => (
-                            <div key={i} className="flex gap-6 group/item cursor-pointer">
-                                <div className="w-14 h-14 shrink-0 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center font-black text-2xl text-slate-600 group-hover/item:border-primary group-hover/item:text-white transition-all">
-                                    {item.step}
-                                </div>
-                                <div className="flex-1">
-                                    <div className={clsx("font-black tracking-[0.2em] uppercase text-[10px] mb-2", item.color)}>{item.title}</div>
-                                    <p className="text-sm text-slate-400 font-medium leading-relaxed">{item.desc}</p>
-                                </div>
-                            </div>
-                        ))}
+                            { label: 'Novo aluno', icon: UserPlus, path: '/dashboard/members' },
+                            { label: 'Financeiro', icon: WalletCards, path: '/dashboard/finance' },
+                            { label: 'WhatsApp', icon: MessageSquare, path: '/dashboard/whatsapp' },
+                            ...(user?.enable_scheduling ? [{ label: 'Agenda', icon: CalendarPlus, path: '/dashboard/appointments' }] : [])
+                        ].map(action => {
+                            const Icon = action.icon;
+                            return <button type="button" key={action.label} onClick={() => navigate(action.path)} className="flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-3 text-center text-[10px] font-black uppercase tracking-wider text-slate-500 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-primary"><Icon size={19} /><span className="truncate max-w-full">{action.label}</span></button>;
+                        })}
                     </div>
                 </div>
+                <div className="min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-6 flex items-center justify-between gap-3"><div><h3 className="text-xl font-black tracking-tight text-slate-900">Status da operação</h3><p className="mt-1 text-xs font-medium text-slate-400">O que precisa da sua atenção agora.</p></div><Wifi className={whatsappConnected ? 'text-emerald-500' : 'text-slate-300'} size={22} /></div>
+                    <div className="space-y-3">
+                        <button type="button" onClick={() => navigate('/dashboard/whatsapp')} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 text-left transition-colors hover:bg-slate-100"><span className="flex min-w-0 items-center gap-3"><span className={clsx('h-2.5 w-2.5 shrink-0 rounded-full', whatsappConnected ? 'bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]' : 'bg-slate-300')} /><span className="truncate text-sm font-bold text-slate-700">WhatsApp</span></span><span className={clsx('shrink-0 text-[10px] font-black uppercase tracking-widest', whatsappConnected ? 'text-emerald-600' : 'text-slate-400')}>{whatsappConnected ? 'Conectado' : 'Conectar'}</span></button>
+                        <button type="button" onClick={() => user?.enable_scheduling && navigate('/dashboard/appointments')} className={clsx('flex w-full items-center justify-between gap-3 rounded-2xl bg-slate-50 p-4 text-left transition-colors', user?.enable_scheduling ? 'hover:bg-slate-100' : 'cursor-default')}><span className="flex min-w-0 items-center gap-3"><Calendar size={17} className="shrink-0 text-primary" /><span className="truncate text-sm font-bold text-slate-700">Próximo compromisso</span></span><span className="max-w-[48%] truncate text-right text-xs font-black text-slate-500">{user?.enable_scheduling ? (snapshot.nextAppointment?.member?.name || 'Agenda livre') : 'Agenda desativada'}</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="rounded-[2.5rem] bg-[#1e293b] p-6 text-white shadow-2xl sm:p-8 lg:p-10">
+                <div className="mb-8 flex items-center gap-3"><Zap className="fill-primary text-primary" size={25} /><div><h3 className="text-2xl font-black tracking-tight">Próximos passos</h3><p className="mt-1 text-xs font-medium text-slate-400">Estruture sua operação para ganhar tempo todos os dias.</p></div></div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {[
+                        { step: '1', title: 'WhatsApp', desc: 'Ative seu bot para automatizar a recepção.', path: '/dashboard/whatsapp' },
+                        { step: '2', title: 'Planos', desc: 'Cadastre mensalidades para organizar cobranças.', path: '/dashboard/plans' },
+                        { step: '3', title: 'Membros', desc: 'Adicione alunos e mantenha os acessos em dia.', path: '/dashboard/members' }
+                    ].map(item => (
+                        <button type="button" key={item.step} onClick={() => navigate(item.path)} className="group/item flex min-w-0 items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 text-left transition-all hover:border-primary/40 hover:bg-white/10 sm:gap-5 sm:p-5">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 font-black text-xl text-slate-500 transition-colors group-hover/item:border-primary group-hover/item:text-white">{item.step}</div>
+                            <div className="min-w-0 flex-1"><div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">{item.title}</div><p className="text-xs font-medium leading-relaxed text-slate-400">{item.desc}</p></div>
+                            <ArrowUpRight size={16} className="shrink-0 text-slate-600 transition-colors group-hover/item:text-primary" />
+                        </button>
+                    ))}
+                </div>
+                <div className="mt-6 flex items-center justify-end gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">Atualizado às {formatRefreshTime(lastUpdated)}</div>
             </div>
         </div>
-    )
+    );
 };
