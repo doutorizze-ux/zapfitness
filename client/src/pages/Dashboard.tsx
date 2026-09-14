@@ -363,6 +363,11 @@ interface DashboardAppointmentSummary {
     member?: { name?: string } | null;
 }
 
+interface DashboardLeadSummary {
+    status?: string;
+    value?: number | null;
+}
+
 interface DashboardTenantSummary {
     name?: string;
     whatsapp_status?: string;
@@ -387,6 +392,13 @@ interface DashboardSnapshot {
         granted: number;
         uniqueMembers: number;
     };
+    leads: {
+        total: number;
+        new: number;
+        trial: number;
+        won: number;
+        estimatedValue: number;
+    };
     nextAppointment: DashboardAppointmentSummary | null;
     whatsappStatus: string;
     operationalScore: number;
@@ -402,6 +414,7 @@ const EMPTY_DASHBOARD_SNAPSHOT: DashboardSnapshot = {
     members: { total: 0, active: 0, expiring: 0, expired: 0, atRisk: 0, atRiskNames: [] },
     finance: { monthly_income: 0, pending_amount: 0, overdue_amount: 0 },
     access: { today: 0, granted: 0, uniqueMembers: 0 },
+    leads: { total: 0, new: 0, trial: 0, won: 0, estimatedValue: 0 },
     nextAppointment: null,
     whatsappStatus: 'DISCONNECTED',
     operationalScore: 0,
@@ -453,7 +466,8 @@ const Welcome = () => {
             api.get('/members'),
             api.get('/finance/stats'),
             api.get('/logs'),
-            user?.enable_scheduling ? api.get('/appointments', { params: { date: dateParam } }) : Promise.resolve({ data: [] })
+            user?.enable_scheduling ? api.get('/appointments', { params: { date: dateParam } }) : Promise.resolve({ data: [] }),
+            api.get('/leads')
         ]);
 
         const getData = <T,>(index: number, fallback: T): T => {
@@ -465,6 +479,7 @@ const Welcome = () => {
         const finance = getData<DashboardSnapshot['finance']>(2, EMPTY_DASHBOARD_SNAPSHOT.finance);
         const logs = getData<DashboardAccessSummary[]>(3, []);
         const appointments = getData<DashboardAppointmentSummary[]>(4, []);
+        const leads = getData<DashboardLeadSummary[]>(5, []);
         const now = new Date();
         const activeMembers = members.filter(member => {
             if (!member.active || !member.plan_end_date) return false;
@@ -492,6 +507,9 @@ const Welcome = () => {
         const nextAppointment = appointments
             .filter(appointment => appointment.dateTime && new Date(appointment.dateTime) >= now && appointment.status !== 'CANCELLED')
             .sort((a, b) => new Date(a.dateTime as string).getTime() - new Date(b.dateTime as string).getTime())[0] || null;
+        const estimatedLeadValue = leads
+            .filter(lead => lead.status !== 'lost' && lead.status !== 'won')
+            .reduce((total, lead) => total + (Number(lead.value) || 0), 0);
 
         const tenantData = getData<DashboardTenantSummary>(0, {});
         const isWhatsappConnected = tenantData.whatsapp_status === 'CONNECTED';
@@ -553,6 +571,13 @@ const Welcome = () => {
                 today: todayLogs.length,
                 granted: grantedLogs.length,
                 uniqueMembers: uniqueAccessMembers.size
+            },
+            leads: {
+                total: leads.length,
+                new: leads.filter(lead => lead.status === 'new').length,
+                trial: leads.filter(lead => lead.status === 'trial').length,
+                won: leads.filter(lead => lead.status === 'won').length,
+                estimatedValue: estimatedLeadValue
             },
             nextAppointment,
             whatsappStatus: tenantData.whatsapp_status || 'DISCONNECTED',
@@ -665,6 +690,39 @@ const Welcome = () => {
             </div>
 
             <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-3">
+                <div className="min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm sm:p-8 lg:col-span-2">
+                    <div className="mb-7 flex items-start justify-between gap-4">
+                        <div>
+                            <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary"><Target size={15} /> Funil comercial</div>
+                            <h3 className="text-xl font-black tracking-tight text-slate-900">Transforme interesse em matrícula</h3>
+                            <p className="mt-1 text-xs font-medium leading-relaxed text-slate-400">Acompanhe as oportunidades que podem virar receita para a academia.</p>
+                        </div>
+                        <button type="button" onClick={() => navigate('/dashboard/leads')} className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors hover:border-primary/30 hover:text-primary">Ver vendas</button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-5">
+                        {[
+                            { label: 'Interessados', value: snapshot.leads.new, tone: 'text-blue-600', bg: 'bg-blue-50' },
+                            { label: 'Experimentais', value: snapshot.leads.trial, tone: 'text-violet-600', bg: 'bg-violet-50' },
+                            { label: 'Matriculados', value: snapshot.leads.won, tone: 'text-emerald-600', bg: 'bg-emerald-50' }
+                        ].map(metric => <div key={metric.label} className={clsx('min-w-0 rounded-2xl p-3 sm:p-4', metric.bg)}><div className={clsx('truncate text-[9px] font-black uppercase tracking-wider', metric.tone)}>{metric.label}</div><div className="mt-2 text-2xl font-black tracking-tight text-slate-900">{loading ? '—' : metric.value}</div></div>)}
+                    </div>
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 flex-1 items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-gradient-to-r from-primary to-emerald-500 transition-all duration-700" style={{ width: `${snapshot.leads.total > 0 ? Math.max(4, Math.min(100, (snapshot.leads.won / snapshot.leads.total) * 100)) : 0}%` }}></div></div><span className="shrink-0 text-xs font-black text-slate-500">{loading ? '—' : `${snapshot.leads.total > 0 ? Math.round((snapshot.leads.won / snapshot.leads.total) * 100) : 0}% conversão`}</span></div>
+                        <span className="shrink-0 text-[10px] font-black uppercase tracking-widest text-slate-400">{loading ? '—' : `${snapshot.leads.total} oportunidades`}</span>
+                    </div>
+                </div>
+                <div className="relative min-w-0 overflow-hidden rounded-[2.5rem] bg-slate-900 p-6 text-white shadow-2xl sm:p-8">
+                    <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-primary/20 blur-[60px]"></div>
+                    <div className="relative z-10 flex h-full min-h-[220px] flex-col">
+                        <div className="mb-6 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-primary"><TrendingUp size={19} /></div><div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Receita em potencial</div><p className="mt-1 text-xs font-medium text-slate-400">Oportunidades ainda abertas.</p></div></div>
+                        <div className="text-3xl font-black tracking-tight">{loading ? '—' : formatCurrency(snapshot.leads.estimatedValue)}</div>
+                        <p className="mt-3 max-w-xs text-sm font-medium leading-relaxed text-slate-300">Organize os próximos contatos e acelere as matrículas sem deixar interessados esfriarem.</p>
+                        <button type="button" onClick={() => navigate('/dashboard/leads')} className="mt-auto inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">Abrir funil <ArrowUpRight size={14} /></button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-3">
                 <div className="relative min-w-0 overflow-hidden rounded-[2.5rem] bg-[#1e293b] p-6 text-white shadow-2xl sm:p-8 lg:col-span-2">
                     <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-primary/15 blur-[80px]"></div>
                     <div className="relative z-10">
@@ -753,6 +811,7 @@ const Welcome = () => {
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {[
                             { label: 'Novo aluno', icon: UserPlus, path: '/dashboard/members' },
+                            { label: 'Vendas', icon: Target, path: '/dashboard/leads' },
                             { label: 'Financeiro', icon: WalletCards, path: '/dashboard/finance' },
                             { label: 'WhatsApp', icon: MessageSquare, path: '/dashboard/whatsapp' },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', icon: CalendarPlus, path: '/dashboard/appointments' }] : [])
