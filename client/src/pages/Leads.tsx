@@ -40,6 +40,9 @@ const COLUMNS = [
     { id: 'lost', label: 'PERDIDO', color: 'bg-slate-500', lightColor: 'bg-slate-50', textColor: 'text-slate-600', shadow: 'shadow-slate-500/20' },
 ] as const;
 
+const formatCurrency = (value: number | null | undefined) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
 export const Leads = () => {
     const { user } = useAuth();
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -138,6 +141,7 @@ export const Leads = () => {
         try {
             await api.put(`/leads/${leadId}`, { status });
             setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status: status as Lead['status'] } : l));
+            setSelectedLead(prev => prev?.id === leadId ? { ...prev, status: status as Lead['status'] } : prev);
             toast.success('Status atualizado');
         } catch (err) {
             console.error('Error updating status:', err);
@@ -342,7 +346,7 @@ export const Leads = () => {
                             </div>
 
                             <div className="bg-slate-100/40 p-3 rounded-[2.5rem] border border-slate-200/60 min-h-[500px] flex flex-col gap-3">
-                                {leads.filter(l => l.status === col.id).length === 0 ? (
+                                {filteredLeads.filter(l => l.status === col.id).length === 0 ? (
                                     <div className="flex flex-col items-center justify-center flex-1 text-slate-400/60">
                                         <div className="w-14 h-14 bg-white/50 rounded-3xl flex items-center justify-center mb-3">
                                             <Target size={24} />
@@ -351,7 +355,7 @@ export const Leads = () => {
                                     </div>
                                 ) : (
                                     <AnimatePresence mode="popLayout">
-                                        {leads.filter(l => l.status === col.id).map(lead => (
+                                        {filteredLeads.filter(l => l.status === col.id).map(lead => (
                                             <motion.div
                                                 layout
                                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -424,9 +428,28 @@ export const Leads = () => {
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 px-2">Valor Estimado</span>
                                                         <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 shadow-inner">
-                                                            <span className="text-xs font-black text-slate-700">R$ {lead.value?.toFixed(2)}</span>
+                                                            <span className="text-xs font-black text-slate-700">{formatCurrency(lead.value)}</span>
                                                         </div>
                                                     </div>
+                                                </div>
+
+                                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                                    <select
+                                                        aria-label={`Etapa de ${lead.name || lead.phone}`}
+                                                        value={lead.status}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                                                        className={clsx(
+                                                            "w-full px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer border",
+                                                            COLUMNS.find(c => c.id === lead.status)?.lightColor,
+                                                            COLUMNS.find(c => c.id === lead.status)?.textColor,
+                                                            "border-slate-200"
+                                                        )}
+                                                    >
+                                                        {COLUMNS.map(c => (
+                                                            <option key={c.id} value={c.id}>{c.label}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -469,7 +492,7 @@ export const Leads = () => {
                                             {format(new Date(lead.last_message_at), 'dd/MM HH:mm')}
                                         </div>
                                         <div className="text-xs font-black text-slate-700">
-                                            R$ {lead.value?.toFixed(2)}
+                                            {formatCurrency(lead.value)}
                                         </div>
                                     </div>
 
@@ -535,7 +558,7 @@ export const Leads = () => {
                                             </select>
                                         </td>
                                         <td className="px-10 py-6 text-right">
-                                            <span className="font-black text-slate-700">R$ {lead.value?.toFixed(2)}</span>
+                                            <span className="font-black text-slate-700">{formatCurrency(lead.value)}</span>
                                         </td>
                                         <td className="px-10 py-6">
                                             <div className="text-xs text-slate-500 font-bold">{format(new Date(lead.last_message_at), 'dd/MM HH:mm')}</div>

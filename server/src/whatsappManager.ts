@@ -301,8 +301,9 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     }
 
     let leadId = null;
+    let lead: any = null;
     if (!member) {
-        const lead = await prisma.lead.findFirst({
+        lead = await prisma.lead.findFirst({
             where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
         });
         if (lead) {
@@ -327,6 +328,20 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
             type: 'text'
         }
     });
+
+    // A message sent by the team is a real sales touchpoint. Keep the lead
+    // timeline and funnel aligned automatically, without requiring a second
+    // manual status update in the dashboard.
+    if (leadId) {
+        await prisma.lead.update({
+            where: { id: leadId },
+            data: {
+                last_message: text,
+                last_message_at: new Date(),
+                status: lead?.status === 'new' ? 'contacted' : lead?.status
+            }
+        });
+    }
 
     return result;
 };
