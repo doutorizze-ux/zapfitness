@@ -340,6 +340,7 @@ export const Dashboard = () => {
 
 interface DashboardMemberSummary {
     id?: string;
+    name?: string;
     active?: boolean;
     plan_end_date?: string | null;
 }
@@ -368,6 +369,8 @@ interface DashboardSnapshot {
         active: number;
         expiring: number;
         expired: number;
+        atRisk: number;
+        atRiskNames: string[];
     };
     finance: {
         monthly_income: number;
@@ -381,14 +384,28 @@ interface DashboardSnapshot {
     };
     nextAppointment: DashboardAppointmentSummary | null;
     whatsappStatus: string;
+    operationalScore: number;
+    recommendation: {
+        title: string;
+        description: string;
+        actionLabel: string;
+        path: string;
+    };
 }
 
 const EMPTY_DASHBOARD_SNAPSHOT: DashboardSnapshot = {
-    members: { total: 0, active: 0, expiring: 0, expired: 0 },
+    members: { total: 0, active: 0, expiring: 0, expired: 0, atRisk: 0, atRiskNames: [] },
     finance: { monthly_income: 0, pending_amount: 0, overdue_amount: 0 },
     access: { today: 0, granted: 0, uniqueMembers: 0 },
     nextAppointment: null,
-    whatsappStatus: 'DISCONNECTED'
+    whatsappStatus: 'DISCONNECTED',
+    operationalScore: 0,
+    recommendation: {
+        title: 'Configure sua operação',
+        description: 'Assim que seus dados estiverem disponíveis, o radar indicará a próxima melhor ação.',
+        actionLabel: 'Abrir membros',
+        path: '/dashboard/members'
+    }
 };
 
 const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', {
@@ -456,18 +473,71 @@ const Welcome = () => {
         const todayLogs = logs.filter(log => log.scanned_at && new Date(log.scanned_at) >= todayStart);
         const grantedLogs = todayLogs.filter(log => log.status === 'GRANTED');
         const uniqueAccessMembers = new Set(grantedLogs.map(log => log.member_id).filter(Boolean));
+        const lastAccessByMember = new Map<string, Date>();
+        logs.filter(log => log.status === 'GRANTED' && log.member_id && log.scanned_at).forEach(log => {
+            const lastAccess = lastAccessByMember.get(log.member_id as string);
+            const scannedAt = new Date(log.scanned_at as string);
+            if (!lastAccess || scannedAt > lastAccess) lastAccessByMember.set(log.member_id as string, scannedAt);
+        });
+        const atRiskMembers = activeMembers.filter(member => {
+            if (!member.id) return false;
+            const lastAccess = lastAccessByMember.get(member.id);
+            return !lastAccess || (now.getTime() - lastAccess.getTime()) > 10 * 24 * 60 * 60 * 1000;
+        });
         const nextAppointment = appointments
             .filter(appointment => appointment.dateTime && new Date(appointment.dateTime) >= now && appointment.status !== 'CANCELLED')
             .sort((a, b) => new Date(a.dateTime as string).getTime() - new Date(b.dateTime as string).getTime())[0] || null;
 
         const tenantData = getData<DashboardTenantSummary>(0, {});
+        const isWhatsappConnected = tenantData.whatsapp_status === 'CONNECTED';
+        const baseReadiness = activeMembers.length > 0 ? Math.round((activeMembers.length / Math.max(members.length, 1)) * 35) : 0;
+        const accessReadiness = activeMembers.length > 0 ? Math.min(25, Math.round((uniqueAccessMembers.size / activeMembers.length) * 25)) : 0;
+        const whatsappReadiness = isWhatsappConnected ? 20 : 0;
+        const billingReadiness = finance.overdue_amount > 0 ? 8 : 20;
+        const operationalScore = Math.min(100, baseReadiness + accessReadiness + whatsappReadiness + billingReadiness);
+        const recommendation = expiringMembers.length > 0
+            ? {
+                title: 'Proteja a próxima receita',
+                description: `${expiringMembers.length} ${expiringMembers.length === 1 ? 'aluno está' : 'alunos estão'} perto de renovar. Antecipe o contato enquanto o relacionamento está ativo.`,
+                actionLabel: 'Ver renovações',
+                path: '/dashboard/members'
+            }
+            : finance.overdue_amount > 0
+                ? {
+                    title: 'Recupere pagamentos em atraso',
+                    description: `${formatCurrency(finance.overdue_amount)} em cobranças vencidas merecem atenção hoje.`,
+                    actionLabel: 'Abrir financeiro',
+                    path: '/dashboard/finance'
+                }
+                : atRiskMembers.length > 0
+                    ? {
+                        title: 'Reative alunos silenciosos',
+                        description: `${atRiskMembers.length} ${atRiskMembers.length === 1 ? 'aluno não aparece' : 'alunos não aparecem'} há mais de 10 dias nos acessos registrados.`,
+                        actionLabel: 'Ver membros',
+                        path: '/dashboard/members'
+                    }
+                    : !isWhatsappConnected
+                        ? {
+                            title: 'Conecte o WhatsApp da academia',
+                            description: 'Ative o canal para automatizar a recepção e acelerar seus próximos contatos.',
+                            actionLabel: 'Conectar agora',
+                            path: '/dashboard/whatsapp'
+                        }
+                        : {
+                            title: 'Tudo pronto para hoje',
+                            description: 'Sua operação não tem alertas críticos. Acompanhe os acessos para manter o ritmo.',
+                            actionLabel: 'Ver acessos',
+                            path: '/dashboard/logs'
+                        };
         setTenant(tenantData);
         setSnapshot({
             members: {
                 total: members.length,
                 active: activeMembers.length,
                 expiring: expiringMembers.length,
-                expired: expiredMembers.length
+                expired: expiredMembers.length,
+                atRisk: atRiskMembers.length,
+                atRiskNames: atRiskMembers.map(member => member.name || 'Aluno').slice(0, 3)
             },
             finance: {
                 monthly_income: Number(finance.monthly_income) || 0,
@@ -480,7 +550,9 @@ const Welcome = () => {
                 uniqueMembers: uniqueAccessMembers.size
             },
             nextAppointment,
-            whatsappStatus: tenantData.whatsapp_status || 'DISCONNECTED'
+            whatsappStatus: tenantData.whatsapp_status || 'DISCONNECTED',
+            operationalScore,
+            recommendation
         });
         setLastUpdated(new Date());
         setLoading(false);
@@ -499,6 +571,12 @@ const Welcome = () => {
         : 0;
     const greetingName = tenant?.name || user?.name || 'sua academia';
     const whatsappConnected = snapshot.whatsappStatus === 'CONNECTED';
+    const scoreLabel = snapshot.operationalScore >= 80
+        ? 'Operação saudável'
+        : snapshot.operationalScore >= 60
+            ? 'Atenção preventiva'
+            : 'Ação recomendada';
+    const scoreTone = snapshot.operationalScore >= 80 ? 'text-emerald-600' : snapshot.operationalScore >= 60 ? 'text-amber-600' : 'text-primary';
 
     const kpis = [
         {
@@ -625,6 +703,41 @@ const Welcome = () => {
                     <div className="mt-8 rounded-3xl border border-blue-100 bg-blue-50/50 p-5">
                         <div className="mb-2 flex items-center gap-2 text-blue-700"><CheckCircle2 size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Leitura operacional</span></div>
                         <p className="text-xs font-bold leading-relaxed text-blue-800">{snapshot.access.uniqueMembers > 0 ? `${snapshot.access.uniqueMembers} membros já passaram pela academia hoje.` : 'Ainda não há acessos liberados registrados hoje.'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mb-8 grid min-w-0 grid-cols-1 gap-6 px-4 sm:px-0 lg:grid-cols-2">
+                <div className="min-w-0 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+                    <div className="mb-6 flex items-start justify-between gap-3">
+                        <div><div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">Radar da academia</div><h3 className="text-xl font-black tracking-tight text-slate-900">Índice de prontidão</h3><p className="mt-1 text-xs font-medium leading-relaxed text-slate-400">Uma leitura simples dos sinais que movem sua operação.</p></div>
+                        <Activity className="shrink-0 text-primary" size={22} />
+                    </div>
+                    <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+                        <div className="relative flex h-32 w-32 shrink-0 items-center justify-center rounded-full" style={{ background: `conic-gradient(var(--primary-color) ${snapshot.operationalScore}%, #f1f5f9 0)` }}>
+                            <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-white"><span className="text-3xl font-black tracking-tighter text-slate-900">{loading ? '—' : snapshot.operationalScore}</span><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">de 100</span></div>
+                        </div>
+                        <div className="min-w-0 flex-1 w-full">
+                            <div className={clsx('mb-4 text-sm font-black', scoreTone)}>{scoreLabel}</div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: 'Base ativa', value: `${activeRate}%`, ok: activeRate >= 80 },
+                                    { label: 'Presença', value: `${accessRate}%`, ok: accessRate > 0 },
+                                    { label: 'WhatsApp', value: whatsappConnected ? 'OK' : 'Pendente', ok: whatsappConnected },
+                                    { label: 'Cobranças', value: snapshot.finance.overdue_amount > 0 ? 'Atraso' : 'Em dia', ok: snapshot.finance.overdue_amount === 0 }
+                                ].map(signal => <div key={signal.label} className="min-w-0 rounded-xl bg-slate-50 px-3 py-2"><div className="truncate text-[9px] font-black uppercase tracking-wider text-slate-400">{signal.label}</div><div className={clsx('mt-1 truncate text-xs font-black', signal.ok ? 'text-emerald-600' : 'text-amber-600')}>{signal.value}</div></div>)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="relative min-w-0 overflow-hidden rounded-[2.5rem] bg-[#1e293b] p-6 text-white shadow-2xl sm:p-8">
+                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/15 blur-[70px]"></div>
+                    <div className="relative z-10 flex h-full min-h-[220px] flex-col">
+                        <div className="mb-5 flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary"><Sparkles size={19} /></div><div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Próxima melhor ação</div><p className="mt-1 text-xs font-medium text-slate-400">Seu painel priorizou este movimento.</p></div></div>
+                        <h3 className="max-w-lg text-2xl font-black leading-tight tracking-tight">{snapshot.recommendation.title}</h3>
+                        <p className="mt-3 max-w-lg text-sm font-medium leading-relaxed text-slate-300">{snapshot.recommendation.description}</p>
+                        {snapshot.members.atRiskNames.length > 0 && <p className="mt-3 truncate text-xs font-bold text-slate-400">Radar de frequência: {snapshot.members.atRiskNames.join(', ')}{snapshot.members.atRisk > snapshot.members.atRiskNames.length ? ` +${snapshot.members.atRisk - snapshot.members.atRiskNames.length}` : ''}</p>}
+                        <button type="button" onClick={() => navigate(snapshot.recommendation.path)} className="mt-auto inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">{snapshot.recommendation.actionLabel} <ArrowUpRight size={14} /></button>
                     </div>
                 </div>
             </div>
