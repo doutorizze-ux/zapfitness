@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '../contexts/TutorialContext';
 import api from '../api';
-import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, XCircle, Send, Brain } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Calendar, User, Activity, Utensils, Phone, XCircle, Send, Brain, BookOpen } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'react-toastify';
 import { WorkoutBuilder } from '../components/WorkoutBuilder';
+import { TemplatePicker } from '../components/TemplatePicker';
+import { templateToText, type TemplateType } from '../data/templateLibrary';
 
 interface MemberPlan {
     id: string;
@@ -35,6 +37,7 @@ export const Members = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'info' | 'workout' | 'diet'>('info');
+    const [templateType, setTemplateType] = useState<TemplateType | null>(null);
 
     const { startTutorial, hasSeenTutorial } = useTutorial();
 
@@ -442,6 +445,9 @@ Domingo:
                                                         <span className="text-xs font-medium text-slate-400">Texto rápido enviado via WhatsApp.</span>
                                                     </div>
                                                     <div className="flex gap-2 w-full sm:w-auto">
+                                                        <button type="button" onClick={() => setTemplateType('workout')} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/20 transition">
+                                                            <BookOpen size={14} /> Biblioteca
+                                                        </button>
                                                         <button type="button" onClick={generateAIWorkout} className="flex-1 sm:flex-none text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-primary to-orange-400 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:scale-105 transition shadow-lg shadow-primary/20">
                                                             <Brain size={14} /> Sugestão IA
                                                         </button>
@@ -472,9 +478,14 @@ Domingo:
                                 <div className="h-full flex flex-col space-y-4">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                         <span className="text-sm font-medium text-slate-400">O plano alimentar será enviado junto com o treino.</span>
-                                        <button type="button" onClick={() => insertTemplate('diet')} className="w-full sm:w-auto text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
-                                            <Calendar size={14} /> Usar Modelo Semanal
-                                        </button>
+                                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                            <button type="button" onClick={() => setTemplateType('diet')} className="w-full sm:w-auto text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/20 transition">
+                                                <BookOpen size={14} /> Biblioteca
+                                            </button>
+                                            <button type="button" onClick={() => insertTemplate('diet')} className="w-full sm:w-auto text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition">
+                                                <Calendar size={14} /> Modelo semanal
+                                            </button>
+                                        </div>
                                     </div>
                                     <textarea
                                         className="flex-1 w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 md:p-8 text-base focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-mono resize-none shadow-inner min-h-[300px]"
@@ -487,6 +498,18 @@ Domingo:
                         </div>
                     </div>
                 </div>
+            )}
+            {templateType && (
+                <TemplatePicker
+                    type={templateType}
+                    onClose={() => setTemplateType(null)}
+                    onSelect={(template, variationIndex) => {
+                        const field = templateType === 'workout' ? 'workout' : 'diet';
+                        setFormData(prev => ({ ...prev, [field]: templateToText(template, variationIndex) }));
+                        setTemplateType(null);
+                        toast.success('Modelo aplicado na ficha. Revise e salve para finalizar.');
+                    }}
+                />
             )}
         </>
     );

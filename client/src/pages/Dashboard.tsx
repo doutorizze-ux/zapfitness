@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target, ShieldCheck, BookOpen } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -16,6 +16,7 @@ import { Exercises } from './Exercises';
 import { Chat } from './Chat';
 import { Leads } from './Leads';
 import { Retention } from './Retention';
+import { TemplateLibrary } from './TemplateLibrary';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -50,6 +51,7 @@ export const Dashboard = () => {
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
         { label: 'EXERCÍCIOS', path: '/dashboard/exercises', icon: Activity }, // Use Activity or Dumbbell
+        { label: 'BIBLIOTECA', path: '/dashboard/library', icon: BookOpen },
         { label: 'ACESSOS', path: '/dashboard/logs', icon: Activity },
         { label: 'FINANCEIRO', path: '/dashboard/finance', icon: CreditCard },
         { label: 'CATRACAS', path: '/dashboard/turnstiles', icon: Cpu },
@@ -219,6 +221,7 @@ export const Dashboard = () => {
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
                             <Route path="/exercises" element={<Exercises />} />
+                            <Route path="/library" element={<TemplateLibrary />} />
                             <Route path="/logs" element={<AccessLogs />} />
                             <Route path="/finance" element={<Finance />} />
                             <Route path="/turnstiles" element={<Turnstiles />} />
