@@ -524,26 +524,62 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
 
         console.log(`Received message from ${remoteJid} for tenant ${tenantId}: ${text} `);
 
-        // Normalize text
+        // Normalize text while preserving the original message for the chat history.
+        // Removing accents here makes commands such as "Recepção" and "Recepcao"
+        // behave consistently across different keyboards.
         const cleanText = text.trim().toLowerCase().replace(/[^\w\sà-ú]/g, ''); // Remove punctuation
+        const commandText = cleanText.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const isMenuRequest =
-            ['oi', 'olá', 'ola', 'menu', 'ajuda', 'iniciar', 'start', 'voltar', 'bot'].includes(cleanText) ||
-            cleanText.startsWith('menu') ||
-            cleanText.startsWith('ola') ||
-            cleanText.startsWith('oi');
+            ['oi', 'ola', 'menu', 'ajuda', 'iniciar', 'start', 'voltar', 'bot'].includes(commandText) ||
+            commandText.startsWith('menu') ||
+            commandText.startsWith('ola') ||
+            commandText.startsWith('oi');
 
         if (!member) {
             console.log(`[WA] Non-member ${remotePhone} contacted tenant ${tenantId}`);
-            await humanizedSendMessage(sock, remoteJid, {
-                text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenant.name}*.\n\nVerifiquei aqui e você ainda não é nosso aluno. Deseja conhecer nossos planos ou falar com a recepção?\n\nDigite *Planos* ou *Recepção*.`
-            });
+
+            // A lead can request a human attendant just like an existing member.
+            // Once handed off, the bot stays quiet until the lead explicitly sends
+            // "menu" again, preventing the automation from interrupting the team.
+            if (lead?.status === 'contacted' && commandText !== 'menu') return;
+
+            if (commandText === 'menu') {
+                if (lead?.status === 'contacted') {
+                    await prisma.lead.update({ where: { id: lead.id }, data: { status: 'new' } });
+                }
+                await sendLeadWelcome(tenant.name, senderName, sock, remoteJid);
+            } else if (commandText === 'planos' || commandText.includes('plano')) {
+                await sendPlans(tenantId, tenant.name, sock, remoteJid);
+            } else if (commandText === 'recepcao' || commandText.includes('atendente') || commandText.includes('falar')) {
+                if (lead) {
+                    await prisma.lead.update({
+                        where: { id: lead.id },
+                        data: { status: 'contacted', last_message: text, last_message_at: new Date() }
+                    });
+                }
+
+                await humanizedSendMessage(sock, remoteJid, {
+                    text: '📞 *Recepção acionada!*\n\nSua mensagem foi encaminhada para a equipe da academia. Em breve alguém falará com você por aqui.\n\nQuando quiser voltar ao atendimento automático, digite *Menu*.'
+                });
+
+                eventBus.emit(EVENTS.ATTENDANCE_REQUESTED, {
+                    tenantId,
+                    memberName: senderName,
+                    contactName: senderName,
+                    phone: remotePhone,
+                    leadId: lead?.id,
+                    isLead: true
+                });
+            } else {
+                await sendLeadWelcome(tenant.name, senderName, sock, remoteJid);
+            }
             return;
         }
 
         // 1.5 Bot Pause Logic
         if (member.bot_paused) {
             // IF PAUSED: Only the strict command "menu" can unpause it
-            if (cleanText === 'menu') {
+            if (commandText === 'menu') {
                 console.log(`[WA] Member ${member.name} requested UNPAUSE via 'menu' command.`);
                 await prisma.member.update({
                     where: { id: member.id },
@@ -581,15 +617,15 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             return;
         }
 
-        if (cleanText === '1' || cleanText.includes('ver treino')) {
+        if (commandText === '1' || commandText.includes('ver treino')) {
             await handleGetWorkout(member, sock, remoteJid);
-        } else if (cleanText === '2' || cleanText.includes('ver dieta')) {
+        } else if (commandText === '2' || commandText.includes('ver dieta')) {
             await handleGetDiet(member, sock, remoteJid);
-        } else if (cleanText === '3' || cleanText.includes('status') || cleanText.includes('plano')) {
+        } else if (commandText === '3' || commandText.includes('status') || commandText.includes('plano')) {
             await handleGetStatus(member, sock, remoteJid);
-        } else if (cleanText === '4' || cleanText.includes('checkin') || cleanText.includes('entrada') || cleanText.includes('cheguei')) {
+        } else if (commandText === '4' || commandText.includes('checkin') || commandText.includes('entrada') || commandText.includes('cheguei')) {
             await handleCheckin(tenantId, member, sock, remoteJid, tenant);
-        } else if (cleanText === '5' || cleanText.includes('falar') || cleanText === 'recepção') {
+        } else if (commandText === '5' || commandText.includes('falar') || commandText === 'recepcao') {
             await prisma.member.update({
                 where: { id: member.id },
                 data: { bot_paused: true }
@@ -602,16 +638,10 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
                 memberId: member.id,
                 memberName: member.name
             });
-        } else if ((cleanText === '6' || cleanText.includes('agendamento') || cleanText.includes('horário') || cleanText.includes('agenda')) && tenant.enable_scheduling) {
+        } else if ((commandText === '6' || commandText.includes('agendamento') || commandText.includes('horario') || commandText.includes('agenda')) && tenant.enable_scheduling) {
             await handleGetAppointments(member, sock, remoteJid);
-        } else if (cleanText === 'planos') {
-            const plans = await prisma.plan.findMany({ where: { tenant_id: tenantId } });
-            let plansText = `🏋️ *Nossos Planos:*\n\n`;
-            plans.forEach(p => {
-                plansText += `✅ *${p.name}*: R$ ${p.price}\n`;
-            });
-            plansText += `\nVenha nos visitar para se matricular!`;
-            await humanizedSendMessage(sock, remoteJid, { text: plansText });
+        } else if (commandText === 'planos') {
+            await sendPlans(tenantId, tenant.name, sock, remoteJid);
         } else {
             // Se não entendeu, manda o menu para ajudar
             await sendMainMenu(member, sock, remoteJid);
@@ -619,6 +649,44 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
     } catch (err) {
         console.error(`[WA] Critical error handling message from tenant ${tenantId}:`, err);
     }
+}
+
+async function sendLeadWelcome(tenantName: string, senderName: string, sock: WASocket, remoteJid: string) {
+    await humanizedSendMessage(sock, remoteJid, {
+        text: `Olá, *${senderName}*! 👋\n\nSou o assistente digital da *${tenantName}*.\n\nPosso te mostrar nossos planos ou chamar a recepção para tirar suas dúvidas.\n\nDigite *Planos* para conhecer as opções ou *Recepção* para falar com a equipe.`
+    });
+}
+
+async function sendPlans(tenantId: string, tenantName: string, sock: WASocket, remoteJid: string) {
+    const plans = await prisma.plan.findMany({
+        where: { tenant_id: tenantId },
+        orderBy: { price: 'asc' }
+    });
+
+    if (plans.length === 0) {
+        await humanizedSendMessage(sock, remoteJid, {
+            text: `🏋️ *Planos da ${tenantName}*\n\nNo momento, a equipe está atualizando as opções disponíveis.\n\nDigite *Recepção* para falar com a equipe e receber os valores.`
+        });
+        return;
+    }
+
+    const currency = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+
+    let plansText = `🏋️ *Planos da ${tenantName}*\n\n`;
+    plans.forEach(plan => {
+        const duration = plan.duration_days === 30
+            ? 'mensal'
+            : `${plan.duration_days} dias`;
+
+        plansText += `✅ *${plan.name}*\n💰 ${currency.format(plan.price)}\n📅 ${duration}\n\n`;
+    });
+
+    plansText += `Para fazer sua matrícula ou tirar dúvidas, digite *Recepção*.\n\nPagamento e liberação são tratados diretamente pela academia.`;
+
+    await humanizedSendMessage(sock, remoteJid, { text: plansText });
 }
 
 async function sendMainMenu(member: any, sock: WASocket, remoteJid: string) {

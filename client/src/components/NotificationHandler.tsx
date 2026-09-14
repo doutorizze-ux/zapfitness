@@ -17,11 +17,14 @@ export const NotificationHandler = () => {
         if (user?.tenant_id) {
             socket.emit('join', user.tenant_id);
 
-            socket.on('attendance:requested', (data: { memberName: string }) => {
+            socket.on('attendance:requested', (data: { memberName?: string; contactName?: string; isLead?: boolean }) => {
                 // Play sound
                 if (audioRef.current) {
                     audioRef.current.play().catch(err => console.error('[Audio] Error playing notification sound:', err));
                 }
+
+                const contactName = data.contactName || data.memberName || 'um contato';
+                const contactLabel = data.isLead ? 'O novo contato' : 'O aluno';
 
                 // Show Toast
                 toast.info(
@@ -31,7 +34,7 @@ export const NotificationHandler = () => {
                         </div>
                         <div>
                             <p className="font-black text-sm text-slate-900">Solicitação de Atendimento</p>
-                            <p className="text-xs text-slate-500">O aluno <span className="font-bold text-primary">{data.memberName}</span> quer falar com você!</p>
+                            <p className="text-xs text-slate-500">{contactLabel} <span className="font-bold text-primary">{contactName}</span> quer falar com você!</p>
                         </div>
                     </div>,
                     {
