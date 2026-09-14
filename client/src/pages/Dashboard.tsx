@@ -404,6 +404,14 @@ interface DashboardSnapshot {
         won: number;
         estimatedValue: number;
     };
+    setup: {
+        completed: number;
+        total: number;
+        whatsapp: boolean;
+        plans: boolean;
+        members: boolean;
+        sales: boolean;
+    };
     nextAppointment: DashboardAppointmentSummary | null;
     whatsappStatus: string;
     operationalScore: number;
@@ -420,6 +428,7 @@ const EMPTY_DASHBOARD_SNAPSHOT: DashboardSnapshot = {
     finance: { monthly_income: 0, pending_amount: 0, overdue_amount: 0 },
     access: { today: 0, granted: 0, uniqueMembers: 0 },
     leads: { total: 0, new: 0, trial: 0, won: 0, estimatedValue: 0 },
+    setup: { completed: 0, total: 4, whatsapp: false, plans: false, members: false, sales: false },
     nextAppointment: null,
     whatsappStatus: 'DISCONNECTED',
     operationalScore: 0,
@@ -472,7 +481,8 @@ const Welcome = () => {
             api.get('/finance/stats'),
             api.get('/logs'),
             user?.enable_scheduling ? api.get('/appointments', { params: { date: dateParam } }) : Promise.resolve({ data: [] }),
-            api.get('/leads')
+            api.get('/leads'),
+            api.get('/plans')
         ]);
 
         const getData = <T,>(index: number, fallback: T): T => {
@@ -485,6 +495,7 @@ const Welcome = () => {
         const logs = getData<DashboardAccessSummary[]>(3, []);
         const appointments = getData<DashboardAppointmentSummary[]>(4, []);
         const leads = getData<DashboardLeadSummary[]>(5, []);
+        const plans = getData<unknown[]>(6, []);
         const now = new Date();
         const activeMembers = members.filter(member => {
             if (!member.active || !member.plan_end_date) return false;
@@ -518,6 +529,13 @@ const Welcome = () => {
 
         const tenantData = getData<DashboardTenantSummary>(0, {});
         const isWhatsappConnected = tenantData.whatsapp_status === 'CONNECTED';
+        const setupStatus = {
+            whatsapp: isWhatsappConnected,
+            plans: plans.length > 0,
+            members: members.length > 0,
+            sales: leads.length > 0
+        };
+        const setupCompleted = Object.values(setupStatus).filter(Boolean).length;
         const baseReadiness = activeMembers.length > 0 ? Math.round((activeMembers.length / Math.max(members.length, 1)) * 35) : 0;
         const accessReadiness = activeMembers.length > 0 ? Math.min(25, Math.round((uniqueAccessMembers.size / activeMembers.length) * 25)) : 0;
         const whatsappReadiness = isWhatsappConnected ? 20 : 0;
@@ -584,6 +602,7 @@ const Welcome = () => {
                 won: leads.filter(lead => lead.status === 'won').length,
                 estimatedValue: estimatedLeadValue
             },
+            setup: { completed: setupCompleted, total: 4, ...setupStatus },
             nextAppointment,
             whatsappStatus: tenantData.whatsapp_status || 'DISCONNECTED',
             operationalScore,
@@ -612,6 +631,13 @@ const Welcome = () => {
             ? 'Atenção preventiva'
             : 'Ação recomendada';
     const scoreTone = snapshot.operationalScore >= 80 ? 'text-emerald-600' : snapshot.operationalScore >= 60 ? 'text-amber-600' : 'text-primary';
+    const setupSteps = [
+        { step: '1', title: 'WhatsApp', desc: 'Conecte o número da academia para automatizar a recepção.', path: '/dashboard/whatsapp', done: snapshot.setup.whatsapp },
+        { step: '2', title: 'Planos', desc: 'Cadastre os planos que você oferece e organize a operação.', path: '/dashboard/plans', done: snapshot.setup.plans },
+        { step: '3', title: 'Membros', desc: 'Adicione seus alunos para manter acessos e treinos em dia.', path: '/dashboard/members', done: snapshot.setup.members },
+        { step: '4', title: 'Vendas', desc: 'Registre interessados e acompanhe cada matrícula no funil.', path: '/dashboard/leads', done: snapshot.setup.sales }
+    ];
+    const setupProgress = Math.round((snapshot.setup.completed / snapshot.setup.total) * 100);
 
     const kpis = [
         {
@@ -837,16 +863,16 @@ const Welcome = () => {
             </div>
 
             <div className="rounded-[2.5rem] bg-[#1e293b] p-6 text-white shadow-2xl sm:p-8 lg:p-10">
-                <div className="mb-8 flex items-center gap-3"><Zap className="fill-primary text-primary" size={25} /><div><h3 className="text-2xl font-black tracking-tight">Próximos passos</h3><p className="mt-1 text-xs font-medium text-slate-400">Estruture sua operação para ganhar tempo todos os dias.</p></div></div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    {[
-                        { step: '1', title: 'WhatsApp', desc: 'Ative seu bot para automatizar a recepção.', path: '/dashboard/whatsapp' },
-                        { step: '2', title: 'Planos', desc: 'Cadastre mensalidades para organizar cobranças.', path: '/dashboard/plans' },
-                        { step: '3', title: 'Membros', desc: 'Adicione alunos e mantenha os acessos em dia.', path: '/dashboard/members' }
-                    ].map(item => (
+                <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                    <div className="flex items-start gap-3"><Zap className="mt-1 shrink-0 fill-primary text-primary" size={25} /><div><h3 className="text-2xl font-black tracking-tight">{setupProgress === 100 ? 'Operação pronta' : 'Acelere seu início'}</h3><p className="mt-1 max-w-xl text-xs font-medium leading-relaxed text-slate-400">{setupProgress === 100 ? 'Sua base está configurada. Agora é manter o relacionamento e crescer com previsibilidade.' : 'Conclua estes passos para extrair o máximo do ZapFitness desde o primeiro dia.'}</p></div></div>
+                    <div className="shrink-0 text-left md:text-right"><div className="text-2xl font-black text-white">{setupProgress}%</div><div className="text-[9px] font-black uppercase tracking-widest text-slate-500">setup operacional</div></div>
+                </div>
+                <div className="mb-8 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-primary shadow-[0_0_18px_rgba(249,115,22,0.65)] transition-all duration-700" style={{ width: `${setupProgress}%` }} /></div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {setupSteps.map(item => (
                         <button type="button" key={item.step} onClick={() => navigate(item.path)} className="group/item flex min-w-0 items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 text-left transition-all hover:border-primary/40 hover:bg-white/10 sm:gap-5 sm:p-5">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 font-black text-xl text-slate-500 transition-colors group-hover/item:border-primary group-hover/item:text-white">{item.step}</div>
-                            <div className="min-w-0 flex-1"><div className="mb-1 text-[10px] font-black uppercase tracking-[0.18em] text-primary">{item.title}</div><p className="text-xs font-medium leading-relaxed text-slate-400">{item.desc}</p></div>
+                            <div className={clsx('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border font-black text-xl transition-colors', item.done ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300' : 'border-white/10 text-slate-500 group-hover/item:border-primary group-hover/item:text-white')}>{item.done ? <CheckCircle2 size={21} /> : item.step}</div>
+                            <div className="min-w-0 flex-1"><div className={clsx('mb-1 text-[10px] font-black uppercase tracking-[0.18em]', item.done ? 'text-emerald-300' : 'text-primary')}>{item.title} {item.done && '· Concluído'}</div><p className="text-xs font-medium leading-relaxed text-slate-400">{item.desc}</p></div>
                             <ArrowUpRight size={16} className="shrink-0 text-slate-600 transition-colors group-hover/item:text-primary" />
                         </button>
                     ))}
