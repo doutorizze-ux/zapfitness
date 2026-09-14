@@ -256,7 +256,7 @@ export const Leads = () => {
     }
 
     return (
-        <div className="animate-fade-in-up pb-20">
+        <div className={clsx("pb-20", !selectedLead && "animate-fade-in-up")}>
             {/* Header & Stats */}
             <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 mb-10">
                 <div className="flex-1">
