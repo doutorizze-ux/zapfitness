@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -14,6 +14,7 @@ import { ProfileSettings } from './ProfileSettings';
 import { Appointments } from './Appointments';
 import { Exercises } from './Exercises';
 import { Chat } from './Chat';
+import { Leads } from './Leads';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -42,6 +43,7 @@ export const Dashboard = () => {
 
     const navItems = [
         { label: 'ATENDIMENTO', path: '/dashboard/chat', icon: MessageSquare },
+        { label: 'VENDAS', path: '/dashboard/leads', icon: Target },
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
@@ -55,7 +57,7 @@ export const Dashboard = () => {
     ];
 
     const filteredNavItems = navItems.filter(item => {
-        if (item.label === 'Agenda' && !user?.enable_scheduling) return false;
+        if (item.path === '/dashboard/appointments' && !user?.enable_scheduling) return false;
         return true;
     });
 
@@ -135,6 +137,7 @@ export const Dashboard = () => {
                             else if (path.includes('/turnstiles')) tutorialId = 'turnstiles';
                             else if (path.includes('/logs')) tutorialId = 'access_logs';
                             else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
+                            else if (path.includes('/leads')) tutorialId = 'leads';
 
                             startTutorial(tutorialId);
                         }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
@@ -207,6 +210,7 @@ export const Dashboard = () => {
                         <Routes>
                             <Route path="/" element={<Welcome />} />
                             <Route path="/chat" element={<Chat />} />
+                            <Route path="/leads" element={<Leads />} />
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
@@ -287,6 +291,7 @@ export const Dashboard = () => {
                             <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
                                 {[
                                     { label: 'Membros', path: '/dashboard/members', icon: Users },
+                                    { label: 'Vendas', path: '/dashboard/leads', icon: Target },
                                     { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
                                     { label: 'Planos', path: '/dashboard/plans', icon: Activity },
                                     { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
