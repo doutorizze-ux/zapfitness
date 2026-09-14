@@ -30,6 +30,7 @@ interface Message {
     from_me: boolean;
     created_at: string;
     type: string;
+    status?: 'sending' | 'sent' | 'failed';
 }
 
 const COLUMNS = [
@@ -42,6 +43,17 @@ const COLUMNS = [
 
 const formatCurrency = (value: number | null | undefined) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+
+const getSocketUrl = () => {
+    const configuredUrl = import.meta.env.VITE_API_URL;
+    if (configuredUrl) {
+        const withoutApi = configuredUrl.replace(/\/api\/?$/, '');
+        if (withoutApi && withoutApi !== '/') return withoutApi;
+    }
+
+    if (typeof window !== 'undefined') return window.location.origin;
+    return 'http://localhost:3000';
+};
 
 export const Leads = () => {
     const { user } = useAuth();
@@ -57,6 +69,11 @@ export const Leads = () => {
     const [showLeadModal, setShowLeadModal] = useState(false);
     const [modalLead, setModalLead] = useState<Partial<Lead> | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const selectedLeadRef = useRef<Lead | null>(null);
+
+    useEffect(() => {
+        selectedLeadRef.current = selectedLead;
+    }, [selectedLead]);
 
     const fetchLeads = useCallback(async () => {
         try {
@@ -73,28 +90,49 @@ export const Leads = () => {
     useEffect(() => {
         fetchLeads();
 
-        const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-            transports: ['websocket', 'polling']
+        const socket = io(getSocketUrl(), {
+            transports: ['websocket', 'polling'],
+            withCredentials: true,
         });
 
-        if (user?.tenant_id) {
-            socket.emit('join', user.tenant_id);
+        const joinTenantRoom = () => {
+            if (user?.tenant_id) socket.emit('join', user.tenant_id);
+        };
+
+        socket.on('connect', joinTenantRoom);
+        if (socket.connected) {
+            joinTenantRoom();
         }
 
-        socket.on('new_message', (msg: Message & { lead_id: string }) => {
-            fetchLeads();
-            if (selectedLead && (msg.lead_id === selectedLead.id)) {
-                setMessages(prev => [...prev, msg]);
+        const handleNewMessage = (msg: Message & { lead_id?: string }) => {
+            void fetchLeads();
+            const activeLead = selectedLeadRef.current;
+            if (activeLead && msg.lead_id === activeLead.id) {
+                setMessages(prev => prev.some(message => message.id === msg.id) ? prev : [...prev, msg]);
             }
-        });
+        };
+
+        socket.on('new_message', handleNewMessage);
 
         return () => {
+            socket.off('connect', joinTenantRoom);
+            socket.off('new_message', handleNewMessage);
             socket.disconnect();
         };
-    }, [user?.tenant_id, selectedLead, fetchLeads]);
+    }, [user?.tenant_id, fetchLeads]);
 
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (!selectedLead) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [selectedLead]);
+
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
     }, [messages]);
 
     const fetchMessages = useCallback(async (leadId: string) => {
@@ -114,24 +152,37 @@ export const Leads = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedLead || !newMessage.trim() || sending) return;
+        const content = newMessage.trim();
+        if (!selectedLead || !content || sending) return;
+
+        const leadId = selectedLead.id;
+        const optimisticId = `pending-${Date.now()}`;
+        const optimisticMsg: Message = {
+            id: optimisticId,
+            content,
+            from_me: true,
+            created_at: new Date().toISOString(),
+            type: 'text',
+            status: 'sending'
+        };
 
         setSending(true);
+        setMessages(prev => [...prev, optimisticMsg]);
+        setNewMessage('');
+
         try {
-            await api.post(`/leads/${selectedLead.id}/messages`, { content: newMessage });
-            const optimisticMsg: Message = {
-                id: Date.now().toString(),
-                content: newMessage,
-                from_me: true,
-                created_at: new Date().toISOString(),
-                type: 'text'
-            };
-            setMessages(prev => [...prev, optimisticMsg]);
-            setNewMessage('');
-            fetchLeads();
-        } catch (err) {
+            await api.post(`/leads/${leadId}/messages`, { content });
+            setMessages(prev => prev.map(message =>
+                message.id === optimisticId ? { ...message, status: 'sent' } : message
+            ));
+            void fetchLeads();
+        } catch (err: any) {
             console.error('Error sending message:', err);
-            toast.error('Erro ao enviar mensagem');
+            setMessages(prev => prev.map(message =>
+                message.id === optimisticId ? { ...message, status: 'failed' } : message
+            ));
+            setNewMessage(current => current || content);
+            toast.error(err?.response?.data?.error || 'Não foi possível enviar a mensagem');
         } finally {
             setSending(false);
         }
@@ -601,41 +652,43 @@ export const Leads = () => {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 500 }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 w-full sm:w-[500px] h-full bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[100] border-l border-slate-100 flex flex-col overflow-hidden"
+                        className="fixed inset-y-0 right-0 w-full sm:w-[500px] h-[100dvh] max-h-[100dvh] bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-[100] border-l border-slate-100 flex flex-col overflow-hidden"
                     >
                         {/* Chat Header */}
-                        <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white relative">
-                            <div className="flex items-center gap-5">
-                                <div className="w-14 h-14 rounded-[1.5rem] bg-primary/5 flex items-center justify-center text-primary font-black text-xl border border-primary/10 shadow-inner">
+                        <div className="p-4 sm:p-8 border-b border-slate-100 flex items-center justify-between bg-white relative shrink-0">
+                            <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                                <div className="w-11 h-11 sm:w-14 sm:h-14 shrink-0 rounded-2xl sm:rounded-[1.5rem] bg-primary/5 flex items-center justify-center text-primary font-black text-lg sm:text-xl border border-primary/10 shadow-inner">
                                     {selectedLead.name?.charAt(0) || 'L'}
                                 </div>
-                                <div>
-                                    <h2 className="font-black text-slate-900 text-lg tracking-tight leading-tight">{selectedLead.name || 'Lead'}</h2>
+                                <div className="min-w-0">
+                                    <h2 className="font-black text-slate-900 text-base sm:text-lg tracking-tight leading-tight truncate">{selectedLead.name || 'Lead'}</h2>
                                     <div className="flex items-center gap-2 mt-1">
                                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{selectedLead.phone}</p>
+                                        <p className="text-[9px] sm:text-[10px] text-slate-400 font-black uppercase tracking-[0.12em] sm:tracking-[0.2em] truncate">{selectedLead.phone}</p>
                                     </div>
                                 </div>
                             </div>
                             <button
+                                type="button"
+                                aria-label="Fechar conversa"
                                 onClick={() => setSelectedLead(null)}
-                                className="p-3 hover:bg-slate-100 rounded-2xl transition-all text-slate-300 hover:text-slate-600 border border-transparent hover:border-slate-200 shadow-sm"
+                                className="p-2.5 sm:p-3 shrink-0 hover:bg-slate-100 rounded-2xl transition-all text-slate-300 hover:text-slate-600 border border-transparent hover:border-slate-200 shadow-sm"
                             >
-                                <X size={24} />
+                                <X size={22} />
                             </button>
                         </div>
 
                         {/* Funnel Stage in Chat */}
-                        <div className="px-8 py-5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        <div className="px-4 py-3 sm:px-8 sm:py-5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between gap-3 shrink-0">
+                            <div className="flex items-center gap-2 min-w-0">
                                 <div className="w-2 h-8 bg-primary rounded-full"></div>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Estágio do Funil:</span>
+                                <span className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-[0.12em] sm:tracking-widest pl-1 truncate">Estágio do Funil:</span>
                             </div>
                             <select
                                 value={selectedLead.status}
                                 onChange={(e) => updateLeadStatus(selectedLead.id, e.target.value)}
                                 className={clsx(
-                                    "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none shadow-sm transition-all cursor-pointer",
+                                    "max-w-[55%] px-3 sm:px-5 py-2.5 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.08em] sm:tracking-widest outline-none shadow-sm transition-all cursor-pointer",
                                     COLUMNS.find(c => c.id === selectedLead.status)?.lightColor,
                                     COLUMNS.find(c => c.id === selectedLead.status)?.textColor,
                                     "border-2",
@@ -649,7 +702,7 @@ export const Leads = () => {
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-[#fcfcfd]">
+                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-8 space-y-4 sm:space-y-6 bg-[#fcfcfd]">
                             {messages.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-300/60 text-center">
                                     <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-xl shadow-slate-200/50 mb-6 border border-slate-100">
@@ -663,7 +716,7 @@ export const Leads = () => {
                                     {messages.map((msg, i) => (
                                         <div key={msg.id || i} className={clsx("flex", msg.from_me ? "justify-end" : "justify-start")}>
                                             <div className={clsx(
-                                                "max-w-[85%] p-5 rounded-3xl shadow-sm text-sm font-medium leading-relaxed mb-1 relative group",
+                                                "max-w-[90%] sm:max-w-[85%] p-4 sm:p-5 rounded-3xl shadow-sm text-sm font-medium leading-relaxed mb-1 relative group break-words",
                                                 msg.from_me
                                                     ? "bg-slate-900 text-white rounded-tr-none shadow-xl shadow-slate-900/10"
                                                     : "bg-white text-slate-800 rounded-tl-none border border-slate-100"
@@ -674,6 +727,8 @@ export const Leads = () => {
                                                     msg.from_me ? "text-slate-400 text-right font-bold" : "text-slate-400"
                                                 )}>
                                                     {format(new Date(msg.created_at), 'HH:mm')}
+                                                    {msg.from_me && msg.status === 'sending' && ' • enviando'}
+                                                    {msg.from_me && msg.status === 'failed' && ' • não enviado'}
                                                 </div>
                                             </div>
                                         </div>
@@ -684,28 +739,29 @@ export const Leads = () => {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-8 border-t border-slate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
-                            <form onSubmit={handleSendMessage} className="flex gap-4">
+                        <div className="p-4 sm:p-8 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-8 border-t border-slate-100 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.02)] shrink-0">
+                            <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-4">
                                 <div className="flex-1 relative">
                                     <input
                                         type="text"
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
                                         placeholder="Digite sua resposta..."
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-[1.8rem] pl-6 pr-14 py-5 text-sm font-black placeholder:text-slate-300 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all font-medium"
+                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl sm:rounded-[1.8rem] pl-4 sm:pl-6 pr-14 py-4 sm:py-5 text-base sm:text-sm font-black placeholder:text-slate-300 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/50 transition-all font-medium"
                                     />
                                     <button
+                                        aria-label="Enviar mensagem"
                                         disabled={!newMessage.trim() || sending}
                                         type="submit"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-primary text-white rounded-[1.2rem] flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
+                                        className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-12 sm:h-12 bg-primary text-white rounded-xl sm:rounded-[1.2rem] flex items-center justify-center shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
                                     >
-                                        <Send size={22} className={clsx(sending && "animate-pulse")} />
+                                        <Send size={20} className={clsx(sending && "animate-pulse")} />
                                     </button>
                                 </div>
                             </form>
-                            <div className="mt-5 flex items-center justify-center gap-3">
+                            <div className="mt-3 sm:mt-5 flex items-center justify-center gap-2 sm:gap-3">
                                 <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Canais: WhatsApp Business 2.0</p>
+                                <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-[0.14em] sm:tracking-[0.3em]">Canais: WhatsApp Business 2.0</p>
                             </div>
                         </div>
                     </motion.div>

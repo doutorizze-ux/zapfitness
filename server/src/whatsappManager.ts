@@ -255,7 +255,12 @@ export const logoutSession = async (tenantId: string) => {
     }
 };
 
-export const sendMessageToJid = async (tenantId: string, jid: string, text: string) => {
+export const sendMessageToJid = async (
+    tenantId: string,
+    jid: string,
+    text: string,
+    options: { humanize?: boolean } = {}
+) => {
     const sock = sessions.get(tenantId);
     if (!sock) throw new Error('WhatsApp não conectado');
 
@@ -281,7 +286,12 @@ export const sendMessageToJid = async (tenantId: string, jid: string, text: stri
     }
 
     console.log(`[WA] Sending message to target JID: ${targetJid}`);
-    const result = await humanizedSendMessage(sock, targetJid, { text });
+    // Mensagens disparadas por um atendente precisam chegar imediatamente.
+    // A simulação de digitação continua ativa para o bot e para os disparos
+    // automáticos, mas não deve atrasar uma conversa humana no painel.
+    const result = options.humanize === false
+        ? await sock.sendMessage(targetJid, { text })
+        : await humanizedSendMessage(sock, targetJid, { text });
 
     // Try to find member or lead to save the JID if missing
     let member = null;

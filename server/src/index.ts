@@ -575,7 +575,9 @@ app.get('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
 
 app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
     try {
-        const { content } = req.body;
+        const content = typeof req.body.content === 'string' ? req.body.content.trim() : '';
+        if (!content) return res.status(400).json({ error: 'A mensagem não pode ficar vazia' });
+
         const lead = await prisma.lead.findUnique({
             where: { id: req.params.id, tenant_id: req.user.tenant_id }
         });
@@ -584,7 +586,7 @@ app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
 
         const cleanPhone = lead.phone.replace(/\D/g, '');
         const jid = `${cleanPhone}@s.whatsapp.net`;
-        await sendMessageToJid(req.user.tenant_id, jid, content);
+        await sendMessageToJid(req.user.tenant_id, jid, content, { humanize: false });
 
         res.json({ success: true });
     } catch (e: any) {
