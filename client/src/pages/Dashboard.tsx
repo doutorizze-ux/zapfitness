@@ -31,6 +31,23 @@ export const Dashboard = () => {
     const { startTutorial, hasSeenTutorial } = useTutorial();
     const [systemSettings, setSystemSettings] = React.useState({ site_name: 'ZapFitness', logo_url: '' });
 
+    // A navigation triggered by the browser history must never leave the
+    // mobile drawer open over the next page.
+    React.useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
+
+    React.useEffect(() => {
+        if (!isMobileMenuOpen) return;
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setIsMobileMenuOpen(false);
+        };
+
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isMobileMenuOpen]);
+
     React.useEffect(() => {
         // Start the general dashboard tutorial if not seen
         requestAnimationFrame(() => {
@@ -232,8 +249,18 @@ export const Dashboard = () => {
                     </div>
                 </main>
 
+                {/* Overlay stays below the dock in its own stacking layer so it
+                    can close the drawer without ever intercepting drawer taps. */}
+                {isMobileMenuOpen && (
+                    <div
+                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[190] animate-fade-in pointer-events-auto"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        aria-hidden="true"
+                    />
+                )}
+
                 {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
-                <div className="md:hidden pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-50">
+                <div className="md:hidden pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200] isolate">
                     <nav className="pointer-events-auto bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
                         {/* Primary Items (Top 4) */}
                         {[
@@ -276,7 +303,9 @@ export const Dashboard = () => {
                         {/* Expand Button */}
                         <button
                             type="button"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            onClick={() => setIsMobileMenuOpen((open) => !open)}
+                            aria-expanded={isMobileMenuOpen}
+                            aria-controls="mobile-dashboard-menu"
                             className={clsx(
                                 "flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-300 flex-1",
                                 isMobileMenuOpen ? "text-primary bg-primary/10 scale-110 rotate-90" : "text-white/40"
@@ -294,7 +323,7 @@ export const Dashboard = () => {
 
                     {/* Expandable Menu Overlay (Glassmorphism Modal) */}
                     {isMobileMenuOpen && (
-                        <div className="pointer-events-auto absolute bottom-20 left-0 right-0 animate-fade-in-up">
+                        <div id="mobile-dashboard-menu" className="pointer-events-auto absolute bottom-20 left-0 right-0 z-10 animate-fade-in-up">
                             <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
                                 {[
                                     { label: 'Membros', path: '/dashboard/members', icon: Users },
@@ -339,13 +368,6 @@ export const Dashboard = () => {
                     )}
                 </div>
 
-                {/* Overlay Background to close menu */}
-                {isMobileMenuOpen && (
-                    <div
-                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in pointer-events-auto"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    />
-                )}
             </div>
         </div>
     );
