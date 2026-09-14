@@ -77,16 +77,16 @@ export const Exercises = () => {
     });
 
     return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto animate-fade-in">
+        <div className="p-4 md:p-6 min-[1800px]:p-10 max-w-7xl mx-auto animate-fade-in">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-6 mb-12">
+            <div className="flex flex-col xl:flex-row xl:justify-between xl:items-center gap-4 xl:gap-6 mb-8 xl:mb-12">
                 <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Biblioteca de Exercícios</h1>
+                    <h1 className="text-3xl min-[1800px]:text-4xl font-black text-slate-900 tracking-tight mb-2">Biblioteca de Exercícios</h1>
                     <p className="text-slate-500 font-medium">Gerencie o catálogo de exercícios da sua academia.</p>
                 </div>
                 <button
                     onClick={() => { setEditingExercise({ name: '', category: 'Peito' }); setShowModal(true); }}
-                    className="flex items-center justify-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl font-black shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
+                    className="flex items-center justify-center gap-2 px-6 py-3.5 min-[1800px]:px-8 min-[1800px]:py-4 bg-primary text-white rounded-xl min-[1800px]:rounded-2xl font-black shadow-xl shadow-primary/25 hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
                 >
                     <Plus size={20} strokeWidth={3} />
                     ADICIONAR EXERCÍCIO
@@ -94,23 +94,23 @@ export const Exercises = () => {
             </div>
 
             {/* Controls */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-                <div className="lg:col-span-5 relative group">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-6 mb-8">
+                <div className="xl:col-span-5 relative group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar por nome ou descrição..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-12 pr-6 py-4 bg-white border border-slate-200 rounded-2xl font-medium focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
+                        className="w-full pl-12 pr-6 py-3.5 min-[1800px]:py-4 bg-white border border-slate-200 rounded-xl min-[1800px]:rounded-2xl font-medium focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
                     />
                 </div>
 
-                <div className="lg:col-span-4 flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                <div className="xl:col-span-4 flex gap-2 overflow-x-auto pb-1 min-[1800px]:pb-2 no-scrollbar">
                     <button
                         onClick={() => setFilterCategory(null)}
                         className={clsx(
-                            "px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                            "px-4 py-2.5 min-[1800px]:px-5 min-[1800px]:py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border",
                             !filterCategory ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
                         )}
                     >
@@ -121,7 +121,7 @@ export const Exercises = () => {
                             key={cat}
                             onClick={() => setFilterCategory(cat)}
                             className={clsx(
-                                "px-5 py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                                "px-4 py-2.5 min-[1800px]:px-5 min-[1800px]:py-3 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border",
                                 filterCategory === cat ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"
                             )}
                         >
@@ -130,16 +130,16 @@ export const Exercises = () => {
                     ))}
                 </div>
 
-                <div className="lg:col-span-3 flex justify-end gap-2">
+                <div className="xl:col-span-3 flex justify-start xl:justify-end gap-2">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={clsx("p-4 rounded-xl border transition-all", viewMode === 'grid' ? "bg-white border-primary text-primary shadow-sm" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}
+                        className={clsx("p-3 min-[1800px]:p-4 rounded-xl border transition-all", viewMode === 'grid' ? "bg-white border-primary text-primary shadow-sm" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}
                     >
                         <LayoutGrid size={20} />
                     </button>
                     <button
                         onClick={() => setViewMode('list')}
-                        className={clsx("p-4 rounded-xl border transition-all", viewMode === 'list' ? "bg-white border-primary text-primary shadow-sm" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}
+                        className={clsx("p-3 min-[1800px]:p-4 rounded-xl border transition-all", viewMode === 'list' ? "bg-white border-primary text-primary shadow-sm" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}
                     >
                         <List size={20} />
                     </button>
@@ -153,7 +153,7 @@ export const Exercises = () => {
                     <span className="text-slate-400 font-bold uppercase tracking-widest text-xs">Carregando catálogo...</span>
                 </div>
             ) : filtered.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                <div className="text-center py-16 min-[1800px]:py-20 bg-white rounded-2xl min-[1800px]:rounded-[3rem] border-2 border-dashed border-slate-100">
                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                         <Dumbbell size={40} />
                     </div>
@@ -161,12 +161,12 @@ export const Exercises = () => {
                     <p className="text-slate-500">Tente mudar os filtros ou adicione um novo exercício.</p>
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-[1800px]:gap-6">
                     {filtered.map(ex => (
                         <motion.div
                             layout
                             key={ex.id}
-                            className="bg-white rounded-[2rem] border border-slate-100 p-6 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group"
+                            className="bg-white rounded-2xl min-[1800px]:rounded-[2rem] border border-slate-100 p-5 min-[1800px]:p-6 hover:shadow-2xl hover:shadow-slate-200/50 transition-all group"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-slate-50 rounded-2xl text-slate-400 group-hover:text-primary group-hover:bg-primary/10 transition-colors">

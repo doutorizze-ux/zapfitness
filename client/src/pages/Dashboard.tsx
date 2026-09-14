@@ -66,12 +66,12 @@ export const Dashboard = () => {
     const currentItem = filteredNavItems.find(item => item.path === location.pathname) || filteredNavItems[0];
 
     return (
-        <div className="flex h-dvh min-h-0 min-w-0 bg-slate-50 overflow-hidden">
+        <div className="dashboard-shell flex h-dvh min-h-0 min-w-0 bg-slate-50 overflow-hidden">
             <NotificationHandler />
             {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-72 shrink-0 bg-slate-950 text-white flex-col shadow-2xl z-20">
-                <div className="p-8 border-b border-slate-800">
-                    <div className="flex items-center gap-3 px-1 mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
+            <aside className="hidden md:flex w-64 min-[1800px]:w-72 shrink-0 bg-slate-950 text-white flex-col shadow-2xl z-20">
+                <div className="p-6 min-[1800px]:p-8 border-b border-slate-800">
+                    <div className="flex items-center gap-3 px-1 mb-8 min-[1800px]:mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 bg-white">
                             {user?.logo_url ? (
                                 <img src={formatImageUrl(user.logo_url)} alt="Gym Logo" className="w-full h-full object-contain p-1" />
@@ -93,14 +93,14 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
-                <nav id="sidebar-nav" className="flex-1 p-6 space-y-2 overflow-y-auto">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 px-4">Menu Principal</p>
+                <nav id="sidebar-nav" className="flex-1 p-4 min-[1800px]:p-6 space-y-1 min-[1800px]:space-y-2 overflow-y-auto">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 min-[1800px]:mb-6 px-3 min-[1800px]:px-4">Menu Principal</p>
                     {filteredNavItems.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}
                             className={clsx(
-                                "flex items-center gap-3 p-4 rounded-2xl transition-all duration-300 group",
+                                "flex items-center gap-3 p-3 min-[1800px]:p-4 rounded-xl min-[1800px]:rounded-2xl transition-all duration-300 group",
                                 location.pathname === item.path
                                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                                     : "text-slate-500 hover:bg-white/5 hover:text-white"
@@ -112,9 +112,9 @@ export const Dashboard = () => {
                     ))}
                 </nav>
 
-                <div className="p-6 border-t border-white/5 bg-slate-950/50">
-                    <div className="flex items-center gap-4 p-5 rounded-[2.5rem] bg-white/5 border border-white/5 mb-6">
-                        <div className="w-14 h-14 rounded-[1.5rem] bg-white shadow-lg flex items-center justify-center font-bold text-slate-900 shadow-inner overflow-hidden flex-shrink-0 border-2 border-white/10">
+                <div className="p-4 min-[1800px]:p-6 border-t border-white/5 bg-slate-950/50">
+                    <div className="flex items-center gap-3 min-[1800px]:gap-4 p-4 min-[1800px]:p-5 rounded-3xl min-[1800px]:rounded-[2.5rem] bg-white/5 border border-white/5 mb-4 min-[1800px]:mb-6">
+                        <div className="w-12 h-12 min-[1800px]:w-14 min-[1800px]:h-14 rounded-2xl min-[1800px]:rounded-[1.5rem] bg-white shadow-lg flex items-center justify-center font-bold text-slate-900 shadow-inner overflow-hidden flex-shrink-0 border-2 border-white/10">
                             {user?.logo_url ? (
                                 <img src={formatImageUrl(user.logo_url)} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
@@ -122,7 +122,7 @@ export const Dashboard = () => {
                             )}
                         </div>
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-base font-black text-white truncate uppercase tracking-tighter">{user?.name || 'Academia'}</p>
+                            <p className="text-sm min-[1800px]:text-base font-black text-white truncate uppercase tracking-tighter">{user?.name || 'Academia'}</p>
                             <div className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
                                 <span className="text-[9px] text-slate-500 uppercase font-black tracking-widest whitespace-nowrap">Conectado Live</span>
@@ -143,7 +143,7 @@ export const Dashboard = () => {
                             else if (path.includes('/retention')) tutorialId = 'retention';
 
                             startTutorial(tutorialId);
-                        }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
+                            }} className="flex items-center justify-center p-3 min-[1800px]:p-4 bg-white/5 hover:bg-white/10 rounded-xl min-[1800px]:rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
                             <HelpCircle size={18} className="group-hover:scale-110 transition-transform" />
                         </button>
                         <button
@@ -153,7 +153,7 @@ export const Dashboard = () => {
                                     navigate('/');
                                 }
                             }}
-                            className="flex items-center justify-center p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl text-red-500 transition-all group border border-red-500/10"
+                            className="flex items-center justify-center p-3 min-[1800px]:p-4 bg-red-500/10 hover:bg-red-500/20 rounded-xl min-[1800px]:rounded-2xl text-red-500 transition-all group border border-red-500/10"
                             title="Sair"
                         >
                             <LogOut size={18} className="group-hover:scale-110 transition-transform" />
@@ -192,7 +192,7 @@ export const Dashboard = () => {
                     </div>
                 </header>
 
-                <header className="hidden md:flex bg-white border-b border-slate-100 px-12 py-6 items-center justify-between z-10">
+                <header className="hidden md:flex bg-white border-b border-slate-100 px-8 min-[1800px]:px-12 py-4 min-[1800px]:py-6 items-center justify-between z-10">
                     <div className="flex items-center gap-6">
                         <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{currentItem.label}</h2>
                         <div className="flex items-center gap-3 px-5 py-2 bg-primary/5 rounded-full border border-primary/10">
@@ -209,7 +209,7 @@ export const Dashboard = () => {
 
                 {/* Content Container */}
                 <main id="main-content" className="flex-1 min-w-0 overflow-y-auto overscroll-contain min-h-0 pb-32 md:pb-8 touch-pan-y">
-                    <div className="w-full min-w-0 p-4 md:p-10 max-w-7xl mx-auto">
+                    <div className="dashboard-content w-full min-w-0 p-4 md:p-6 min-[1800px]:p-10 max-w-7xl mx-auto">
                         <Routes>
                             <Route path="/" element={<Welcome />} />
                             <Route path="/chat" element={<Chat />} />
