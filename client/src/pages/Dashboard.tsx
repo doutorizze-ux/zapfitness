@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target, ShieldCheck } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -15,6 +15,7 @@ import { Appointments } from './Appointments';
 import { Exercises } from './Exercises';
 import { Chat } from './Chat';
 import { Leads } from './Leads';
+import { Retention } from './Retention';
 
 import clsx from 'clsx';
 import api from '../api';
@@ -44,6 +45,7 @@ export const Dashboard = () => {
     const navItems = [
         { label: 'ATENDIMENTO', path: '/dashboard/chat', icon: MessageSquare },
         { label: 'VENDAS', path: '/dashboard/leads', icon: Target },
+        { label: 'RETENÇÃO', path: '/dashboard/retention', icon: ShieldCheck },
         { label: 'PLANOS', path: '/dashboard/plans', icon: Activity },
         { label: 'AGENDA', path: '/dashboard/appointments', icon: Calendar },
         { label: 'MEMBROS', path: '/dashboard/members', icon: Users },
@@ -138,6 +140,7 @@ export const Dashboard = () => {
                             else if (path.includes('/logs')) tutorialId = 'access_logs';
                             else if (path.includes('/whatsapp')) tutorialId = 'whatsapp';
                             else if (path.includes('/leads')) tutorialId = 'leads';
+                            else if (path.includes('/retention')) tutorialId = 'retention';
 
                             startTutorial(tutorialId);
                         }} className="flex items-center justify-center p-4 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all group border border-white/5">
@@ -211,6 +214,7 @@ export const Dashboard = () => {
                             <Route path="/" element={<Welcome />} />
                             <Route path="/chat" element={<Chat />} />
                             <Route path="/leads" element={<Leads />} />
+                            <Route path="/retention" element={<Retention />} />
                             <Route path="/plans" element={<Plans />} />
                             <Route path="/appointments" element={<Appointments />} />
                             <Route path="/members" element={<Members />} />
@@ -292,6 +296,7 @@ export const Dashboard = () => {
                                 {[
                                     { label: 'Membros', path: '/dashboard/members', icon: Users },
                                     { label: 'Vendas', path: '/dashboard/leads', icon: Target },
+                                    { label: 'Retenção', path: '/dashboard/retention', icon: ShieldCheck },
                                     { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
                                     { label: 'Planos', path: '/dashboard/plans', icon: Activity },
                                     { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
@@ -536,8 +541,8 @@ const Welcome = () => {
                     ? {
                         title: 'Reative alunos silenciosos',
                         description: `${atRiskMembers.length} ${atRiskMembers.length === 1 ? 'aluno não aparece' : 'alunos não aparecem'} há mais de 10 dias nos acessos registrados.`,
-                        actionLabel: 'Ver membros',
-                        path: '/dashboard/members'
+                        actionLabel: 'Abrir retenção',
+                        path: '/dashboard/retention'
                     }
                     : !isWhatsappConnected
                         ? {
@@ -812,6 +817,7 @@ const Welcome = () => {
                         {[
                             { label: 'Novo aluno', icon: UserPlus, path: '/dashboard/members' },
                             { label: 'Vendas', icon: Target, path: '/dashboard/leads' },
+                            { label: 'Retenção', icon: ShieldCheck, path: '/dashboard/retention' },
                             { label: 'Financeiro', icon: WalletCards, path: '/dashboard/finance' },
                             { label: 'WhatsApp', icon: MessageSquare, path: '/dashboard/whatsapp' },
                             ...(user?.enable_scheduling ? [{ label: 'Agenda', icon: CalendarPlus, path: '/dashboard/appointments' }] : [])

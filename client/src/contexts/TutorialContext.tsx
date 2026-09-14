@@ -176,6 +176,26 @@ const TUTORIAL_STEPS: Record<string, Step[]> = {
             disableBeacon: true,
         }
     ],
+    'retention': [
+        {
+            target: '#retention-header',
+            content: '🛡️ Central de retenção: veja quais alunos precisam de atenção antes que a academia perca relacionamento ou receita.',
+            placement: 'bottom',
+            disableBeacon: true,
+        },
+        {
+            target: '#retention-filters',
+            content: '🎯 Priorize sua equipe: filtre por risco crítico, renovação próxima ou falta de frequência.',
+            placement: 'bottom',
+            disableBeacon: true,
+        },
+        {
+            target: '#retention-list',
+            content: '💬 Ação com contexto: cada aluno mostra o motivo do alerta e permite iniciar uma conversa de recuperação pelo WhatsApp.',
+            placement: 'top',
+            disableBeacon: true,
+        }
+    ],
 };
 
 export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children }) => {
