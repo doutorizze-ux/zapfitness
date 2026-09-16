@@ -49,6 +49,15 @@ export const Dashboard = () => {
     }, [isMobileMenuOpen]);
 
     React.useEffect(() => {
+        const closeOnDesktop = () => {
+            if (window.innerWidth >= 768) setIsMobileMenuOpen(false);
+        };
+
+        window.addEventListener('resize', closeOnDesktop);
+        return () => window.removeEventListener('resize', closeOnDesktop);
+    }, []);
+
+    React.useEffect(() => {
         // Start the general dashboard tutorial if not seen
         requestAnimationFrame(() => {
             if (!hasSeenTutorial('dashboard')) {
@@ -260,8 +269,8 @@ export const Dashboard = () => {
                 )}
 
                 {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
-                <div className="md:hidden pointer-events-none fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200] isolate">
-                    <nav className="pointer-events-auto bg-slate-900/90 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
+                <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200] isolate">
+                    <nav aria-label="Navegação principal" className="bg-slate-900/95 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
                         {/* Primary Items (Top 4) */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
@@ -276,14 +285,16 @@ export const Dashboard = () => {
                                     key={item.path}
                                     to={item.path}
                                     onClick={() => setIsMobileMenuOpen(false)}
+                                    aria-label={item.label}
+                                    aria-current={isActive ? 'page' : undefined}
                                     className={clsx(
-                                        "relative flex flex-col items-center justify-center py-2 px-1 transition-all duration-300 flex-1",
+                                        "relative flex min-h-14 flex-col items-center justify-center rounded-2xl py-2 px-1 transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 flex-1",
                                         isActive ? "text-primary" : "text-white/40 hover:text-white/60"
                                     )}
                                 >
                                     <div className={clsx(
-                                        "p-2.5 rounded-2xl transition-all duration-500",
-                                        isActive ? "bg-primary/10 scale-110" : "bg-transparent"
+                                        "p-2.5 rounded-2xl transition-all duration-200",
+                                        isActive ? "bg-primary/10 scale-110 shadow-[0_0_20px_rgba(var(--primary-rgb),0.18)]" : "bg-transparent"
                                     )}>
                                         <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
                                     </div>
@@ -306,8 +317,9 @@ export const Dashboard = () => {
                             onClick={() => setIsMobileMenuOpen((open) => !open)}
                             aria-expanded={isMobileMenuOpen}
                             aria-controls="mobile-dashboard-menu"
+                            aria-label={isMobileMenuOpen ? 'Fechar mais opções' : 'Abrir mais opções'}
                             className={clsx(
-                                "flex flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-300 flex-1",
+                                "flex min-h-14 flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 flex-1",
                                 isMobileMenuOpen ? "text-primary bg-primary/10 scale-110 rotate-90" : "text-white/40"
                             )}
                         >
@@ -323,8 +335,8 @@ export const Dashboard = () => {
 
                     {/* Expandable Menu Overlay (Glassmorphism Modal) */}
                     {isMobileMenuOpen && (
-                        <div id="mobile-dashboard-menu" className="pointer-events-auto absolute bottom-20 left-0 right-0 z-10 animate-fade-in-up">
-                            <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[3rem] p-6 shadow-2xl grid grid-cols-3 gap-6">
+                        <div id="mobile-dashboard-menu" role="menu" className="absolute bottom-[calc(100%+0.75rem)] left-0 right-0 z-10 animate-mobile-menu-in">
+                            <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 shadow-2xl shadow-slate-950/30 grid grid-cols-3 gap-2 sm:gap-3">
                                 {[
                                     { label: 'Membros', path: '/dashboard/members', icon: Users },
                                     { label: 'Vendas', path: '/dashboard/leads', icon: Target },
@@ -335,17 +347,27 @@ export const Dashboard = () => {
                                     { label: 'Dinheiro', path: '/dashboard/finance', icon: CreditCard },
                                     { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
                                     { label: 'Ajustes', path: '/dashboard/settings', icon: Settings },
-                                ].map((item) => (
+                                ].map((item, index) => (
                                     <Link
                                         key={item.path}
                                         to={item.path}
                                         onClick={() => setIsMobileMenuOpen(false)}
-                                        className="flex flex-col items-center gap-2 group"
+                                        role="menuitem"
+                                        aria-current={location.pathname === item.path ? 'page' : undefined}
+                                        aria-label={item.label}
+                                        style={{ animationDelay: `${index * 35}ms` }}
+                                        className={clsx(
+                                            'mobile-menu-item flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-2xl border px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 group',
+                                            location.pathname === item.path ? 'border-primary/40 bg-primary/10' : 'border-white/5 bg-white/[0.03] hover:border-primary/30 hover:bg-primary/10'
+                                        )}
                                     >
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white/60 group-hover:bg-orange-500/20 group-hover:text-orange-500 transition-all border border-white/5">
+                                        <div className={clsx(
+                                            'flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110',
+                                            location.pathname === item.path ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white/5 text-white/60 group-hover:bg-orange-500/20 group-hover:text-orange-500'
+                                        )}>
                                             <item.icon size={24} />
                                         </div>
-                                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest text-center">{item.label}</span>
+                                        <span className="text-[9px] font-black text-white/60 uppercase tracking-wider text-center">{item.label}</span>
                                     </Link>
                                 ))}
                                 <button
@@ -356,12 +378,15 @@ export const Dashboard = () => {
                                             navigate('/');
                                         }
                                     }}
-                                    className="flex flex-col items-center gap-2 group"
+                                    role="menuitem"
+                                    aria-label="Sair"
+                                    style={{ animationDelay: '315ms' }}
+                                    className="mobile-menu-item flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-2xl border border-red-500/10 bg-red-500/[0.04] px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 group"
                                 >
-                                    <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 group-hover:bg-red-500/20 transition-all border border-red-500/10">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-500 transition-all duration-200 group-hover:scale-110 group-hover:bg-red-500/20">
                                         <LogOut size={24} />
                                     </div>
-                                    <span className="text-[10px] font-black text-red-500/60 uppercase tracking-widest text-center">Sair</span>
+                                    <span className="text-[9px] font-black text-red-500/70 uppercase tracking-wider text-center">Sair</span>
                                 </button>
                             </div>
                         </div>
