@@ -518,7 +518,7 @@ export const LandingPage = () => {
                         <div>
                             <h4 className="text-white font-black uppercase tracking-widest text-[10px] mb-10">Legal & Support</h4>
                             <ul className="space-y-6 text-sm font-black uppercase tracking-tighter">
-                                <li><a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a></li>
+                                <li><a href="/privacidade" className="hover:text-orange-500 transition-colors">Privacy Policy</a></li>
                                 <li><a href="#" className="hover:text-orange-500 transition-colors">Compliance</a></li>
                                 <li><a href="#" className="hover:text-orange-500 transition-colors">API Docs</a></li>
                                 <li><a href="#" className="hover:text-orange-500 transition-colors">Help Center</a></li>

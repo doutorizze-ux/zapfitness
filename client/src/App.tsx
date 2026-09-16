@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard';
 import { PaymentPage } from './pages/PaymentPage';
 import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import { ThemeHandler } from './components/ThemeHandler';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
 
 import api from './api';
 
@@ -59,6 +60,7 @@ function App() {
         <TutorialProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/privacidade" element={<PrivacyPolicy />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Login initialMode="register" />} />
             <Route path="/w/:id" element={<PublicWorkout />} />
