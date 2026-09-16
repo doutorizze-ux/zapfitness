@@ -775,6 +775,17 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
                 member: {
                     select: {
                         name: true,
+                        diet_plan: true,
+                        plan_start_date: true,
+                        plan_end_date: true,
+                        active: true,
+                        plan: {
+                            select: {
+                                name: true,
+                                price: true,
+                                duration_days: true
+                            }
+                        },
                         tenant: {
                             select: { name: true, primary_color: true, logo_url: true }
                         }
@@ -788,19 +799,43 @@ app.get('/api/public/workouts/:id', async (req: any, res) => {
         if (workouts.length === 0) {
             const member = await prisma.member.findFirst({
                 where: { id: id },
-                include: { tenant: { select: { name: true, primary_color: true, logo_url: true } } }
+                select: {
+                    id: true,
+                    name: true,
+                    diet_plan: true,
+                    workout_routine: true,
+                    plan_start_date: true,
+                    plan_end_date: true,
+                    active: true,
+                    plan: {
+                        select: {
+                            name: true,
+                            price: true,
+                            duration_days: true
+                        }
+                    },
+                    tenant: { select: { name: true, primary_color: true, logo_url: true } }
+                }
             });
 
-            if (member && member.workout_routine && member.workout_routine.trim() !== '') {
-                console.log(`[PublicAPI] Found manual workout routine for member ${member.name}. Synthesizing response.`);
+            const hasManualWorkout = Boolean(member?.workout_routine?.trim());
+            const hasDietPlan = Boolean(member?.diet_plan?.trim());
+
+            if (member && (hasManualWorkout || hasDietPlan)) {
+                console.log(`[PublicAPI] Found manual content for member ${member.name}. Synthesizing response.`);
                 workouts = [{
                     id: `manual-${member.id}`,
                     name: 'Ficha de Treino',
-                    notes: member.workout_routine,
+                    notes: member.workout_routine || null,
                     active: true,
                     exercises: [],
                     member: {
                         name: member.name,
+                        diet_plan: member.diet_plan,
+                        plan_start_date: member.plan_start_date,
+                        plan_end_date: member.plan_end_date,
+                        active: member.active,
+                        plan: member.plan,
                         tenant: member.tenant
                     }
                 } as any];

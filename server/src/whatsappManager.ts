@@ -978,6 +978,7 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
 
     const hasDigital = digitalWorkouts.length > 0;
     const hasManual = member.workout_routine && member.workout_routine.trim() !== '';
+    const hasDiet = Boolean(member.diet_plan && member.diet_plan.trim() !== '');
 
     if (!hasDigital && !hasManual) {
         await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Você ainda não possui um treino cadastrado.' });
@@ -1000,15 +1001,17 @@ async function handleGetWorkout(member: any, sock: WASocket, remoteJid: string) 
         text += `📝 *Anotações / Ficha Manual:*\n${member.workout_routine}\n\n`;
     }
 
-    // Always send the smart link so the user gets what they expect
-    text += `🔗 *Acesse sua Ficha Completa aqui:*\n${baseUrl}/w/${member.id}`;
+    // Always send the smart link so the member can access the complete experience.
+    const linkLabel = hasDiet ? 'seu Treino e Plano Alimentar' : 'sua Ficha Completa';
+    text += `🔗 *Acesse ${linkLabel} aqui:*\n${baseUrl}/w/${member.id}`;
 
     await humanizedSendMessage(sock, remoteJid, { text: text.trim() });
 }
 
 async function handleGetDiet(member: any, sock: WASocket, remoteJid: string) {
     if (member && member.diet_plan) {
-        await humanizedSendMessage(sock, remoteJid, { text: `🥗 *Sua Dieta:*\n\n${member.diet_plan}` });
+        const baseUrl = process.env.FRONTEND_URL || 'https://zapp.fitness';
+        await humanizedSendMessage(sock, remoteJid, { text: `🥗 *Seu Plano Alimentar:*\n\n${member.diet_plan}\n\n🔗 *Acesse também pelo portal do aluno:*\n${baseUrl}/w/${member.id}` });
     } else {
         await humanizedSendMessage(sock, remoteJid, { text: 'ℹ️ Você ainda não possui uma dieta cadastrada.' });
     }

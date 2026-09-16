@@ -242,7 +242,10 @@ Domingo:
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     const workoutLink = `${window.location.origin}/w/${member.id}`;
-                                                    const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
+                                                    const hasDiet = Boolean(member.diet_plan?.trim());
+                                                    const contentLabel = hasDiet ? 'Seu treino e plano alimentar digitais estão prontos!' : 'Seu treino digital está pronto!';
+                                                    const contentHint = hasDiet ? 'No link abaixo você verá seu treino e seu plano alimentar:' : 'Acesse sua ficha pelo link abaixo:';
+                                                    const msg = `Olá ${member.name}! 💪\n\n${contentLabel}\n${contentHint}\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora evoluir! 🚀`;
                                                     const cleanPhone = member.phone.replace(/\D/g, '');
                                                     api.post('/chat/send', { jid: `${cleanPhone}@s.whatsapp.net`, text: msg })
                                                         .then(() => toast.success('Treino enviado!'))
@@ -307,7 +310,10 @@ Domingo:
                                                 <div className="flex gap-2 justify-end touch-visible-actions transition-opacity">
                                                     <button type="button" onClick={() => {
                                                         const workoutLink = `${window.location.origin}/w/${member.id}`;
-                                                        const msg = `Olá ${member.name}! 💪\n\nSeu treino digital está pronto! Acesse pelo link abaixo:\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora treinar! 🚀`;
+                                                        const hasDiet = Boolean(member.diet_plan?.trim());
+                                                        const contentLabel = hasDiet ? 'Seu treino e plano alimentar digitais estão prontos!' : 'Seu treino digital está pronto!';
+                                                        const contentHint = hasDiet ? 'No link abaixo você verá seu treino e seu plano alimentar:' : 'Acesse sua ficha pelo link abaixo:';
+                                                        const msg = `Olá ${member.name}! 💪\n\n${contentLabel}\n${contentHint}\n🔗 ${workoutLink}\n\n${member.workout_routine ? `Observações:\n${member.workout_routine}` : ''}\n\nBora evoluir! 🚀`;
 
                                                         // Clean phone number (leave only digits)
                                                         const cleanPhone = member.phone.replace(/\D/g, '');
