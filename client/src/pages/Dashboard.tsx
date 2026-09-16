@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTutorial } from '../contexts/TutorialContext';
-import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target, ShieldCheck, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Activity, Settings, Zap, Bell, Cpu, CreditCard, HelpCircle, MoreHorizontal, X, Calendar, TrendingUp, Sparkles, Brain, AlertCircle, MessageSquare, LogOut, RefreshCw, ArrowUpRight, UserPlus, WalletCards, CalendarPlus, Wifi, CheckCircle2, Target, ShieldCheck, BookOpen } from 'lucide-react';
 import { WhatsAppConnect } from './WhatsAppConnect';
 import { Turnstiles } from './Turnstiles';
 import { Finance } from './Finance';
@@ -262,16 +262,16 @@ export const Dashboard = () => {
                     can close the drawer without ever intercepting drawer taps. */}
                 {isMobileMenuOpen && (
                     <div
-                        className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[190] animate-fade-in pointer-events-auto"
+                        className="md:hidden fixed inset-0 bg-slate-950/35 backdrop-blur-[3px] z-[190] animate-fade-in pointer-events-auto"
                         onClick={() => setIsMobileMenuOpen(false)}
                         aria-hidden="true"
                     />
                 )}
 
-                {/* --- PROFESSIONAL MOBILE SMART DOCK --- */}
-                <div className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] max-w-md z-[200] isolate">
-                    <nav aria-label="Navegação principal" className="bg-slate-900/95 backdrop-blur-xl border border-white/10 p-2 rounded-[2.5rem] flex items-center justify-between shadow-2xl shadow-primary/20">
-                        {/* Primary Items (Top 4) */}
+                {/* --- MOBILE COMMAND BAR --- */}
+                <div className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-[430px] z-[200] isolate">
+                    <nav aria-label="Navegação principal" className="relative flex items-center gap-1 rounded-[1.75rem] border border-slate-200/90 bg-white/95 p-1.5 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.55)] backdrop-blur-2xl">
+                        {/* Primary Items */}
                         {[
                             { label: 'Início', path: '/dashboard', icon: LayoutDashboard },
                             { label: 'Chat', path: '/dashboard/chat', icon: MessageSquare },
@@ -288,25 +288,19 @@ export const Dashboard = () => {
                                     aria-label={item.label}
                                     aria-current={isActive ? 'page' : undefined}
                                     className={clsx(
-                                        "relative flex min-h-14 flex-col items-center justify-center rounded-2xl py-2 px-1 transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 flex-1",
-                                        isActive ? "text-primary" : "text-white/40 hover:text-white/60"
+                                        "relative flex min-h-[62px] flex-1 flex-col items-center justify-center gap-1 rounded-[1.25rem] px-1.5 py-1.5 transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70",
+                                        isActive ? "bg-slate-950 text-white shadow-lg shadow-slate-950/20" : "text-slate-400 hover:bg-slate-50 hover:text-slate-700"
                                     )}
                                 >
                                     <div className={clsx(
-                                        "p-2.5 rounded-2xl transition-all duration-200",
-                                        isActive ? "bg-primary/10 scale-110 shadow-[0_0_20px_rgba(var(--primary-rgb),0.18)]" : "bg-transparent"
+                                        "flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200",
+                                        isActive ? "bg-primary text-white shadow-[0_8px_18px_rgba(var(--primary-rgb),0.35)]" : "bg-slate-100 text-slate-500"
                                     )}>
-                                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                                        <item.icon size={17} strokeWidth={isActive ? 2.8 : 2.2} />
                                     </div>
-                                    <span className={clsx(
-                                        "text-[9px] font-black uppercase tracking-widest mt-1 scale-90",
-                                        isActive ? "opacity-100" : "opacity-0 invisible h-0"
-                                    )}>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.08em] leading-none">
                                         {item.label}
                                     </span>
-                                    {isActive && (
-                                        <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_var(--primary-color)]" />
-                                    )}
                                 </Link>
                             );
                         })}
@@ -319,34 +313,52 @@ export const Dashboard = () => {
                             aria-controls="mobile-dashboard-menu"
                             aria-label={isMobileMenuOpen ? 'Fechar mais opções' : 'Abrir mais opções'}
                             className={clsx(
-                                "flex min-h-14 flex-col items-center justify-center p-2.5 rounded-2xl transition-all duration-200 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 flex-1",
-                                isMobileMenuOpen ? "text-primary bg-primary/10 scale-110 rotate-90" : "text-white/40"
+                                "flex min-h-[62px] flex-1 flex-col items-center justify-center gap-1 rounded-[1.25rem] px-1.5 py-1.5 transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70",
+                                isMobileMenuOpen ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-slate-400 hover:bg-orange-50 hover:text-primary"
                             )}
                         >
-                            <MoreHorizontal size={24} />
-                            <span className={clsx(
-                                "text-[9px] font-black uppercase tracking-widest mt-1 scale-90",
-                                isMobileMenuOpen ? "opacity-100" : "opacity-0 invisible h-0"
+                            <div className={clsx(
+                                "flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-300",
+                                isMobileMenuOpen ? "bg-white/20" : "bg-slate-100"
                             )}>
-                                Mais
-                            </span>
+                                {isMobileMenuOpen ? <X size={17} strokeWidth={2.8} /> : <MoreHorizontal size={18} strokeWidth={2.8} />}
+                            </div>
+                            <span className="text-[9px] font-black uppercase tracking-[0.08em] leading-none">Menu</span>
                         </button>
                     </nav>
 
-                    {/* Expandable Menu Overlay (Glassmorphism Modal) */}
+                    {/* Expandable navigation sheet */}
                     {isMobileMenuOpen && (
-                        <div id="mobile-dashboard-menu" role="menu" className="absolute bottom-[calc(100%+0.75rem)] left-0 right-0 z-10 animate-mobile-menu-in">
-                            <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 shadow-2xl shadow-slate-950/30 grid grid-cols-3 gap-2 sm:gap-3">
+                        <div id="mobile-dashboard-menu" role="menu" className="absolute bottom-[calc(100%+0.85rem)] left-0 right-0 z-10 animate-mobile-sheet-in">
+                            <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/95 shadow-[0_30px_80px_-28px_rgba(15,23,42,0.7)] backdrop-blur-2xl">
+                                <div className="relative overflow-hidden bg-slate-950 px-5 pb-4 pt-5 text-white">
+                                    <div className="pointer-events-none absolute -right-8 -top-12 h-32 w-32 rounded-full bg-primary/30 blur-2xl" />
+                                    <div className="pointer-events-none absolute -bottom-16 left-1/3 h-28 w-28 rounded-full bg-orange-400/15 blur-2xl" />
+                                    <div className="relative flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase tracking-[0.24em] text-primary">Central de operações</p>
+                                            <h2 className="mt-1 text-lg font-black tracking-tight">Navegue pelo seu negócio</h2>
+                                        </div>
+                                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-primary shadow-inner">
+                                            <Sparkles size={17} />
+                                        </div>
+                                    </div>
+                                    <div className="relative mt-4 flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.14em] text-white/55">
+                                        <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-2.5 py-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" /> Academia conectada</span>
+                                        <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1.5 text-primary">1 toque</span>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-4">
                                 {[
-                                    { label: 'Membros', path: '/dashboard/members', icon: Users },
-                                    { label: 'Vendas', path: '/dashboard/leads', icon: Target },
-                                    { label: 'Retenção', path: '/dashboard/retention', icon: ShieldCheck },
-                                    { label: 'Treinos', path: '/dashboard/exercises', icon: Activity },
-                                    { label: 'Planos', path: '/dashboard/plans', icon: Activity },
-                                    { label: 'Acessos', path: '/dashboard/logs', icon: Activity },
-                                    { label: 'Dinheiro', path: '/dashboard/finance', icon: CreditCard },
-                                    { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu },
-                                    { label: 'Ajustes', path: '/dashboard/settings', icon: Settings },
+                                    { label: 'Membros', path: '/dashboard/members', icon: Users, hint: 'Alunos' },
+                                    { label: 'Vendas', path: '/dashboard/leads', icon: Target, hint: 'Funil' },
+                                    { label: 'Retenção', path: '/dashboard/retention', icon: ShieldCheck, hint: 'Lealdade' },
+                                    { label: 'Treinos', path: '/dashboard/exercises', icon: Activity, hint: 'Rotinas' },
+                                    { label: 'Planos', path: '/dashboard/plans', icon: Activity, hint: 'Ofertas' },
+                                    { label: 'Acessos', path: '/dashboard/logs', icon: Activity, hint: 'Presença' },
+                                    { label: 'Dinheiro', path: '/dashboard/finance', icon: CreditCard, hint: 'Receita' },
+                                    { label: 'Catracas', path: '/dashboard/turnstiles', icon: Cpu, hint: 'Entrada' },
+                                    { label: 'Ajustes', path: '/dashboard/settings', icon: Settings, hint: 'Sistema' },
                                 ].map((item, index) => (
                                     <Link
                                         key={item.path}
@@ -357,17 +369,18 @@ export const Dashboard = () => {
                                         aria-label={item.label}
                                         style={{ animationDelay: `${index * 35}ms` }}
                                         className={clsx(
-                                            'mobile-menu-item flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-2xl border px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 group',
-                                            location.pathname === item.path ? 'border-primary/40 bg-primary/10' : 'border-white/5 bg-white/[0.03] hover:border-primary/30 hover:bg-primary/10'
+                                            'mobile-menu-item group relative flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
+                                            location.pathname === item.path ? 'border-primary/30 bg-orange-50 shadow-[0_10px_22px_-16px_rgba(var(--primary-rgb),0.8)]' : 'border-slate-100 bg-slate-50/75 hover:border-orange-200 hover:bg-orange-50/70'
                                         )}
                                     >
                                         <div className={clsx(
-                                            'flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-200 group-hover:scale-110',
-                                            location.pathname === item.path ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white/5 text-white/60 group-hover:bg-orange-500/20 group-hover:text-orange-500'
+                                            'flex h-10 w-10 items-center justify-center rounded-xl border transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md',
+                                            location.pathname === item.path ? 'border-primary/10 bg-primary text-white shadow-lg shadow-primary/25' : 'border-slate-200/80 bg-white text-slate-500 group-hover:border-orange-200 group-hover:text-primary'
                                         )}>
-                                            <item.icon size={24} />
+                                            <item.icon size={19} strokeWidth={2.4} />
                                         </div>
-                                        <span className="text-[9px] font-black text-white/60 uppercase tracking-wider text-center">{item.label}</span>
+                                        <span className={clsx('text-[9px] font-black uppercase tracking-[0.06em] leading-none', location.pathname === item.path ? 'text-slate-900' : 'text-slate-500')}>{item.label}</span>
+                                        <span className="text-[8px] font-semibold text-slate-400 leading-none">{item.hint}</span>
                                     </Link>
                                 ))}
                                 <button
@@ -381,13 +394,15 @@ export const Dashboard = () => {
                                     role="menuitem"
                                     aria-label="Sair"
                                     style={{ animationDelay: '315ms' }}
-                                    className="mobile-menu-item flex min-h-[86px] flex-col items-center justify-center gap-2 rounded-2xl border border-red-500/10 bg-red-500/[0.04] px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 group"
+                                    className="mobile-menu-item group relative flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-[1.25rem] border border-red-100 bg-red-50/70 px-1 py-2 text-center transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                                 >
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-500 transition-all duration-200 group-hover:scale-110 group-hover:bg-red-500/20">
-                                        <LogOut size={24} />
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-md">
+                                        <LogOut size={19} strokeWidth={2.4} />
                                     </div>
-                                    <span className="text-[9px] font-black text-red-500/70 uppercase tracking-wider text-center">Sair</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.06em] leading-none text-red-500">Sair</span>
+                                    <span className="text-[8px] font-semibold leading-none text-red-300">Sessão</span>
                                 </button>
+                                </div>
                             </div>
                         </div>
                     )}
