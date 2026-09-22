@@ -267,6 +267,17 @@ model Lead {
   
   status          String   @default("new") // new, contacted, trial, won, lost
   value           Float    @default(0)
+  ai_intent       String?
+  ai_topic        String?
+  ai_objection    String?
+  ai_sentiment    String?
+  ai_next_action  String?
+  ai_priority     Float?
+  ai_qualified    Boolean?
+  ai_needs_human  Boolean?
+  ai_is_spam      Boolean?
+  ai_confidence   Float?
+  ai_analyzed_at  DateTime?
   
   messages        ChatMessage[]
 

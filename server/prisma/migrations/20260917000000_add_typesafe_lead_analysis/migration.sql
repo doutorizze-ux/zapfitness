@@ -1,0 +1,11 @@
+ALTER TABLE "Lead" ADD COLUMN "ai_intent" TEXT;
+ALTER TABLE "Lead" ADD COLUMN "ai_topic" TEXT;
+ALTER TABLE "Lead" ADD COLUMN "ai_objection" TEXT;
+ALTER TABLE "Lead" ADD COLUMN "ai_sentiment" TEXT;
+ALTER TABLE "Lead" ADD COLUMN "ai_next_action" TEXT;
+ALTER TABLE "Lead" ADD COLUMN "ai_priority" REAL;
+ALTER TABLE "Lead" ADD COLUMN "ai_qualified" BOOLEAN;
+ALTER TABLE "Lead" ADD COLUMN "ai_needs_human" BOOLEAN;
+ALTER TABLE "Lead" ADD COLUMN "ai_is_spam" BOOLEAN;
+ALTER TABLE "Lead" ADD COLUMN "ai_confidence" REAL;
+ALTER TABLE "Lead" ADD COLUMN "ai_analyzed_at" DATETIME;

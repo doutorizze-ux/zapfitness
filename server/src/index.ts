@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import { eventBus, EVENTS } from './events.js';
 import multer from 'multer';
 import cors from 'cors';
+import { qualifyLeadWithTypeSafe } from './services/typesafeLeadQualification.js';
 
 // --- PREVENTION FOR CRASHES ---
 process.on('unhandledRejection', (reason, promise) => {
@@ -568,6 +569,36 @@ app.get('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
             orderBy: { created_at: 'asc' }
         });
         res.json(messages);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Re-runs the Jev analysis on the latest conversation when the team wants a
+// fresh recommendation. It only updates AI insight fields; it never messages
+// a contact or changes the sales funnel.
+app.post('/api/leads/:id/analyze', authMiddleware, async (req: any, res) => {
+    try {
+        const lead = await prisma.lead.findUnique({
+            where: { id: req.params.id, tenant_id: req.user.tenant_id },
+        });
+        if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
+
+        const messages = await prisma.chatMessage.findMany({
+            where: { lead_id: lead.id, tenant_id: req.user.tenant_id },
+            orderBy: { created_at: 'desc' },
+            take: 6,
+            select: { content: true, from_me: true },
+        });
+        if (!messages.length) return res.status(400).json({ error: 'Este lead ainda não tem mensagens para analisar' });
+
+        const analysis = await qualifyLeadWithTypeSafe({
+            messages: messages.reverse().map(message => ({ content: message.content, fromMe: message.from_me })),
+        });
+        if (!analysis) return res.status(503).json({ error: 'A chave da TypeSafe não está configurada no servidor' });
+
+        const updated = await prisma.lead.update({ where: { id: lead.id }, data: analysis });
+        res.json(updated);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -1532,6 +1563,10 @@ io.on('connection', (socket: any) => {
 // --- TURNSTILE & CHAT INTEGRATION ---
 eventBus.on(EVENTS.NEW_MESSAGE, (msg) => {
     io.to(msg.tenant_id).emit('new_message', msg);
+});
+
+eventBus.on(EVENTS.LEAD_ANALYZED, (lead) => {
+    io.to(lead.tenant_id).emit('lead_analyzed', lead);
 });
 
 eventBus.on(EVENTS.ATTENDANCE_REQUESTED, (data) => {

@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Plus, MessageSquare, Phone,
     LayoutGrid, List, Search, Trash2, Edit,
-    Send, X, Users, Target, Calendar, TrendingUp
+    Send, X, Users, Target, Calendar, TrendingUp,
+    Sparkles, RefreshCw, Flame, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api';
@@ -22,6 +23,17 @@ interface Lead {
     last_message: string | null;
     last_message_at: string;
     created_at: string;
+    ai_intent?: 'cold' | 'warm' | 'hot' | null;
+    ai_topic?: 'pricing' | 'trial' | 'schedule' | 'location' | 'enrollment' | 'cancellation' | 'other' | null;
+    ai_objection?: 'none' | 'price' | 'schedule' | 'location' | 'trust' | 'other' | null;
+    ai_sentiment?: 'interested' | 'neutral' | 'frustrated' | 'urgent' | null;
+    ai_next_action?: 'send_plans' | 'invite_trial' | 'human_follow_up' | 'nurture' | null;
+    ai_priority?: number | null;
+    ai_qualified?: boolean | null;
+    ai_needs_human?: boolean | null;
+    ai_is_spam?: boolean | null;
+    ai_confidence?: number | null;
+    ai_analyzed_at?: string | null;
 }
 
 interface Message {
@@ -44,6 +56,84 @@ const COLUMNS = [
 const formatCurrency = (value: number | null | undefined) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
 
+const AI_INTENT_LABEL = {
+    cold: 'Frio',
+    warm: 'Morno',
+    hot: 'Quente',
+} as const;
+
+const AI_ACTION_LABEL = {
+    send_plans: 'Enviar planos',
+    invite_trial: 'Convidar para aula',
+    human_follow_up: 'Responder agora',
+    nurture: 'Acompanhar depois',
+} as const;
+
+const AI_TOPIC_LABEL = {
+    pricing: 'Preço e planos',
+    trial: 'Aula experimental',
+    schedule: 'Horários',
+    location: 'Localização',
+    enrollment: 'Matrícula',
+    cancellation: 'Cancelamento',
+    other: 'Outro assunto',
+} as const;
+
+const AI_OBJECTION_LABEL = {
+    none: 'Sem objeção',
+    price: 'Preço',
+    schedule: 'Horário',
+    location: 'Distância',
+    trust: 'Confiança',
+    other: 'Outra objeção',
+} as const;
+
+const AI_SENTIMENT_LABEL = {
+    interested: 'Interessado',
+    neutral: 'Neutro',
+    frustrated: 'Frustrado',
+    urgent: 'Com pressa',
+} as const;
+
+const LeadAiSummary = ({ lead }: { lead: Lead }) => {
+    if (!lead.ai_analyzed_at || !lead.ai_intent || !lead.ai_next_action) return null;
+
+    const priority = lead.ai_priority === null || lead.ai_priority === undefined
+        ? null
+        : lead.ai_priority >= 1.5 ? 'Alta' : lead.ai_priority >= 0.75 ? 'Média' : 'Baixa';
+
+    return (
+        <div className="mb-4 rounded-2xl border border-violet-100 bg-violet-50/70 p-3.5">
+            <div className="mb-2 flex items-center justify-between gap-2">
+                <span className="text-[9px] font-black uppercase tracking-widest text-violet-700">Análise Jev</span>
+                <span className={clsx(
+                    'rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-widest',
+                    lead.ai_intent === 'hot' ? 'bg-emerald-100 text-emerald-700' : lead.ai_intent === 'warm' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'
+                )}>
+                    {AI_INTENT_LABEL[lead.ai_intent]}
+                </span>
+            </div>
+            <p className="text-[11px] font-bold leading-relaxed text-slate-700">
+                Próxima ação: <span className="text-violet-700">{AI_ACTION_LABEL[lead.ai_next_action]}</span>
+                {priority && <> · Prioridade {priority}</>}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+                {lead.ai_topic && <span className="rounded-lg bg-white px-2 py-1 text-[9px] font-bold text-slate-600">{AI_TOPIC_LABEL[lead.ai_topic]}</span>}
+                {lead.ai_objection && lead.ai_objection !== 'none' && <span className="rounded-lg bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700">Objeção: {AI_OBJECTION_LABEL[lead.ai_objection]}</span>}
+                {lead.ai_sentiment && <span className="rounded-lg bg-white px-2 py-1 text-[9px] font-bold text-slate-600">{AI_SENTIMENT_LABEL[lead.ai_sentiment]}</span>}
+            </div>
+            {lead.ai_qualified && (
+                <p className="mt-1 text-[10px] font-bold text-emerald-700">✓ Vale atendimento comercial agora</p>
+            )}
+            {lead.ai_needs_human && <p className="mt-1 text-[10px] font-bold text-blue-700">● Precisa de atenção humana</p>}
+            {lead.ai_is_spam && <p className="mt-1 text-[10px] font-bold text-red-700">⚠ Possível spam — revisar</p>}
+            {lead.ai_confidence !== null && lead.ai_confidence !== undefined && lead.ai_confidence < 0.5 && (
+                <p className="mt-1 text-[10px] font-bold text-slate-500">Análise incerta — confirme manualmente</p>
+            )}
+        </div>
+    );
+};
+
 const getSocketUrl = () => {
     const configuredUrl = import.meta.env.VITE_API_URL;
     if (configuredUrl) {
@@ -64,8 +154,10 @@ export const Leads = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [sending, setSending] = useState(false);
+    const [analyzingLeadId, setAnalyzingLeadId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
+    const [aiFilter, setAiFilter] = useState<'all' | 'hot' | 'human' | 'spam'>('all');
     const [showLeadModal, setShowLeadModal] = useState(false);
     const [modalLead, setModalLead] = useState<Partial<Lead> | null>(null);
     const chatEndRef = useRef<HTMLDivElement>(null);
@@ -112,11 +204,18 @@ export const Leads = () => {
             }
         };
 
+        const handleLeadAnalyzed = (analyzedLead: Lead) => {
+            setLeads(prev => prev.map(lead => lead.id === analyzedLead.id ? analyzedLead : lead));
+            setSelectedLead(prev => prev?.id === analyzedLead.id ? analyzedLead : prev);
+        };
+
         socket.on('new_message', handleNewMessage);
+        socket.on('lead_analyzed', handleLeadAnalyzed);
 
         return () => {
             socket.off('connect', joinTenantRoom);
             socket.off('new_message', handleNewMessage);
+            socket.off('lead_analyzed', handleLeadAnalyzed);
             socket.disconnect();
         };
     }, [user?.tenant_id, fetchLeads]);
@@ -233,18 +332,40 @@ export const Leads = () => {
         }
     };
 
+    const analyzeLead = async (leadId: string) => {
+        setAnalyzingLeadId(leadId);
+        try {
+            const response = await api.post(`/leads/${leadId}/analyze`);
+            const analyzedLead: Lead = response.data;
+            setLeads(prev => prev.map(lead => lead.id === leadId ? analyzedLead : lead));
+            setSelectedLead(prev => prev?.id === leadId ? analyzedLead : prev);
+            toast.success('Análise Jev atualizada');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.error || 'Não foi possível analisar este lead');
+        } finally {
+            setAnalyzingLeadId(null);
+        }
+    };
+
     const filteredLeads = leads.filter(l => {
         const matchesSearch = (l.name?.toLowerCase().includes(searchQuery.toLowerCase()) || l.phone.includes(searchQuery));
         const matchesStatus = !statusFilter || l.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+        const matchesAi = aiFilter === 'all'
+            || (aiFilter === 'hot' && l.ai_intent === 'hot' && !l.ai_is_spam)
+            || (aiFilter === 'human' && l.ai_needs_human === true && !l.ai_is_spam)
+            || (aiFilter === 'spam' && l.ai_is_spam === true);
+        return matchesSearch && matchesStatus && matchesAi;
+    }).sort((a, b) => (b.ai_priority ?? -1) - (a.ai_priority ?? -1));
 
     const stats = {
         total: leads.length,
         new: leads.filter(l => l.status === 'new').length,
         conversion: leads.length > 0 ? ((leads.filter(l => l.status === 'won').length / leads.length) * 100).toFixed(1) : 0,
         trial: leads.filter(l => l.status === 'trial').length,
-        matriculated: leads.filter(l => l.status === 'won').length
+        matriculated: leads.filter(l => l.status === 'won').length,
+        hot: leads.filter(l => l.ai_intent === 'hot' && !l.ai_is_spam).length,
+        human: leads.filter(l => l.ai_needs_human && !l.ai_is_spam).length,
+        spam: leads.filter(l => l.ai_is_spam).length,
     };
 
     if (loading) {
@@ -329,6 +450,41 @@ export const Leads = () => {
                         </div>
                     </motion.div>
                 ))}
+            </div>
+
+            {/* Jev intelligence queue: read-only filters over stored analysis. */}
+            <div className="mb-8 rounded-3xl border border-violet-100 bg-gradient-to-r from-violet-50 to-white p-4 md:p-6 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-600/20">
+                            <Sparkles size={20} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-slate-900">Fila inteligente Jev</p>
+                            <p className="text-xs font-medium text-slate-500">Prioriza oportunidades sem alterar o bot ou enviar mensagens.</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {[
+                            { id: 'all', label: 'Todos', count: leads.length, icon: Sparkles },
+                            { id: 'hot', label: 'Quentes', count: stats.hot, icon: Flame },
+                            { id: 'human', label: 'Atenção humana', count: stats.human, icon: Users },
+                            { id: 'spam', label: 'Possível spam', count: stats.spam, icon: ShieldAlert },
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setAiFilter(item.id as typeof aiFilter)}
+                                className={clsx(
+                                    'flex items-center gap-2 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-wider transition-all',
+                                    aiFilter === item.id ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/20' : 'border border-violet-100 bg-white text-slate-600 hover:border-violet-300'
+                                )}
+                            >
+                                <item.icon size={14} /> {item.label} <span className="rounded-md bg-black/10 px-1.5 py-0.5">{item.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* View Toggle & Active Filters */}
@@ -459,6 +615,8 @@ export const Leads = () => {
                                                         <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Nenhum contato</span>
                                                     </div>
                                                 )}
+
+                                                <LeadAiSummary lead={lead} />
 
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex gap-2.5">
@@ -699,6 +857,19 @@ export const Leads = () => {
                                     <option key={c.id} value={c.id}>{c.label}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="px-4 pt-4 sm:px-8 sm:pt-6 bg-[#fcfcfd] shrink-0">
+                            <LeadAiSummary lead={selectedLead} />
+                            <button
+                                type="button"
+                                onClick={() => analyzeLead(selectedLead.id)}
+                                disabled={analyzingLeadId === selectedLead.id || messages.length === 0}
+                                className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-200 bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest text-violet-700 transition-all hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={clsx(analyzingLeadId === selectedLead.id && 'animate-spin')} />
+                                {analyzingLeadId === selectedLead.id ? 'Analisando conversa' : 'Atualizar análise Jev'}
+                            </button>
                         </div>
 
                         {/* Messages Area */}

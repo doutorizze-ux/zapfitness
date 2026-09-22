@@ -6,5 +6,6 @@ export const EVENTS = {
     CHECKIN_GRANTED: 'checkin:granted',
     CHECKIN_DENIED: 'checkin:denied',
     NEW_MESSAGE: 'chat:new_message',
+    LEAD_ANALYZED: 'lead:analyzed',
     ATTENDANCE_REQUESTED: 'attendance:requested'
 };

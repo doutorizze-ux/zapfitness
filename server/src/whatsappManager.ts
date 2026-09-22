@@ -7,6 +7,7 @@ import pino from 'pino';
 import { format } from 'date-fns';
 import { fileURLToPath } from 'url';
 import { eventBus, EVENTS } from './events.js';
+import { qualifyLeadWithTypeSafe } from './services/typesafeLeadQualification.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -536,7 +537,7 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
             }
         });
 
-        // Emit for real-time dashboard updates
+        // Preserve the existing real-time behavior before any optional AI work.
         eventBus.emit(EVENTS.NEW_MESSAGE, chatMsg);
 
         // --- AUTH & PLAN CHECKS (FAST) ---
@@ -545,6 +546,37 @@ async function handleMessage(tenantId: string, msg: any, sock: WASocket) {
         if (tenant.saas_plan_expires_at && new Date(tenant.saas_plan_expires_at) < new Date()) {
             await humanizedSendMessage(sock, remoteJid, { text: '🚫 O sistema desta academia está temporariamente suspenso por questões administrativas (Plano Expirado). Entre em contato com a gerência.' });
             return;
+        }
+
+        // Jev is deliberately detached from the WhatsApp flow: it never blocks
+        // a bot response, check-in-related behavior, or lead capture. It only
+        // stores an optional recommendation for the dashboard to display later.
+        if (lead && !msg.message?.imageMessage) {
+            void (async () => {
+                try {
+                    const recentMessages = await prisma.chatMessage.findMany({
+                        where: { lead_id: lead.id },
+                        orderBy: { created_at: 'desc' },
+                        take: 6,
+                        select: { content: true, from_me: true },
+                    });
+                    const analysis = await qualifyLeadWithTypeSafe({
+                        messages: recentMessages.reverse().map(message => ({
+                            content: message.content,
+                            fromMe: message.from_me,
+                        })),
+                    });
+
+                    if (analysis) {
+                        const analyzedLead = await prisma.lead.update({ where: { id: lead.id }, data: analysis });
+                        eventBus.emit(EVENTS.LEAD_ANALYZED, analyzedLead);
+                    }
+                } catch (error) {
+                    // A temporary AI/API failure must never prevent WhatsApp,
+                    // existing automations, or lead capture from working.
+                    console.error('[TypeSafe] Lead qualification failed:', error);
+                }
+            })();
         }
 
         console.log(`Received message from ${remoteJid} for tenant ${tenantId}: ${text} `);
