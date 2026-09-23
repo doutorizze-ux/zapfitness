@@ -23,6 +23,10 @@ import api from '../api';
 import { formatImageUrl } from '../utils/format';
 import { NotificationHandler } from '../components/NotificationHandler';
 
+// Keep the full sidebar for windows wide enough to show the app content
+// alongside it. Windows display scaling can reduce the CSS viewport width.
+const DESKTOP_NAV_BREAKPOINT = 1024;
+
 export const Dashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
     const { user, logout } = useAuth();
@@ -50,7 +54,7 @@ export const Dashboard = () => {
 
     React.useEffect(() => {
         const closeOnDesktop = () => {
-            if (window.innerWidth >= 768) setIsMobileMenuOpen(false);
+            if (window.innerWidth >= DESKTOP_NAV_BREAKPOINT) setIsMobileMenuOpen(false);
         };
 
         window.addEventListener('resize', closeOnDesktop);
@@ -97,7 +101,7 @@ export const Dashboard = () => {
         <div className="dashboard-shell flex h-dvh min-h-0 min-w-0 bg-slate-50 overflow-hidden">
             <NotificationHandler />
             {/* Desktop Sidebar */}
-            <aside className="hidden md:flex w-64 min-[1800px]:w-72 shrink-0 bg-slate-950 text-white flex-col shadow-2xl z-20">
+            <aside className="hidden lg:flex w-64 min-[1800px]:w-72 shrink-0 bg-slate-950 text-white flex-col shadow-2xl z-20">
                 <div className="p-6 min-[1800px]:p-8 border-b border-slate-800">
                     <div className="flex items-center gap-3 px-1 mb-8 min-[1800px]:mb-10 group cursor-pointer" onClick={() => navigate('/dashboard')}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300 bg-white">
@@ -194,7 +198,7 @@ export const Dashboard = () => {
             <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full overflow-hidden relative">
 
                 {/* Mobile Top Header */}
-                <header className="md:hidden bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+                <header className="lg:hidden bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center shadow-md overflow-hidden">
                             {user?.logo_url ? (
@@ -220,7 +224,7 @@ export const Dashboard = () => {
                     </div>
                 </header>
 
-                <header className="hidden md:flex bg-white border-b border-slate-100 px-8 min-[1800px]:px-12 py-4 min-[1800px]:py-6 items-center justify-between z-10">
+                <header className="hidden lg:flex bg-white border-b border-slate-100 px-8 min-[1800px]:px-12 py-4 min-[1800px]:py-6 items-center justify-between z-10">
                     <div className="flex items-center gap-6">
                         <h2 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em]">{currentItem.label}</h2>
                         <div className="flex items-center gap-3 px-5 py-2 bg-primary/5 rounded-full border border-primary/10">
@@ -262,14 +266,14 @@ export const Dashboard = () => {
                     can close the drawer without ever intercepting drawer taps. */}
                 {isMobileMenuOpen && (
                     <div
-                        className="md:hidden fixed inset-0 bg-slate-950/35 backdrop-blur-[3px] z-[190] animate-fade-in pointer-events-auto"
+                        className="lg:hidden fixed inset-0 bg-slate-950/35 backdrop-blur-[3px] z-[190] animate-fade-in pointer-events-auto"
                         onClick={() => setIsMobileMenuOpen(false)}
                         aria-hidden="true"
                     />
                 )}
 
                 {/* --- MOBILE COMMAND BAR --- */}
-                <div className="md:hidden fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-[430px] z-[200] isolate">
+                <div className="lg:hidden fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-[430px] z-[200] isolate">
                     <nav aria-label="Navegação principal" className="relative flex items-center gap-1 rounded-[1.75rem] border border-slate-200/90 bg-white/95 p-1.5 shadow-[0_18px_45px_-18px_rgba(15,23,42,0.55)] backdrop-blur-2xl">
                         {/* Primary Items */}
                         {[
