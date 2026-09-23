@@ -265,11 +265,54 @@ export const sendMessageToJid = async (
     const sock = sessions.get(tenantId);
     if (!sock) throw new Error('WhatsApp não conectado');
 
-    let targetJid = jid;
+    // The socket is added to the session map while it is still connecting.
+    // Avoid reporting a false success when the attendant sends too early.
+    if (!(sock as any).user) {
+        throw new Error('WhatsApp ainda está conectando. Aguarde alguns segundos e tente novamente.');
+    }
+
+    const inputJid = jid.trim();
+    const inputNumber = inputJid.split('@')[0].split(':')[0].replace(/\D/g, '');
+    const phoneFilters = inputNumber.length >= 8
+        ? [{ phone: { contains: inputNumber.slice(-8) } }]
+        : [];
+
+    // WhatsApp can identify the same person with a LID instead of a phone JID.
+    // Resolve the contact saved by the inbound message before falling back to
+    // the number typed by the dashboard. This is essential for leads and for
+    // members migrated to WhatsApp's newer LID format.
+    let storedJid: string | null = null;
+    const storedMember = await prisma.member.findFirst({
+        where: {
+            tenant_id: tenantId,
+            OR: [
+                { whatsapp_jid: inputJid },
+                ...phoneFilters
+            ]
+        },
+        select: { whatsapp_jid: true }
+    });
+    storedJid = storedMember?.whatsapp_jid || null;
+
+    if (!storedJid) {
+        const storedLead = await prisma.lead.findFirst({
+            where: {
+                tenant_id: tenantId,
+                OR: [
+                    { whatsapp_jid: inputJid },
+                    ...phoneFilters
+                ]
+            },
+            select: { whatsapp_jid: true }
+        });
+        storedJid = storedLead?.whatsapp_jid || null;
+    }
+
+    let targetJid = storedJid || inputJid;
 
     // Only try to resolve/normalize if it looks like a phone number (not a LID)
-    if (!jid.endsWith('@lid')) {
-        let cleanNumber = jid.split('@')[0].replace(/\D/g, '');
+    if (!targetJid.endsWith('@lid')) {
+        let cleanNumber = targetJid.split('@')[0].split(':')[0].replace(/\D/g, '');
 
         if (cleanNumber.length >= 10 && cleanNumber.length <= 11 && !cleanNumber.startsWith('55')) {
             cleanNumber = '55' + cleanNumber;
@@ -296,9 +339,9 @@ export const sendMessageToJid = async (
 
     // Try to find member or lead to save the JID if missing
     let member = null;
-    let phone = jid.split('@')[0].replace(/\D/g, '');
+    let phone = inputNumber || targetJid.split('@')[0].split(':')[0].replace(/\D/g, '');
 
-    if (!jid.endsWith('@lid')) {
+    if (!targetJid.endsWith('@lid')) {
         member = await prisma.member.findFirst({
             where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
         });
@@ -315,7 +358,13 @@ export const sendMessageToJid = async (
     let lead: any = null;
     if (!member) {
         lead = await prisma.lead.findFirst({
-            where: { tenant_id: tenantId, phone: { contains: phone.slice(-8) } }
+            where: {
+                tenant_id: tenantId,
+                OR: [
+                    { whatsapp_jid: targetJid },
+                    ...(phone.length >= 8 ? [{ phone: { contains: phone.slice(-8) } }] : [])
+                ]
+            }
         });
         if (lead) {
             leadId = lead.id;

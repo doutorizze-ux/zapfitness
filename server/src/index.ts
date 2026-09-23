@@ -615,8 +615,10 @@ app.post('/api/leads/:id/messages', authMiddleware, async (req: any, res) => {
 
         if (!lead) return res.status(404).json({ error: 'Lead não encontrado' });
 
-        const cleanPhone = lead.phone.replace(/\D/g, '');
-        const jid = `${cleanPhone}@s.whatsapp.net`;
+        // Prefer the JID captured from the inbound WhatsApp message. For
+        // contacts using WhatsApp LIDs, rebuilding a JID from lead.phone
+        // produces a syntactically valid but unreachable recipient.
+        const jid = lead.whatsapp_jid || lead.phone;
         await sendMessageToJid(req.user.tenant_id, jid, content, { humanize: false });
 
         res.json({ success: true });
